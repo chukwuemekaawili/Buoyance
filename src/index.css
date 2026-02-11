@@ -1,0 +1,233 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Buoyance Design System - Nigerian Tax Compliance Platform */
+
+@layer base {
+  :root {
+    /* Primary: Deep Blue - Navigation, headers, structural UI */
+    --primary: 210 76% 15%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Background & Surfaces */
+    --background: 210 20% 98%;
+    --foreground: 210 76% 15%;
+
+    /* Card surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 210 76% 15%;
+
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 76% 15%;
+
+    /* Secondary: Emerald Green - Success states, confirmations, trust cues */
+    --secondary: 148 66% 37%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Accent: Amber - CTAs, emphasis, highlights */
+    --accent: 38 91% 55%;
+    --accent-foreground: 210 76% 15%;
+
+    /* Muted surfaces */
+    --muted: 210 20% 94%;
+    --muted-foreground: 210 20% 40%;
+
+    /* Success (Emerald) */
+    --success: 148 66% 37%;
+    --success-foreground: 0 0% 100%;
+
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border & Input */
+    --border: 210 20% 88%;
+    --input: 210 20% 88%;
+    --ring: 148 66% 37%;
+
+    --radius: 0.625rem;
+
+    /* Custom gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(210 76% 15%) 0%, hsl(210 60% 25%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(38 91% 55%) 0%, hsl(38 91% 65%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(148 66% 37%) 0%, hsl(148 50% 45%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(210 76% 15%) 0%, hsl(210 60% 20%) 50%, hsl(210 50% 25%) 100%);
+    --gradient-surface: linear-gradient(180deg, hsl(210 20% 98%) 0%, hsl(210 20% 96%) 100%);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(210 76% 15% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(210 76% 15% / 0.08), 0 2px 4px -2px hsl(210 76% 15% / 0.05);
+    --shadow-lg: 0 10px 15px -3px hsl(210 76% 15% / 0.1), 0 4px 6px -4px hsl(210 76% 15% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(210 76% 15% / 0.12), 0 8px 10px -6px hsl(210 76% 15% / 0.1);
+    --shadow-accent: 0 4px 14px 0 hsl(38 91% 55% / 0.35);
+    --shadow-success: 0 4px 14px 0 hsl(148 66% 37% / 0.25);
+
+    /* Sidebar - keeping for compatibility */
+    --sidebar-background: 210 76% 15%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 38 91% 55%;
+    --sidebar-primary-foreground: 210 76% 15%;
+    --sidebar-accent: 210 60% 20%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 210 50% 25%;
+    --sidebar-ring: 148 66% 37%;
+  }
+
+  .dark {
+    --primary: 210 40% 98%;
+    --primary-foreground: 210 76% 15%;
+
+    --background: 210 76% 10%;
+    --foreground: 210 20% 95%;
+
+    --card: 210 60% 12%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 210 60% 12%;
+    --popover-foreground: 210 20% 95%;
+
+    --secondary: 148 66% 37%;
+    --secondary-foreground: 0 0% 100%;
+
+    --accent: 38 91% 55%;
+    --accent-foreground: 210 76% 15%;
+
+    --muted: 210 50% 18%;
+    --muted-foreground: 210 20% 65%;
+
+    --success: 148 66% 37%;
+    --success-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 50% 20%;
+    --input: 210 50% 20%;
+    --ring: 148 66% 37%;
+
+    --gradient-hero: linear-gradient(180deg, hsl(210 76% 8%) 0%, hsl(210 70% 12%) 50%, hsl(210 60% 15%) 100%);
+
+    --sidebar-background: 210 76% 8%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 38 91% 55%;
+    --sidebar-primary-foreground: 210 76% 15%;
+    --sidebar-accent: 210 60% 15%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 210 50% 18%;
+    --sidebar-ring: 148 66% 37%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Financial figures typography */
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Heading styles */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  /* Text gradient utility */
+  .text-gradient-accent {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-accent);
+  }
+
+  .text-gradient-success {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-success);
+  }
+
+  /* Background utilities */
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .bg-gradient-surface {
+    background: var(--gradient-surface);
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-card/80 backdrop-blur-md border border-border/50;
+  }
+
+  /* Naira symbol styling */
+  .naira::before {
+    content: '₦';
+  }
+
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulseSoft 2s ease-in-out infinite;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulseSoft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}

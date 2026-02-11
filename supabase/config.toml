@@ -1,0 +1,10 @@
+project_id = "bajwsjrqrsglsndgtfpp"
+
+[functions.integration-health]
+verify_jwt = false
+
+[functions.integration-health-admin]
+verify_jwt = false
+
+[functions.ai-chat]
+verify_jwt = false
