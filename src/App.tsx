@@ -58,6 +58,14 @@ import Incomes from "./pages/Incomes";
 import Expenses from "./pages/Expenses";
 import BankConnections from "./pages/BankConnections";
 import Settings from "./pages/Settings";
+import WHTCredits from "./pages/WHTCredits";
+import ComplianceCalendar from "./pages/ComplianceCalendar";
+import Invoicing from "./pages/Invoicing";
+import Payroll from "./pages/Payroll";
+import KnowledgeBase from "./pages/KnowledgeBase";
+import TCCReadiness from "./pages/TCCReadiness";
+import AuditWorkspace from "./pages/AuditWorkspace";
+import BankImport from "./pages/BankImport";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -75,7 +83,7 @@ const App = () => (
               <AIChatWidget />
               <Routes>
                 <Route path="/" element={<Index />} />
-                
+
                 {/* Auth */}
                 <Route path="/signin" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
@@ -83,18 +91,18 @@ const App = () => (
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/my-calculations" element={<MyCalculations />} />
-                
+
                 {/* Dashboard */}
                 <Route path="/dashboard" element={<Dashboard />} />
-                
+
                 {/* Filings */}
                 <Route path="/filings" element={<Filings />} />
                 <Route path="/filings/new" element={<NewFiling />} />
                 <Route path="/filings/:id" element={<FilingDetail />} />
-                
+
                 {/* Payments */}
                 <Route path="/payments" element={<Payments />} />
-                
+
                 {/* Calculators */}
                 <Route path="/calculators" element={<Calculators />} />
                 <Route path="/calculators/pit" element={<PITCalculator />} />
@@ -104,21 +112,31 @@ const App = () => (
                 <Route path="/calculators/cgt" element={<CGTCalculator />} />
                 <Route path="/calculators/crypto" element={<CryptoCalculator />} />
                 <Route path="/calculators/foreign-income" element={<ForeignIncomeCalculator />} />
-                
+
                 {/* Income & Expenses */}
                 <Route path="/incomes" element={<Incomes />} />
                 <Route path="/expenses" element={<Expenses />} />
                 <Route path="/bank-connections" element={<BankConnections />} />
-                
+
+                {/* Core Feature Pages */}
+                <Route path="/wht-credits" element={<WHTCredits />} />
+                <Route path="/compliance-calendar" element={<ComplianceCalendar />} />
+                <Route path="/invoicing" element={<Invoicing />} />
+                <Route path="/payroll" element={<Payroll />} />
+                <Route path="/knowledge" element={<KnowledgeBase />} />
+                <Route path="/tcc" element={<TCCReadiness />} />
+                <Route path="/audit-workspace" element={<AuditWorkspace />} />
+                <Route path="/bank-import" element={<BankImport />} />
+
                 {/* Archived Items */}
                 <Route path="/archived" element={<ArchivedItems />} />
-                
+
                 {/* Settings */}
                 <Route path="/settings" element={<Settings />} />
-                
+
                 {/* Notifications */}
                 <Route path="/notifications" element={<Notifications />} />
-{/* Admin */}
+                {/* Admin */}
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/admin/audit" element={<AuditLogs />} />
@@ -130,26 +148,26 @@ const App = () => (
                 <Route path="/admin/payment-verification" element={<PaymentVerification />} />
                 <Route path="/admin/api-settings" element={<APISettings />} />
                 <Route path="/admin/system-settings" element={<SystemSettings />} />
-                
-                
+
+
                 {/* Company */}
                 <Route path="/about" element={<About />} />
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
-                
+
                 {/* Legal */}
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/cookies" element={<Cookies />} />
                 <Route path="/compliance" element={<Compliance />} />
-                
+
                 {/* Support */}
                 <Route path="/support" element={<Support />} />
                 <Route path="/documentation" element={<Documentation />} />
                 <Route path="/docs" element={<Documentation />} />
                 <Route path="/tax-guides/:slug" element={<TaxGuide />} />
-                
+
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

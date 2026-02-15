@@ -30,6 +30,12 @@ import {
   Wallet,
   Archive,
   Settings,
+  Upload,
+  Shield,
+  BookOpen,
+  FileSpreadsheet,
+  Scale,
+  Users,
 } from "lucide-react";
 import { format } from "date-fns";
 import { formatKoboToNgn, stringToKobo, addKobo } from "@/lib/money";
@@ -80,7 +86,7 @@ function getStartOfMonthLagos(): string {
   const lagosOffset = 1 * 60; // UTC+1
   const utcOffset = now.getTimezoneOffset();
   const lagosTime = new Date(now.getTime() + (lagosOffset + utcOffset) * 60 * 1000);
-  
+
   const year = lagosTime.getFullYear();
   const month = String(lagosTime.getMonth() + 1).padStart(2, '0');
   return `${year}-${month}-01`;
@@ -96,13 +102,13 @@ function DashboardContent() {
     totalPaidKobo: 0n,
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-  
+
   // Tax Health data
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [filingsForHealth, setFilingsForHealth] = useState<FilingData[]>([]);
   const [paymentsForHealth, setPaymentsForHealth] = useState<PaymentData[]>([]);
   const [activityData, setActivityData] = useState<ActivityData>({ hasRecentIncome: false, hasRecentExpense: false });
-  
+
   const [incomes, setIncomes] = useState<{ date: string; amount_kobo: string }[]>([]);
   const [expenses, setExpenses] = useState<{ date: string; amount_kobo: string }[]>([]);
 
@@ -158,7 +164,7 @@ function DashboardContent() {
         .from("incomes")
         .select("date, amount_kobo")
         .eq("archived", false);
-      
+
       if (incomesError) throw incomesError;
 
       // Fetch expenses for chart and activity check
@@ -166,7 +172,7 @@ function DashboardContent() {
         .from("expenses")
         .select("date, amount_kobo")
         .eq("archived", false);
-      
+
       if (expensesError) throw expensesError;
 
       setIncomes(incomesData || []);
@@ -181,9 +187,9 @@ function DashboardContent() {
       setFilingsForHealth(
         (filings || []).map((f) => {
           const output = f.output_json as Record<string, unknown>;
-          const totalTaxKobo = output?.taxPayableKobo || output?.vatPayableKobo || 
-                              output?.whtPayableKobo || output?.cgtPayableKobo || 
-                              output?.totalTaxKobo || "0";
+          const totalTaxKobo = output?.taxPayableKobo || output?.vatPayableKobo ||
+            output?.whtPayableKobo || output?.cgtPayableKobo ||
+            output?.totalTaxKobo || "0";
           return {
             id: f.id,
             status: f.status,
@@ -195,7 +201,7 @@ function DashboardContent() {
           };
         })
       );
-      
+
       // Store payments for health indicator
       setPaymentsForHealth(
         (payments || []).map((p) => ({
@@ -289,9 +295,9 @@ function DashboardContent() {
             <>
               {/* Tax Health Indicator - Full width at top */}
               <div className="mb-8">
-                <TaxHealthIndicator 
+                <TaxHealthIndicator
                   profile={profileData}
-                  filings={filingsForHealth} 
+                  filings={filingsForHealth}
                   payments={paymentsForHealth}
                   activity={activityData}
                 />
@@ -384,6 +390,18 @@ function DashboardContent() {
                       Add Expense
                     </Link>
                   </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/bank-import">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Import Bank Statement
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/invoicing">
+                      <FileSpreadsheet className="h-4 w-4 mr-2" />
+                      Create Invoice
+                    </Link>
+                  </Button>
                 </div>
               </div>
 
@@ -418,8 +436,8 @@ function DashboardContent() {
                           const Icon = activity.taxType
                             ? getTaxTypeIcon(activity.taxType)
                             : activity.type === "payment"
-                            ? CreditCard
-                            : FileText;
+                              ? CreditCard
+                              : FileText;
 
                           return (
                             <div
@@ -550,6 +568,118 @@ function DashboardContent() {
                           <p className="font-medium">Archived Items</p>
                           <p className="text-sm text-muted-foreground">
                             View and restore archived data
+                          </p>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </Link>
+
+                    <Link
+                      to="/wht-credits"
+                      className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Banknote className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">WHT Credits</p>
+                          <p className="text-sm text-muted-foreground">
+                            Upload certificates & track credits
+                          </p>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </Link>
+
+                    <Link
+                      to="/compliance-calendar"
+                      className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Compliance Calendar</p>
+                          <p className="text-sm text-muted-foreground">
+                            Tax deadlines & reminders
+                          </p>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </Link>
+
+                    <Link
+                      to="/invoicing"
+                      className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileSpreadsheet className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Invoicing</p>
+                          <p className="text-sm text-muted-foreground">
+                            Create invoices with VAT/WHT
+                          </p>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </Link>
+
+                    <Link
+                      to="/payroll"
+                      className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Users className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Payroll</p>
+                          <p className="text-sm text-muted-foreground">
+                            Calculate PAYE & payslips
+                          </p>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </Link>
+
+                    <Link
+                      to="/tcc"
+                      className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Shield className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">TCC Readiness</p>
+                          <p className="text-sm text-muted-foreground">
+                            Tax clearance checklist
+                          </p>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </Link>
+
+                    <Link
+                      to="/knowledge"
+                      className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <BookOpen className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Knowledge Base</p>
+                          <p className="text-sm text-muted-foreground">
+                            Tax laws, guides & resources
+                          </p>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </Link>
+
+                    <Link
+                      to="/audit-workspace"
+                      className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Scale className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Audit Workspace</p>
+                          <p className="text-sm text-muted-foreground">
+                            Disputes & defense management
                           </p>
                         </div>
                       </div>

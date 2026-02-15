@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, Calculator, Shield, ChevronDown, LayoutDashboard, FileText, CreditCard, Wallet, DollarSign, Landmark, Settings, PiggyBank, BookOpen, HelpCircle, Plus, User, Check, Circle, Brain, BarChart3 } from "lucide-react";
+import { Menu, LogOut, Calculator, Shield, ChevronDown, LayoutDashboard, FileText, CreditCard, Wallet, DollarSign, Landmark, Settings, PiggyBank, BookOpen, HelpCircle, Plus, User, Check, Circle, Brain, BarChart3, Banknote, Upload, FileSpreadsheet, Scale, Users, Calendar } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -79,7 +79,7 @@ export function Header() {
     { label: "Tax identity", completed: !!taxIdentity },
     { label: "TIN number", completed: !!tin },
   ];
-  
+
   const completedCount = profileChecklist.filter(item => item.completed).length;
   const totalCount = profileChecklist.length;
   const completionPercent = Math.round((completedCount / totalCount) * 100);
@@ -155,12 +155,15 @@ export function Header() {
 
   // Check if any calculator path is active
   const isCalculatorsActive = currentPath.startsWith("/calculators") || currentPath === "/my-calculations";
-  
+
   // Check if any records path is active
   const isRecordsActive = ["/filings", "/payments", "/incomes", "/expenses", "/bank-connections"].some(p => currentPath.startsWith(p));
-  
+
   // Check if any admin path is active
   const isAdminActive = currentPath.startsWith("/admin");
+
+  // Check if any compliance path is active
+  const isComplianceActive = ["/compliance-calendar", "/tcc", "/audit-workspace", "/wht-credits"].some(p => currentPath.startsWith(p));
 
   return (
     <>
@@ -168,8 +171,8 @@ export function Header() {
         <div className="container mx-auto px-4 md:px-6 overflow-hidden">
           <div className="flex items-center h-14 md:h-16 overflow-hidden">
             {/* Logo - fixed width, never shrinks */}
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               onClick={handleLogoClick}
               className="flex-shrink-0"
             >
@@ -254,10 +257,10 @@ export function Header() {
                     <LayoutDashboard className="h-4 w-4" />
                     Dashboard
                   </Link>
-                  
+
                   {/* Records Dropdown */}
                   <DropdownMenu>
-                    <DropdownMenuTrigger 
+                    <DropdownMenuTrigger
                       className={cn(
                         "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1 outline-none",
                         isRecordsActive ? activeLinkClass : inactiveLinkClass
@@ -300,12 +303,65 @@ export function Header() {
                           Bank Connections
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/bank-import" className={cn("flex items-center gap-2", currentPath === "/bank-import" && "bg-accent")}>
+                          <Upload className="h-4 w-4" />
+                          Bank Import
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/invoicing" className={cn("flex items-center gap-2", currentPath === "/invoicing" && "bg-accent")}>
+                          <FileSpreadsheet className="h-4 w-4" />
+                          Invoices
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Compliance Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      className={cn(
+                        "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1 outline-none",
+                        isComplianceActive ? activeLinkClass : inactiveLinkClass
+                      )}
+                    >
+                      <Shield className="h-4 w-4" />
+                      Compliance
+                      <ChevronDown className="h-3 w-3 ml-0.5" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="bg-popover">
+                      <DropdownMenuItem asChild>
+                        <Link to="/compliance-calendar" className={cn("flex items-center gap-2", currentPath === "/compliance-calendar" && "bg-accent")}>
+                          <Calendar className="h-4 w-4 text-primary" />
+                          Compliance Calendar
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/tcc" className={cn("flex items-center gap-2", currentPath === "/tcc" && "bg-accent")}>
+                          <Shield className="h-4 w-4 text-primary" />
+                          TCC Readiness
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/audit-workspace" className={cn("flex items-center gap-2", currentPath === "/audit-workspace" && "bg-accent")}>
+                          <Scale className="h-4 w-4 text-primary" />
+                          Audit Workspace
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/wht-credits" className={cn("flex items-center gap-2", currentPath === "/wht-credits" && "bg-accent")}>
+                          <Banknote className="h-4 w-4 text-primary" />
+                          WHT Credits
+                        </Link>
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
 
                   {/* Calculators Dropdown */}
                   <DropdownMenu>
-                    <DropdownMenuTrigger 
+                    <DropdownMenuTrigger
                       className={cn(
                         "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1 outline-none",
                         isCalculatorsActive ? activeLinkClass : inactiveLinkClass
@@ -333,6 +389,13 @@ export function Header() {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
+                        <Link to="/payroll" className={cn("flex items-center gap-2", currentPath === "/payroll" && "bg-accent")}>
+                          <Users className="h-4 w-4" />
+                          Payroll Calculator
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
                         <Link to="/my-calculations" className={cn("flex items-center gap-2", currentPath === "/my-calculations" && "bg-accent")}>
                           <PiggyBank className="h-4 w-4" />
                           My Calculations
@@ -344,7 +407,7 @@ export function Header() {
                   {/* Admin Dropdown */}
                   {(isAdmin || isAuditor) && (
                     <DropdownMenu>
-                      <DropdownMenuTrigger 
+                      <DropdownMenuTrigger
                         className={cn(
                           "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1 outline-none",
                           isAdminActive ? activeLinkClass : inactiveLinkClass
@@ -474,7 +537,7 @@ export function Header() {
                     </Link>
                   </Button>
                   <NotificationBell />
-                  
+
                   {/* User Dropdown Menu */}
                   <DropdownMenu>
                     <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-primary-foreground/10 transition-colors outline-none">
@@ -505,8 +568,8 @@ export function Header() {
                             {getTaxIdentityLabel()}
                           </span>
                         ) : (
-                          <Link 
-                            to="/settings" 
+                          <Link
+                            to="/settings"
                             className="inline-flex items-center gap-1 mt-1.5 px-2 py-1 text-xs font-medium rounded-md bg-amber-100 text-amber-800 hover:bg-amber-200 transition-colors"
                           >
                             <User className="h-3 w-3" />
@@ -514,7 +577,7 @@ export function Header() {
                           </Link>
                         )}
                       </div>
-                      
+
                       {/* Profile Completion Checklist - show if incomplete */}
                       {!isProfileComplete && (
                         <>
@@ -524,8 +587,8 @@ export function Header() {
                               <span className="text-xs font-semibold text-foreground">{completionPercent}%</span>
                             </div>
                             <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mb-2">
-                              <div 
-                                className="h-full bg-primary transition-all duration-300" 
+                              <div
+                                className="h-full bg-primary transition-all duration-300"
                                 style={{ width: `${completionPercent}%` }}
                               />
                             </div>
@@ -543,8 +606,8 @@ export function Header() {
                                 </li>
                               ))}
                             </ul>
-                            <Link 
-                              to="/settings" 
+                            <Link
+                              to="/settings"
                               className="inline-flex w-full justify-center items-center gap-1 mt-2 px-2 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                             >
                               Complete Setup
@@ -552,7 +615,7 @@ export function Header() {
                           </div>
                         </>
                       )}
-                      
+
                       <DropdownMenuItem asChild>
                         <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
                           <LayoutDashboard className="h-4 w-4" />
@@ -566,7 +629,7 @@ export function Header() {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={handleSignOut}
                         className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
                       >
@@ -626,7 +689,7 @@ export function Header() {
               />
             </SheetTitle>
           </SheetHeader>
-          
+
           <nav className="flex flex-col px-6">
             {user ? (
               // Authenticated mobile menu
@@ -649,8 +712,8 @@ export function Header() {
                       </span>
                     ) : (
                       <SheetClose asChild>
-                        <Link 
-                          to="/settings" 
+                        <Link
+                          to="/settings"
                           className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 text-xs font-medium rounded-md bg-amber-400/90 text-amber-900 hover:bg-amber-300 transition-colors"
                           onClick={handleNavClick}
                         >
@@ -670,8 +733,8 @@ export function Header() {
                       <span className="text-xs font-semibold text-primary-foreground">{completionPercent}%</span>
                     </div>
                     <div className="w-full h-1.5 bg-primary-foreground/20 rounded-full overflow-hidden mb-3">
-                      <div 
-                        className="h-full bg-amber-400 transition-all duration-300" 
+                      <div
+                        className="h-full bg-amber-400 transition-all duration-300"
                         style={{ width: `${completionPercent}%` }}
                       />
                     </div>
@@ -690,8 +753,8 @@ export function Header() {
                       ))}
                     </ul>
                     <SheetClose asChild>
-                      <Link 
-                        to="/settings" 
+                      <Link
+                        to="/settings"
                         className="inline-flex w-full justify-center items-center gap-1 px-3 py-2 text-sm font-medium rounded-md bg-amber-400 text-amber-900 hover:bg-amber-300 transition-colors"
                         onClick={handleNavClick}
                       >
@@ -730,7 +793,7 @@ export function Header() {
                 </div>
 
                 <Separator className="my-4 bg-primary-foreground/10" />
-                
+
                 {/* Main Menu Section */}
                 <div className="flex items-center gap-2 mb-3">
                   <LayoutDashboard className="h-4 w-4 text-primary-foreground/50" />
@@ -741,8 +804,8 @@ export function Header() {
                     to="/dashboard"
                     className={cn(
                       "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
-                      isPathActive(currentPath, "/dashboard") 
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                      isPathActive(currentPath, "/dashboard")
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                         : "text-primary-foreground/90 hover:text-primary-foreground"
                     )}
                     onClick={handleNavClick}
@@ -757,7 +820,7 @@ export function Header() {
                     className={cn(
                       "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                       currentPath.startsWith("/filings")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                         : "text-primary-foreground/90 hover:text-primary-foreground"
                     )}
                     onClick={handleNavClick}
@@ -772,7 +835,7 @@ export function Header() {
                     className={cn(
                       "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                       currentPath.startsWith("/payments")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                         : "text-primary-foreground/90 hover:text-primary-foreground"
                     )}
                     onClick={handleNavClick}
@@ -781,9 +844,9 @@ export function Header() {
                     Payments
                   </Link>
                 </SheetClose>
-                
+
                 <Separator className="my-4 bg-primary-foreground/10" />
-                
+
                 {/* Records Section */}
                 <div className="flex items-center gap-2 mb-3">
                   <FileText className="h-4 w-4 text-primary-foreground/50" />
@@ -795,7 +858,7 @@ export function Header() {
                     className={cn(
                       "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                       currentPath.startsWith("/incomes")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                         : "text-primary-foreground/90 hover:text-primary-foreground"
                     )}
                     onClick={handleNavClick}
@@ -810,7 +873,7 @@ export function Header() {
                     className={cn(
                       "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                       currentPath.startsWith("/expenses")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                         : "text-primary-foreground/90 hover:text-primary-foreground"
                     )}
                     onClick={handleNavClick}
@@ -825,7 +888,7 @@ export function Header() {
                     className={cn(
                       "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                       currentPath.startsWith("/bank-connections")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                         : "text-primary-foreground/90 hover:text-primary-foreground"
                     )}
                     onClick={handleNavClick}
@@ -834,9 +897,107 @@ export function Header() {
                     Bank Connections
                   </Link>
                 </SheetClose>
-                
+                <SheetClose asChild>
+                  <Link
+                    to="/bank-import"
+                    className={cn(
+                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      currentPath === "/bank-import"
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
+                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                    )}
+                    onClick={handleNavClick}
+                  >
+                    <Upload className="h-5 w-5" />
+                    Bank Import
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    to="/invoicing"
+                    className={cn(
+                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      currentPath === "/invoicing"
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
+                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                    )}
+                    onClick={handleNavClick}
+                  >
+                    <FileSpreadsheet className="h-5 w-5" />
+                    Invoices
+                  </Link>
+                </SheetClose>
+
                 <Separator className="my-4 bg-primary-foreground/10" />
-                
+
+                {/* Compliance Section */}
+                <div className="flex items-center gap-2 mb-3">
+                  <Shield className="h-4 w-4 text-primary-foreground/50" />
+                  <p className="text-xs uppercase text-primary-foreground/50 tracking-wider">Compliance</p>
+                </div>
+                <SheetClose asChild>
+                  <Link
+                    to="/compliance-calendar"
+                    className={cn(
+                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      currentPath === "/compliance-calendar"
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
+                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                    )}
+                    onClick={handleNavClick}
+                  >
+                    <Calendar className="h-5 w-5" />
+                    Compliance Calendar
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    to="/tcc"
+                    className={cn(
+                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      currentPath === "/tcc"
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
+                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                    )}
+                    onClick={handleNavClick}
+                  >
+                    <Shield className="h-5 w-5" />
+                    TCC Readiness
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    to="/audit-workspace"
+                    className={cn(
+                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      currentPath === "/audit-workspace"
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
+                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                    )}
+                    onClick={handleNavClick}
+                  >
+                    <Scale className="h-5 w-5" />
+                    Audit Workspace
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    to="/wht-credits"
+                    className={cn(
+                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      currentPath === "/wht-credits"
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
+                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                    )}
+                    onClick={handleNavClick}
+                  >
+                    <Banknote className="h-5 w-5" />
+                    WHT Credits
+                  </Link>
+                </SheetClose>
+
+                <Separator className="my-4 bg-primary-foreground/10" />
+
                 {/* Calculators Section */}
                 <div className="flex items-center gap-2 mb-3">
                   <Calculator className="h-4 w-4 text-primary-foreground/50" />
@@ -848,7 +1009,7 @@ export function Header() {
                     className={cn(
                       "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                       currentPath === "/calculators"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                         : "text-primary-foreground/90 hover:text-primary-foreground"
                     )}
                     onClick={handleNavClick}
@@ -863,13 +1024,28 @@ export function Header() {
                     className={cn(
                       "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                       currentPath === "/my-calculations"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                         : "text-primary-foreground/90 hover:text-primary-foreground"
                     )}
                     onClick={handleNavClick}
                   >
                     <PiggyBank className="h-5 w-5" />
                     My Calculations
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    to="/payroll"
+                    className={cn(
+                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      currentPath === "/payroll"
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
+                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                    )}
+                    onClick={handleNavClick}
+                  >
+                    <Users className="h-5 w-5" />
+                    Payroll Calculator
                   </Link>
                 </SheetClose>
 
@@ -885,7 +1061,7 @@ export function Header() {
                     className={cn(
                       "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                       isPathActive(currentPath, "/documentation") || isPathActive(currentPath, "/docs")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                         : "text-primary-foreground/90 hover:text-primary-foreground"
                     )}
                     onClick={handleNavClick}
@@ -900,7 +1076,7 @@ export function Header() {
                     className={cn(
                       "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                       currentPath === "/support"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                         : "text-primary-foreground/90 hover:text-primary-foreground"
                     )}
                     onClick={handleNavClick}
@@ -921,7 +1097,7 @@ export function Header() {
                         className={cn(
                           "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                           currentPath === "/admin/dashboard" || currentPath === "/admin"
-                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                             : "text-primary-foreground/90 hover:text-primary-foreground"
                         )}
                         onClick={handleNavClick}
@@ -936,7 +1112,7 @@ export function Header() {
                         className={cn(
                           "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                           currentPath === "/admin/tax-rules"
-                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                             : "text-primary-foreground/90 hover:text-primary-foreground"
                         )}
                         onClick={handleNavClick}
@@ -951,7 +1127,7 @@ export function Header() {
                         className={cn(
                           "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                           currentPath === "/admin/classification-rules"
-                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                             : "text-primary-foreground/90 hover:text-primary-foreground"
                         )}
                         onClick={handleNavClick}
@@ -966,7 +1142,7 @@ export function Header() {
                         className={cn(
                           "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                           currentPath === "/admin/classification-test"
-                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                             : "text-primary-foreground/90 hover:text-primary-foreground"
                         )}
                         onClick={handleNavClick}
@@ -981,7 +1157,7 @@ export function Header() {
                         className={cn(
                           "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                           currentPath === "/admin/audit"
-                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                             : "text-primary-foreground/90 hover:text-primary-foreground"
                         )}
                         onClick={handleNavClick}
@@ -996,7 +1172,7 @@ export function Header() {
                         className={cn(
                           "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                           currentPath === "/admin/payment-verification"
-                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                             : "text-primary-foreground/90 hover:text-primary-foreground"
                         )}
                         onClick={handleNavClick}
@@ -1013,7 +1189,7 @@ export function Header() {
                             className={cn(
                               "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                               currentPath === "/admin/users"
-                                ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                                ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                                 : "text-primary-foreground/90 hover:text-primary-foreground"
                             )}
                             onClick={handleNavClick}
@@ -1027,7 +1203,7 @@ export function Header() {
                             className={cn(
                               "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                               currentPath === "/admin/api-settings"
-                                ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                                ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                                 : "text-primary-foreground/90 hover:text-primary-foreground"
                             )}
                             onClick={handleNavClick}
@@ -1048,7 +1224,7 @@ export function Header() {
                     className={cn(
                       "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                       currentPath === "/settings"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                         : "text-primary-foreground/90 hover:text-primary-foreground"
                     )}
                     onClick={handleNavClick}
@@ -1063,7 +1239,7 @@ export function Header() {
                     className={cn(
                       "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
                       currentPath === "/notifications"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md" 
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
                         : "text-primary-foreground/90 hover:text-primary-foreground"
                     )}
                     onClick={handleNavClick}
@@ -1106,7 +1282,7 @@ export function Header() {
                     </SheetClose>
                   )
                 )}
-                
+
                 <Separator className="my-4 bg-primary-foreground/10" />
                 <p className="text-xs uppercase text-primary-foreground/50 tracking-wider mb-2">Calculators</p>
                 <SheetClose asChild>
