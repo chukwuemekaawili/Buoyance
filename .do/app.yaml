@@ -1,0 +1,11 @@
+name: buoyance
+static_sites:
+  - name: buoyance-web
+    github:
+      repo: chukwuemekaawili/Buoyance
+      branch: main
+      deploy_on_push: true
+    build_command: npm install && npm run build
+    output_dir: dist
+    catchall_document: index.html
+    environment_slug: node-js
