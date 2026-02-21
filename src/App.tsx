@@ -66,6 +66,9 @@ import KnowledgeBase from "./pages/KnowledgeBase";
 import TCCReadiness from "./pages/TCCReadiness";
 import AuditWorkspace from "./pages/AuditWorkspace";
 import BankImport from "./pages/BankImport";
+import Academy from "./pages/Academy";
+import CourseViewer from "./pages/CourseViewer";
+import TaxLibrary from "./pages/TaxLibrary";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -127,6 +130,11 @@ const App = () => (
                 <Route path="/tcc" element={<TCCReadiness />} />
                 <Route path="/audit-workspace" element={<AuditWorkspace />} />
                 <Route path="/bank-import" element={<BankImport />} />
+
+                {/* Academy */}
+                <Route path="/academy" element={<Academy />} />
+                <Route path="/academy/course/:courseId" element={<CourseViewer />} />
+                <Route path="/academy/library" element={<TaxLibrary />} />
 
                 {/* Archived Items */}
                 <Route path="/archived" element={<ArchivedItems />} />

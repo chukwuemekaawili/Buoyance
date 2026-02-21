@@ -6,10 +6,10 @@ import logoDark from "@/assets/buoyance_logo_dark.png";
 
 const footerLinks = {
   product: [
-    { label: "Tax Calculator", href: "/#calculator", isAnchor: true },
     { label: "Features", href: "/#features", isAnchor: true },
-    { label: "Pricing", href: "/#", isAnchor: true },
-    { label: "API Access", href: "/#", isAnchor: true },
+    { label: "All Calculators", href: "/calculators" },
+    { label: "PIT Calculator", href: "/calculators/pit" },
+    { label: "VAT Calculator", href: "/calculators/vat" },
   ],
   company: [
     { label: "About Us", href: "/about" },
@@ -17,15 +17,17 @@ const footerLinks = {
     { label: "Blog", href: "/blog" },
     { label: "Contact", href: "/#contact", isAnchor: true },
   ],
+  resources: [
+    { label: "Academy", href: "/academy" },
+    { label: "Tax Library", href: "/academy/library" },
+    { label: "Tax Guide", href: "/docs" },
+    { label: "Support Hub", href: "/support" },
+  ],
   legal: [
     { label: "Terms of Service", href: "/terms" },
     { label: "Privacy Policy", href: "/privacy" },
     { label: "Cookie Policy", href: "/cookies" },
     { label: "Compliance", href: "/compliance" },
-  ],
-  support: [
-    { label: "Support Hub", href: "/support" },
-    { label: "Documentation", href: "/docs" },
   ],
 };
 
@@ -64,8 +66,8 @@ export function Footer() {
       <div className="container py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-12">
           <div className="lg:col-span-2">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               onClick={handleLogoClick}
               className="inline-block mb-4"
             >
@@ -76,7 +78,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-primary-foreground/70 text-sm mb-6 max-w-xs">
-              Nigeria's most trusted platform for tax compliance and financial 
+              Nigeria's most trusted platform for tax compliance and financial
               intelligence. Accurate, compliant, stress-free.
             </p>
             <div className="flex items-center gap-4">
@@ -123,9 +125,9 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Support</h4>
+            <h4 className="font-semibold mb-4">Resources</h4>
             <ul className="space-y-3">
-              {footerLinks.support.map((link) => (
+              {footerLinks.resources.map((link) => (
                 <li key={link.label}>{renderLink(link)}</li>
               ))}
             </ul>
@@ -140,8 +142,8 @@ export function Footer() {
               © {new Date().getFullYear()} Buoyance. All rights reserved.
             </p>
             <p className="text-xs text-primary-foreground/50 text-center md:text-right max-w-xl">
-              All tax estimations are provided for informational purposes only 
-              and do not constitute legal or tax advice. Consult a qualified 
+              All tax estimations are provided for informational purposes only
+              and do not constitute legal or tax advice. Consult a qualified
               tax professional for specific guidance.
             </p>
           </div>

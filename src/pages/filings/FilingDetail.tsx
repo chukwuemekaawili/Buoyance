@@ -66,6 +66,7 @@ import {
   updatePaymentStatus,
   type Payment,
 } from "@/lib/paymentService";
+import { initiatePayment } from "@/lib/paymentGatewayService";
 import { NotificationTriggers } from "@/lib/notificationService";
 import { generateFilingPDF, downloadFilingPDF } from "@/lib/filingPdfExport";
 import { downloadFilingXLS, supportsExcelExport } from "@/lib/excelExport";
@@ -204,6 +205,7 @@ export default function FilingDetail() {
   const [paymentReference, setPaymentReference] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [addingPayment, setAddingPayment] = useState(false);
+  const [initiatingOnline, setInitiatingOnline] = useState(false);
 
   useEffect(() => { if (!authLoading && !user) navigate("/signin"); }, [user, authLoading, navigate]);
   useEffect(() => { if (user && id) loadFiling(); }, [user, id]);
@@ -232,10 +234,10 @@ export default function FilingDetail() {
       const documentUrl = await uploadFilingPDF(user.id, filing.id, pdfBlob);
       await updateFilingDocument(filing.id, documentUrl);
       await writeAuditLog({ action: AuditActions.FILING_DOCUMENT_GENERATED, entity_type: "filing", entity_id: filing.id, metadata: { tax_type: filing.tax_type } });
-      
+
       // Trigger notification for filing submission
       await NotificationTriggers.filingSubmitted(filing.id, filing.tax_type);
-      
+
       toast({ title: "Filing submitted", description: "Your tax filing has been submitted." });
       loadFiling();
     } catch (err: any) { toast({ title: "Submission failed", description: err.message, variant: "destructive" }); }
@@ -248,17 +250,17 @@ export default function FilingDetail() {
     try {
       const amountKobo = koboToString(parseNgnToKobo(paymentAmount));
       const paymentId = await createPayment({ filingId: filing.id, amountKobo, method: paymentMethod, reference: paymentReference });
-      
+
       // CRITICAL: Mark payment as "paid" immediately since user is recording an already-made payment
       await updatePaymentStatus(paymentId, "paid");
-      
+
       // Upload receipt if provided
       if (receiptFile) {
         const timestamp = Date.now();
         const filePath = `${user.id}/${paymentId}/${timestamp}-${receiptFile.name}`;
         const { error: uploadError } = await supabase.storage.from("payment-receipts").upload(filePath, receiptFile);
         if (uploadError) throw uploadError;
-        
+
         await supabase.from("payments").update({ receipt_path: filePath, receipt_file_name: receiptFile.name, receipt_uploaded_at: new Date().toISOString() }).eq("id", paymentId);
       }
 
@@ -280,7 +282,7 @@ export default function FilingDetail() {
 
   const handleDownloadPDF = () => { if (filing) downloadFilingPDF(filing); };
   const handleDownloadXLS = () => { if (filing) downloadFilingXLS(filing); };
-  
+
   const handleArchive = async () => {
     if (!filing) return;
     setArchiving(true);
@@ -352,7 +354,7 @@ export default function FilingDetail() {
                 <div className="flex items-center gap-2 flex-wrap justify-end">
                   {/* Filing Status Badge */}
                   <Badge variant="outline" className={statusColors[filing.status]}>{filing.status}</Badge>
-                  
+
                   {/* Payment Status Badge - TASK 1 */}
                   {!isDraft && paymentStatus && (
                     paymentStatus === "unpaid" ? (
@@ -380,7 +382,7 @@ export default function FilingDetail() {
                   })}
                 </div>
               </div>
-              
+
               {/* Deduction Entries Section */}
               {getDeductionEntries(filing).length > 0 && (
                 <div className="bg-muted/50 rounded-lg p-4 mb-4">
@@ -407,7 +409,7 @@ export default function FilingDetail() {
                   </div>
                 </div>
               )}
-              
+
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>Filing ID: {filing.id}</p>
                 {filing.rule_version && <p>Rule Version: {filing.rule_version}</p>}
@@ -421,7 +423,7 @@ export default function FilingDetail() {
                   <Button onClick={handleSubmit} disabled={submitting}>{submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}Submit Filing</Button>
                 </div>
               )}
-              
+
               {/* TASK 2: Complete Submission CTA Button */}
               {isSubmittedButUnpaid && (
                 <div className="flex flex-wrap gap-3 pt-4 border-t mt-4">
@@ -466,7 +468,7 @@ export default function FilingDetail() {
                       </Button>
                     )}
                   </div>
-                  
+
                   {/* Portal Routing Section */}
                   {filing.status !== "draft" && (
                     <div className="border-t pt-4 space-y-4">
@@ -476,7 +478,7 @@ export default function FilingDetail() {
                           <p className="text-sm text-muted-foreground">
                             Federal taxes are filed on the FIRS TaxPro Max portal.
                           </p>
-                          <Button 
+                          <Button
                             variant="default"
                             onClick={() => window.open("https://taxpromax.firs.gov.ng", "_blank")}
                           >
@@ -501,7 +503,7 @@ export default function FilingDetail() {
                           </p>
                         </div>
                       )}
-                      
+
                       {/* Copy Final Tax Amount */}
                       <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
                         <div className="flex-1">
@@ -512,7 +514,7 @@ export default function FilingDetail() {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="text-sm text-muted-foreground pt-4 border-t">
                     <p><strong>Filing ID:</strong> {filing.id}</p>
                     <p><strong>Rule Version:</strong> {filing.rule_version || "N/A"}</p>
@@ -547,79 +549,102 @@ export default function FilingDetail() {
                             )}
                           </CardDescription>
                         </div>
-                        <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-                          <DialogTrigger asChild>
-                            <Button size="sm">
-                              <Plus className="h-4 w-4 mr-2" />
-                              Record Tax Payment
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-h-[85vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>Log External Payment</DialogTitle>
-                              <DialogDescription>
-                                This ledger tracks compliance. Make the actual payment via Remita or the government portal, then log it here.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                              <div>
-                                <Label>Amount (₦)</Label>
-                                <Input 
-                                  type="text" 
-                                  placeholder="0" 
-                                  value={paymentAmount} 
-                                  onChange={(e) => setPaymentAmount(e.target.value.replace(/[^0-9.,]/g, ""))} 
-                                  className="mt-1 font-mono" 
-                                />
-                              </div>
-                              <div>
-                                <Label>Payment Method</Label>
-                                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                                    <SelectItem value="card">Card Payment</SelectItem>
-                                    <SelectItem value="cash">Cash</SelectItem>
-                                    <SelectItem value="remita">Remita</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div>
-                                <Label>Remita RRR / Reference (optional)</Label>
-                                <Input 
-                                  type="text" 
-                                  placeholder="e.g., 123456789012" 
-                                  value={paymentReference} 
-                                  onChange={(e) => setPaymentReference(e.target.value)} 
-                                  className="mt-1" 
-                                />
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Enter your Remita Retrieval Reference or bank transaction reference
-                                </p>
-                              </div>
-                              <div>
-                                <Label>Receipt (optional)</Label>
-                                <Input 
-                                  type="file" 
-                                  accept="image/*,.pdf" 
-                                  onChange={(e) => setReceiptFile(e.target.files?.[0] || null)} 
-                                  className="mt-1" 
-                                />
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Upload payment evidence for admin verification
-                                </p>
-                              </div>
-                            </div>
-                            <DialogFooter>
-                              <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>Cancel</Button>
-                              <Button onClick={handleAddPayment} disabled={addingPayment || !paymentAmount}>
-                                {addingPayment && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                                Record Payment
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="default" disabled={initiatingOnline || balanceKobo === 0n} onClick={async () => {
+                            if (!user?.email || !filing) return;
+                            setInitiatingOnline(true);
+                            try {
+                              const amountKobo = balanceKobo.toString();
+                              const paymentId = await createPayment({ filingId: filing.id, amountKobo, method: "paystack", reference: "" });
+                              const result = await initiatePayment(paymentId, amountKobo, user.email);
+                              if (result.success && result.authorizationUrl) {
+                                window.open(result.authorizationUrl, "_blank");
+                                toast({ title: "Redirecting to Paystack", description: "Complete your payment in the new tab." });
+                                loadFiling();
+                              } else {
+                                toast({ title: "Payment Gateway", description: result.error || "Could not initiate payment.", variant: result.isStubbed ? "default" : "destructive" });
+                              }
+                            } catch (err: any) {
+                              toast({ title: "Payment Error", description: err.message, variant: "destructive" });
+                            } finally { setInitiatingOnline(false); }
+                          }}>
+                            {initiatingOnline ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                            Pay Online
+                          </Button>
+                          <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="outline">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Record Manual Payment
                               </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
+                            </DialogTrigger>
+                            <DialogContent className="max-h-[85vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Log External Payment</DialogTitle>
+                                <DialogDescription>
+                                  This ledger tracks compliance. Make the actual payment via Remita or the government portal, then log it here.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
+                                <div>
+                                  <Label>Amount (₦)</Label>
+                                  <Input
+                                    type="text"
+                                    placeholder="0"
+                                    value={paymentAmount}
+                                    onChange={(e) => setPaymentAmount(e.target.value.replace(/[^0-9.,]/g, ""))}
+                                    className="mt-1 font-mono"
+                                  />
+                                </div>
+                                <div>
+                                  <Label>Payment Method</Label>
+                                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                                      <SelectItem value="card">Card Payment</SelectItem>
+                                      <SelectItem value="cash">Cash</SelectItem>
+                                      <SelectItem value="remita">Remita</SelectItem>
+                                      <SelectItem value="other">Other</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <Label>Remita RRR / Reference (optional)</Label>
+                                  <Input
+                                    type="text"
+                                    placeholder="e.g., 123456789012"
+                                    value={paymentReference}
+                                    onChange={(e) => setPaymentReference(e.target.value)}
+                                    className="mt-1"
+                                  />
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Enter your Remita Retrieval Reference or bank transaction reference
+                                  </p>
+                                </div>
+                                <div>
+                                  <Label>Receipt (optional)</Label>
+                                  <Input
+                                    type="file"
+                                    accept="image/*,.pdf"
+                                    onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+                                    className="mt-1"
+                                  />
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Upload payment evidence for admin verification
+                                  </p>
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>Cancel</Button>
+                                <Button onClick={handleAddPayment} disabled={addingPayment || !paymentAmount}>
+                                  {addingPayment && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                  Record Payment
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>

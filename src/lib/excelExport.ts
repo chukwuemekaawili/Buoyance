@@ -39,7 +39,7 @@ export function generateCITWorkbookXLS(filing: Filing): ArrayBuffer {
 
   const taxableProfitKobo = stringToKobo(input.taxableProfitKobo as string || "0");
   const citPayableKobo = stringToKobo(output.taxPayableKobo as string || "0");
-  
+
   // NTA 2026: 4% Development Levy on assessable profit
   const developmentLevyKobo = (taxableProfitKobo * 4n) / 100n;
   const totalDueKobo = citPayableKobo + developmentLevyKobo;
@@ -92,7 +92,7 @@ export function generateCITWorkbookXLS(filing: Filing): ArrayBuffer {
     ["- If portal rejects, try saving as CSV from the Schedule sheet"],
     ["- Keep this file for your records"],
     [],
-    ["Support: support@buoyance.lovable.app"],
+    ["Support: support@buoyance.com"],
   ];
   const instructionsSheet = XLSX.utils.aoa_to_sheet(instructionsData);
   XLSX.utils.book_append_sheet(wb, instructionsSheet, "Instructions");
@@ -150,7 +150,7 @@ export function generateVATWorkbookXLS(filing: Filing): ArrayBuffer {
     ["VAT Payable:", formatNaira(vatPayable)],
     [],
     ["State of Consumption:", stateOfConsumption],
-    stateOfConsumption === "UNKNOWN" 
+    stateOfConsumption === "UNKNOWN"
       ? ["WARNING: State of Consumption not specified. Update before portal submission."]
       : [],
   ].filter(row => row.length > 0);
@@ -174,7 +174,7 @@ export function generateVATWorkbookXLS(filing: Filing): ArrayBuffer {
     ["- State of Consumption is REQUIRED by FIRS"],
     ["- If portal rejects, try saving as CSV from the Schedule sheet"],
     [],
-    ["Support: support@buoyance.lovable.app"],
+    ["Support: support@buoyance.com"],
   ];
   const instructionsSheet = XLSX.utils.aoa_to_sheet(instructionsData);
   XLSX.utils.book_append_sheet(wb, instructionsSheet, "Instructions");
@@ -243,7 +243,7 @@ export function generateWHTWorkbookXLS(filing: Filing): ArrayBuffer {
     ["- TIN T-Match is REQUIRED for all beneficiaries"],
     ["- Unmatched TINs will be REJECTED by TaxPro Max"],
     [],
-    ["Support: support@buoyance.lovable.app"],
+    ["Support: support@buoyance.com"],
   ];
   const instructionsSheet = XLSX.utils.aoa_to_sheet(instructionsData);
   XLSX.utils.book_append_sheet(wb, instructionsSheet, "Instructions");
@@ -310,7 +310,7 @@ export function generateCGTWorkbookXLS(filing: Filing): ArrayBuffer {
     ["4. Verify all figures match your records"],
     ["5. Submit and note the acknowledgment reference"],
     [],
-    ["Support: support@buoyance.lovable.app"],
+    ["Support: support@buoyance.com"],
   ];
   const instructionsSheet = XLSX.utils.aoa_to_sheet(instructionsData);
   XLSX.utils.book_append_sheet(wb, instructionsSheet, "Instructions");

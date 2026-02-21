@@ -2,7 +2,7 @@
  * Banking Service
  * 
  * Provides integration with banking data providers (Mono, Okra, Plaid).
- * Currently in stub mode - requires API keys to be functional.
+ * Uses the `bank-connect` Supabase Edge Function for secure server-side API calls.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -38,36 +38,84 @@ export interface ConnectBankResult {
 }
 
 /**
- * Check if banking integration is available
+ * Check if banking integration is available by asking the Edge Function
  */
-export function isBankingAvailable(): { available: boolean; provider?: BankProvider; reason?: string } {
-  // In stub mode, return as unavailable
-  return {
-    available: false,
-    reason: "Banking integration requires API keys to be configured (MONO_SECRET_KEY or OKRA_SECRET_KEY).",
-  };
+export async function isBankingAvailable(): Promise<{ available: boolean; provider?: BankProvider; reason?: string }> {
+  try {
+    const { data, error } = await supabase.functions.invoke("bank-connect", {
+      body: { action: "status" },
+    });
+
+    if (error || !data?.configured) {
+      return {
+        available: false,
+        reason: "Banking integration requires MONO_SECRET_KEY to be set in Supabase secrets.",
+      };
+    }
+
+    return { available: true, provider: "mono" };
+  } catch {
+    return {
+      available: false,
+      reason: "Could not check banking status. The bank-connect Edge Function may not be deployed.",
+    };
+  }
 }
 
 /**
- * Initiate bank connection (stub mode)
+ * Exchange Mono Connect widget code for an account ID via the Edge Function
  */
-export async function connectBank(provider: BankProvider): Promise<ConnectBankResult> {
-  const status = isBankingAvailable();
-  
-  if (!status.available) {
+export async function connectBank(provider: BankProvider, code?: string): Promise<ConnectBankResult> {
+  if (provider !== "mono") {
     return {
       success: false,
-      error: status.reason,
+      error: `${provider} integration is coming soon. Only Mono is currently supported.`,
       isStubbed: true,
     };
   }
 
-  // Would initiate OAuth flow with provider here
-  return {
-    success: false,
-    error: "Bank connection is not yet implemented. Coming soon!",
-    isStubbed: true,
-  };
+  if (!code) {
+    // No Mono widget code provided — create a demo connection
+    return {
+      success: true,
+      connectionId: crypto.randomUUID(),
+      isStubbed: true,
+    };
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke("bank-connect", {
+      body: { action: "exchange", code },
+    });
+
+    if (error) {
+      return {
+        success: false,
+        error: typeof error === "object" && "message" in error ? (error as any).message : String(error),
+        isStubbed: false,
+      };
+    }
+
+    if (data?.success && data?.account_id) {
+      return {
+        success: true,
+        connectionId: data.account_id,
+        isStubbed: false,
+      };
+    }
+
+    return {
+      success: false,
+      error: data?.error || "Failed to connect bank account.",
+      isStubbed: false,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message || "Unexpected error connecting bank.",
+      isStubbed: false,
+    };
+  }
 }
 
 /**
@@ -105,7 +153,7 @@ export async function getBankConnections(): Promise<BankConnection[]> {
 }
 
 /**
- * Sync transactions from a connected bank (stub)
+ * Sync transactions from a connected bank via the Edge Function
  */
 export async function syncBankTransactions(connectionId: string): Promise<{
   success: boolean;
@@ -113,11 +161,69 @@ export async function syncBankTransactions(connectionId: string): Promise<{
   error?: string;
   isStubbed: boolean;
 }> {
-  return {
-    success: false,
-    error: "Transaction sync requires active banking integration. API keys not configured.",
-    isStubbed: true,
-  };
+  // Get the connection to find the account_id
+  const { data: connData } = await supabase
+    .from("bank_connections")
+    .select("account_id, provider")
+    .eq("id", connectionId)
+    .single();
+
+  if (!connData) {
+    return { success: false, error: "Connection not found.", isStubbed: false };
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke("bank-connect", {
+      body: { action: "transactions", account_id: connData.account_id },
+    });
+
+    if (error) {
+      // If the Edge Function returns 503 (not configured), return demo data
+      return {
+        success: true,
+        transactions: generateDemoTransactions(),
+        isStubbed: true,
+      };
+    }
+
+    if (data?.success) {
+      return {
+        success: true,
+        transactions: data.transactions,
+        isStubbed: false,
+      };
+    }
+
+    // Fallback to demo data if Mono returns an error
+    return {
+      success: true,
+      transactions: generateDemoTransactions(),
+      isStubbed: true,
+    };
+  } catch {
+    return {
+      success: true,
+      transactions: generateDemoTransactions(),
+      isStubbed: true,
+    };
+  }
+}
+
+/**
+ * Generate demo transactions for when Mono is not configured
+ */
+function generateDemoTransactions(): BankTransaction[] {
+  const now = new Date();
+  return [
+    { id: "demo-1", date: new Date(now.getTime() - 1 * 86400000).toISOString(), description: "Salary Credit - Employer Ltd", amount: 450000, type: "credit", category: "income" },
+    { id: "demo-2", date: new Date(now.getTime() - 2 * 86400000).toISOString(), description: "MTN Airtime Purchase", amount: 5000, type: "debit", category: "utilities" },
+    { id: "demo-3", date: new Date(now.getTime() - 3 * 86400000).toISOString(), description: "Shoprite - Grocery Purchase", amount: 28750, type: "debit", category: "groceries" },
+    { id: "demo-4", date: new Date(now.getTime() - 5 * 86400000).toISOString(), description: "Client Invoice Payment - ABC Corp", amount: 175000, type: "credit", category: "income" },
+    { id: "demo-5", date: new Date(now.getTime() - 7 * 86400000).toISOString(), description: "IKEDC Electricity Bill", amount: 15400, type: "debit", category: "utilities" },
+    { id: "demo-6", date: new Date(now.getTime() - 10 * 86400000).toISOString(), description: "Uber Ride", amount: 3200, type: "debit", category: "transport" },
+    { id: "demo-7", date: new Date(now.getTime() - 12 * 86400000).toISOString(), description: "Freelance Payment - Design Work", amount: 95000, type: "credit", category: "income" },
+    { id: "demo-8", date: new Date(now.getTime() - 15 * 86400000).toISOString(), description: "Rent Payment", amount: 250000, type: "debit", category: "housing" },
+  ];
 }
 
 /**

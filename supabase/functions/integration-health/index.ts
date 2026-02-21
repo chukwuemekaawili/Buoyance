@@ -43,34 +43,35 @@ serve(async (req) => {
     console.log('integration-health: Checking configuration for user', user.id);
 
     // Check configuration (server-side secrets only)
+    // Uses the actual env var names set by the user in Supabase secrets
     const paymentConfigured = !!(
-      Deno.env.get('PAYMENT_SECRET_KEY') && 
-      Deno.env.get('PAYMENT_PROVIDER')
-    );
-    
-    const emailConfigured = !!(
-      Deno.env.get('EMAIL_API_KEY') && 
-      Deno.env.get('EMAIL_PROVIDER') && 
-      Deno.env.get('EMAIL_FROM')
-    );
-    
-    const bankingConfigured = !!(
-      Deno.env.get('BANKING_SECRET_KEY') && 
-      Deno.env.get('BANKING_PROVIDER')
+      Deno.env.get('PAYSTACK_SECRET_KEY') || Deno.env.get('FLUTTERWAVE_SECRET_KEY')
     );
 
-    console.log('integration-health: Results', { paymentConfigured, emailConfigured, bankingConfigured });
+    const emailConfigured = !!(
+      Deno.env.get('RESEND_API_KEY') || Deno.env.get('SENDGRID_API_KEY')
+    );
+
+    const bankingConfigured = !!(
+      Deno.env.get('MONO_SECRET_KEY') || Deno.env.get('OKRA_SECRET_KEY')
+    );
+
+    // Auto-file requires both payment and email to be configured
+    const autofileConfigured = paymentConfigured && emailConfigured;
+
+    console.log('integration-health: Results', { paymentConfigured, emailConfigured, bankingConfigured, autofileConfigured });
 
     return new Response(
       JSON.stringify({
         payment: { configured: paymentConfigured },
         email: { configured: emailConfigured },
         banking: { configured: bankingConfigured },
+        autofile: { configured: autofileConfigured },
       }),
       {
         status: 200,
-        headers: { 
-          ...corsHeaders, 
+        headers: {
+          ...corsHeaders,
           'Content-Type': 'application/json'
         },
       }

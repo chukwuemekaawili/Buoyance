@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, FileText, Send, Download, Loader2 } from "lucide-react";
 import { calculateInvoiceTotals, type LineItem } from "@/lib/invoiceGenerator";
 import { useToast } from "@/hooks/use-toast";
+import { generateInvoicePDF } from "@/lib/invoicePdfGenerator";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -282,7 +283,23 @@ function InvoicingContent() {
                                                     {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
                                                     Create Invoice
                                                 </Button>
-                                                <Button variant="outline" className="w-full">
+                                                <Button variant="outline" className="w-full" onClick={() => {
+                                                    const fakeNumber = `BUO-DRAFT-${Math.floor(Math.random() * 1000)}`;
+                                                    generateInvoicePDF({
+                                                        invoice_number: fakeNumber,
+                                                        client_name: clientName || "Draft Invoice",
+                                                        client_tin: clientTin,
+                                                        issue_date: issueDate,
+                                                        due_date: dueDate,
+                                                        subtotal_kobo: totals.subtotal_kobo,
+                                                        vat_rate: parseFloat(vatRate),
+                                                        vat_amount_kobo: totals.vat_amount_kobo,
+                                                        wht_rate: parseFloat(whtRate),
+                                                        wht_amount_kobo: totals.wht_amount_kobo,
+                                                        total_amount_kobo: totals.total_amount_kobo,
+                                                        line_items: lineItems.filter(li => li.description && li.amount_kobo > 0),
+                                                    });
+                                                }}>
                                                     <Download className="h-4 w-4 mr-2" /> Download PDF
                                                 </Button>
                                             </div>

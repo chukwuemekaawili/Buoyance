@@ -12,6 +12,7 @@ import { calculateBasicPayroll, formatCurrency, getPayslipData, type PayrollResu
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { generatePayslipPDF } from "@/lib/payslipGenerator";
 
 function PayrollContent() {
     const { user } = useAuth();
@@ -196,7 +197,7 @@ function PayrollContent() {
                                 </Card>
 
                                 <div className="flex gap-3">
-                                    <Button variant="outline" className="flex-1">
+                                    <Button variant="outline" className="flex-1" onClick={() => generatePayslipPDF(result, "Your Company Ltd")}>
                                         <Download className="h-4 w-4 mr-2" /> Export Payslip PDF
                                     </Button>
                                     <Button className="flex-1" disabled={saving} onClick={async () => {

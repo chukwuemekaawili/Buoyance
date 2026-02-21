@@ -6,70 +6,70 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
-    if (req.method === "OPTIONS") {
-        return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    const now = new Date();
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    // Find tasks due within the next 7 days that haven't been completed
+    const { data: upcomingTasks, error: tasksError } = await supabase
+      .from("compliance_tasks")
+      .select("*")
+      .neq("status", "completed")
+      .gte("due_date", now.toISOString().split("T")[0])
+      .lte("due_date", sevenDaysFromNow.toISOString().split("T")[0]);
+
+    if (tasksError) {
+      console.error("Error fetching tasks:", tasksError);
+      throw tasksError;
     }
 
-    try {
-        const supabase = createClient(
-            Deno.env.get("SUPABASE_URL") ?? "",
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-        );
+    const results: { user_id: string; tasks_notified: number; urgency: string }[] = [];
 
-        const now = new Date();
-        const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-        const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    // Group tasks by user
+    const tasksByUser = new Map<string, typeof upcomingTasks>();
+    for (const task of upcomingTasks || []) {
+      const userId = task.user_id;
+      if (!tasksByUser.has(userId)) {
+        tasksByUser.set(userId, []);
+      }
+      tasksByUser.get(userId)!.push(task);
+    }
 
-        // Find tasks due within the next 7 days that haven't been completed
-        const { data: upcomingTasks, error: tasksError } = await supabase
-            .from("compliance_tasks")
-            .select("*")
-            .neq("status", "completed")
-            .gte("due_date", now.toISOString().split("T")[0])
-            .lte("due_date", sevenDaysFromNow.toISOString().split("T")[0]);
+    // Send reminders per user
+    for (const [userId, userTasks] of tasksByUser) {
+      // Get user email
+      const { data: userData } = await supabase.auth.admin.getUserById(userId);
+      if (!userData?.user?.email) continue;
 
-        if (tasksError) {
-            console.error("Error fetching tasks:", tasksError);
-            throw tasksError;
-        }
+      const urgentTasks = userTasks.filter((t: any) => {
+        const due = new Date(t.due_date);
+        return due <= threeDaysFromNow;
+      });
 
-        const results: { user_id: string; tasks_notified: number; urgency: string }[] = [];
+      const upcomingNonUrgent = userTasks.filter((t: any) => {
+        const due = new Date(t.due_date);
+        return due > threeDaysFromNow;
+      });
 
-        // Group tasks by user
-        const tasksByUser = new Map<string, typeof upcomingTasks>();
-        for (const task of upcomingTasks || []) {
-            const userId = task.user_id;
-            if (!tasksByUser.has(userId)) {
-                tasksByUser.set(userId, []);
-            }
-            tasksByUser.get(userId)!.push(task);
-        }
+      const urgency = urgentTasks.length > 0 ? "urgent" : "upcoming";
 
-        // Send reminders per user
-        for (const [userId, userTasks] of tasksByUser) {
-            // Get user email
-            const { data: userData } = await supabase.auth.admin.getUserById(userId);
-            if (!userData?.user?.email) continue;
-
-            const urgentTasks = userTasks.filter((t: any) => {
-                const due = new Date(t.due_date);
-                return due <= threeDaysFromNow;
-            });
-
-            const upcomingNonUrgent = userTasks.filter((t: any) => {
-                const due = new Date(t.due_date);
-                return due > threeDaysFromNow;
-            });
-
-            const urgency = urgentTasks.length > 0 ? "urgent" : "upcoming";
-
-            // Format email body
-            const emailBody = `
+      // Format email body
+      const emailBody = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #1a237e; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
             <h1 style="margin: 0; font-size: 20px;">🔔 Tax Compliance Reminder</h1>
@@ -111,45 +111,68 @@ serve(async (req) => {
         </div>
       `;
 
-            // Log the reminder (for now, since Supabase doesn't have built-in email)
-            // In production, integrate with Resend, SendGrid, or Supabase's email extension
-            console.log(`Reminder for ${userData.user.email}: ${userTasks.length} tasks (${urgency})`);
+      // Integrate with Resend for email delivery
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      if (resendApiKey) {
+        const resendRes = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${resendApiKey}`
+          },
+          body: JSON.stringify({
+            from: "Buoyance Compliance <compliance@buoyance.ng>",
+            to: [userData.user.email],
+            subject: urgency === "urgent" ? "⚠️ Urgent Tax Compliance Reminder" : "📅 Upcoming Tax Compliance Reminder",
+            html: emailBody
+          })
+        });
 
-            // Insert reminder record
-            await supabase.from("task_reminders").insert({
-                user_id: userId,
-                task_id: userTasks[0]?.id || null,
-                reminder_type: urgency === "urgent" ? "3_day" : "7_day",
-                sent_at: new Date().toISOString(),
-                email_body: emailBody,
-            });
-
-            results.push({
-                user_id: userId,
-                tasks_notified: userTasks.length,
-                urgency,
-            });
+        if (!resendRes.ok) {
+          const errorData = await resendRes.text();
+          console.error(`[Resend Error] Failed to send email to ${userData.user.email}:`, errorData);
+        } else {
+          console.log(`Successfully sent priority reminder email to ${userData.user.email}`);
         }
+      } else {
+        console.log(`[STUB] Reminder for ${userData.user.email}: ${userTasks.length} tasks (${urgency}). Need RESEND_API_KEY to send real email.`);
+      }
 
-        return new Response(
-            JSON.stringify({
-                success: true,
-                reminders_sent: results.length,
-                details: results,
-                checked_at: now.toISOString(),
-            }),
-            {
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-                status: 200,
-            }
-        );
-    } catch (error) {
-        return new Response(
-            JSON.stringify({ error: error.message }),
-            {
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-                status: 500,
-            }
-        );
+      // Insert reminder record
+      await supabase.from("task_reminders").insert({
+        user_id: userId,
+        task_id: userTasks[0]?.id || null,
+        reminder_type: urgency === "urgent" ? "3_day" : "7_day",
+        sent_at: new Date().toISOString(),
+        email_body: emailBody,
+      });
+
+      results.push({
+        user_id: userId,
+        tasks_notified: userTasks.length,
+        urgency,
+      });
     }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        reminders_sent: results.length,
+        details: results,
+        checked_at: now.toISOString(),
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
+  }
 });

@@ -2,7 +2,7 @@
  * Payment Gateway Service
  * 
  * Handles integration with payment providers (Paystack, Flutterwave).
- * Currently in stub mode - requires API keys to be functional.
+ * Uses the `paystack-payment` Supabase Edge Function for secure server-side API calls.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -28,22 +28,8 @@ export interface VerifyPaymentResult {
 }
 
 /**
- * Check if payment gateway is available
- */
-export function isPaymentGatewayAvailable(): { 
-  available: boolean; 
-  gateway?: PaymentGateway; 
-  reason?: string;
-} {
-  // In stub mode, return as unavailable
-  return {
-    available: false,
-    reason: "Payment gateway integration requires API keys (PAYSTACK_SECRET_KEY or FLUTTERWAVE_SECRET_KEY).",
-  };
-}
-
-/**
- * Initiate a payment (stub mode)
+ * Initiate a payment via the Paystack Edge Function.
+ * Opens the Paystack checkout page in a new tab/popup.
  */
 export async function initiatePayment(
   paymentId: string,
@@ -51,40 +37,124 @@ export async function initiatePayment(
   email: string,
   gateway: PaymentGateway = "paystack"
 ): Promise<InitiatePaymentResult> {
-  const status = isPaymentGatewayAvailable();
-  
-  if (!status.available) {
+  if (gateway !== "paystack") {
     return {
       success: false,
-      error: status.reason,
+      error: "Only Paystack is currently supported. Flutterwave integration coming soon.",
       isStubbed: true,
     };
   }
 
-  // Would initiate payment with provider here
-  return {
-    success: false,
-    error: "Payment gateway is not yet configured. Please use manual payment and upload receipt.",
-    isStubbed: true,
-  };
+  try {
+    const callbackUrl = `${window.location.origin}/payments?verify=true`;
+
+    const { data, error } = await supabase.functions.invoke("paystack-payment", {
+      body: {
+        action: "initialize",
+        email,
+        amount_kobo: parseInt(amountKobo, 10),
+        payment_id: paymentId,
+        callback_url: callbackUrl,
+      },
+    });
+
+    if (error) {
+      // Edge function returned an error (e.g. 503 = no API key)
+      const message = typeof error === "object" && "message" in error
+        ? (error as any).message
+        : String(error);
+
+      // Check if the error is due to missing API key
+      if (message.includes("PAYSTACK_SECRET_KEY") || message.includes("503")) {
+        return {
+          success: false,
+          error: "Paystack is not yet configured. Please set the PAYSTACK_SECRET_KEY in your Supabase secrets, then try again.",
+          isStubbed: true,
+        };
+      }
+
+      return {
+        success: false,
+        error: message,
+        isStubbed: false,
+      };
+    }
+
+    if (data?.success && data?.authorization_url) {
+      return {
+        success: true,
+        authorizationUrl: data.authorization_url,
+        reference: data.reference,
+        isStubbed: false,
+      };
+    }
+
+    return {
+      success: false,
+      error: data?.error || "Failed to initialize payment.",
+      isStubbed: false,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message || "An unexpected error occurred while initiating payment.",
+      isStubbed: false,
+    };
+  }
 }
 
 /**
- * Verify a payment (stub mode)
+ * Verify a payment via the Paystack Edge Function.
  */
 export async function verifyPayment(
   reference: string,
   gateway: PaymentGateway = "paystack"
 ): Promise<VerifyPaymentResult> {
-  return {
-    success: false,
-    error: "Payment verification requires active gateway integration.",
-    isStubbed: true,
-  };
+  if (gateway !== "paystack") {
+    return {
+      success: false,
+      error: "Only Paystack verification is currently supported.",
+      isStubbed: true,
+    };
+  }
+
+  try {
+    const { data, error } = await supabase.functions.invoke("paystack-payment", {
+      body: {
+        action: "verify",
+        reference,
+      },
+    });
+
+    if (error) {
+      return {
+        success: false,
+        error: typeof error === "object" && "message" in error
+          ? (error as any).message
+          : String(error),
+        isStubbed: false,
+      };
+    }
+
+    return {
+      success: data?.success ?? false,
+      status: data?.status,
+      amount: data?.amount_kobo,
+      reference: data?.reference,
+      gatewayResponse: { gateway_response: data?.gateway_response },
+      isStubbed: false,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message || "An unexpected error occurred during verification.",
+      isStubbed: false,
+    };
+  }
 }
 
 /**
- * Handle payment callback
+ * Handle payment callback - updates the local DB record.
  */
 export async function handlePaymentCallback(
   paymentId: string,
@@ -95,8 +165,7 @@ export async function handlePaymentCallback(
   const { error } = await supabase
     .from("payments")
     .update({
-      gateway_reference: reference,
-      gateway_response: gatewayResponse as any,
+      reference: reference,
       status: status === "success" ? "paid" : "failed",
       paid_at: status === "success" ? new Date().toISOString() : null,
     } as any)

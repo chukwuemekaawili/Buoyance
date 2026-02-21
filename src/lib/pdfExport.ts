@@ -200,7 +200,7 @@ export function exportCalculationPDF(calc: TaxCalculation): void {
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.text("Buoyance - Nigerian Tax Compliance Platform", margin, footerY);
-  doc.text("buoyance.lovable.app", pageWidth - margin - 35, footerY);
+  doc.text("buoyance.com", pageWidth - margin - 35, footerY);
 
   // Download the file
   const fileName = `buoyance-${calc.tax_type.toLowerCase()}-calculation-${format(new Date(calc.created_at), "yyyy-MM-dd")}.pdf`;

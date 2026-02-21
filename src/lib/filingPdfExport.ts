@@ -204,24 +204,24 @@ export function generateFilingPDF(filing: Filing): Blob {
   yPos += 15;
 
   // Tax Amount Due Box
-  const taxDue = filing.output_json.taxPayableKobo || 
-                 filing.output_json.vatPayableKobo || 
-                 filing.output_json.whtPayableKobo || 
-                 filing.output_json.cgtPayableKobo || 
-                 filing.output_json.totalTaxKobo;
-  
+  const taxDue = filing.output_json.taxPayableKobo ||
+    filing.output_json.vatPayableKobo ||
+    filing.output_json.whtPayableKobo ||
+    filing.output_json.cgtPayableKobo ||
+    filing.output_json.totalTaxKobo;
+
   if (taxDue) {
     doc.setFillColor(245, 245, 245);
     doc.roundedRect(margin, yPos, pageWidth - margin * 2, 25, 3, 3, "F");
-    
+
     doc.setTextColor(...primaryColor);
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.text("TOTAL TAX DUE", margin + 10, yPos + 10);
-    
+
     doc.setFontSize(16);
     doc.text(displayCurrency(taxDue as string), margin + 10, yPos + 20);
-    
+
     yPos += 35;
   }
 
@@ -261,7 +261,7 @@ export function generateFilingPDF(filing: Filing): Blob {
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.text("Buoyance - Nigerian Tax Compliance Platform", margin, footerY);
-  doc.text("buoyance.lovable.app", pageWidth - margin - 35, footerY);
+  doc.text("buoyance.com", pageWidth - margin - 35, footerY);
 
   // Return as Blob
   return doc.output("blob");
@@ -279,7 +279,7 @@ export function downloadFilingPDF(filing: Filing): void {
 
   // Generate the same PDF content
   const blob = generateFilingPDF(filing);
-  
+
   // Create download
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

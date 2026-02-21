@@ -149,12 +149,16 @@ export function Header() {
   const marketingLinks = [
     { href: getNavHref("#features"), label: "Features", type: "anchor" },
     { href: getNavHref("#calculator"), label: "Tax Estimator", type: "anchor" },
+    { href: "/academy", label: "Academy", type: "link" },
     { href: "/support", label: "Support", type: "link" },
     { href: getNavHref("#contact"), label: "Contact", type: "anchor" },
   ];
 
   // Check if any calculator path is active
   const isCalculatorsActive = currentPath.startsWith("/calculators") || currentPath === "/my-calculations";
+
+  // Check if any academy path is active
+  const isAcademyActive = currentPath.startsWith("/academy");
 
   // Check if any records path is active
   const isRecordsActive = ["/filings", "/payments", "/incomes", "/expenses", "/bank-connections"].some(p => currentPath.startsWith(p));
@@ -235,6 +239,16 @@ export function Header() {
                 >
                   <Calculator className="h-4 w-4" />
                   Calculators
+                </Link>
+                <Link
+                  to="/academy"
+                  className={cn(
+                    "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5",
+                    isAcademyActive ? activeLinkClass : inactiveLinkClass
+                  )}
+                >
+                  <Brain className="h-4 w-4" />
+                  Academy
                 </Link>
               </nav>
             )}
@@ -403,6 +417,18 @@ export function Header() {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+
+                  {/* Academy Link */}
+                  <Link
+                    to="/academy"
+                    className={cn(
+                      "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5",
+                      isAcademyActive ? activeLinkClass : inactiveLinkClass
+                    )}
+                  >
+                    <Brain className="h-4 w-4" />
+                    Academy
+                  </Link>
 
                   {/* Admin Dropdown */}
                   {(isAdmin || isAuditor) && (
@@ -1068,6 +1094,21 @@ export function Header() {
                   >
                     <BookOpen className="h-5 w-5" />
                     Tax Guide
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link
+                    to="/academy"
+                    className={cn(
+                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      currentPath.startsWith("/academy")
+                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
+                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                    )}
+                    onClick={handleNavClick}
+                  >
+                    <Brain className="h-5 w-5" />
+                    Academy
                   </Link>
                 </SheetClose>
                 <SheetClose asChild>
