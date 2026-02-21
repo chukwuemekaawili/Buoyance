@@ -83,13 +83,13 @@ function getTaxTypeLabel(taxType: string): string {
 
 function getFilingTaxAmount(filing: Filing): string | null {
   const output = filing.output_json;
-  const taxKobo = 
-    output.taxPayableKobo || 
-    output.vatPayableKobo || 
-    output.whtPayableKobo || 
-    output.cgtPayableKobo || 
+  const taxKobo =
+    output.taxPayableKobo ||
+    output.vatPayableKobo ||
+    output.whtPayableKobo ||
+    output.cgtPayableKobo ||
     output.totalTaxKobo;
-  
+
   if (taxKobo && typeof taxKobo === "string") {
     return formatKoboToNgn(stringToKobo(taxKobo));
   }
@@ -114,14 +114,14 @@ function FilingsContent() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { payment: paymentIntegration, loading: integrationLoading } = useIntegrationStatus();
-  
+
   const [filings, setFilings] = useState<Filing[]>([]);
   const [filingPayments, setFilingPayments] = useState<Record<string, Payment[]>>({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"all" | FilingStatus>("all");
   const [archiveTarget, setArchiveTarget] = useState<Filing | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
-  
+
   // Check if auto-file is available (requires payment integration)
   const autoFileAvailable = paymentIntegration?.configured ?? false;
 
@@ -136,7 +136,7 @@ function FilingsContent() {
       setLoading(true);
       const data = await fetchUserFilings();
       setFilings(data);
-      
+
       // Load payments for each filing to compute payment status
       const paymentsMap: Record<string, Payment[]> = {};
       await Promise.all(
@@ -166,15 +166,15 @@ function FilingsContent() {
     // Get the raw kobo string, not the formatted amount
     const taxKoboString = getFilingTaxKoboString(filing);
     if (!taxKoboString) return null;
-    
+
     const totalTax = stringToKobo(taxKoboString);
     if (totalTax === 0n) return "paid";
-    
+
     const payments = filingPayments[filing.id] || [];
     const paidSum = payments
       .filter((p) => p.status === "paid")
       .reduce((sum, p) => addKobo(sum, stringToKobo(p.amount_kobo)), 0n);
-    
+
     if (paidSum === 0n) return "unpaid";
     if (paidSum < totalTax) return "partial";
     return "paid";
@@ -183,13 +183,13 @@ function FilingsContent() {
   // Get raw tax amount in kobo string format
   const getFilingTaxKoboString = (filing: Filing): string | null => {
     const output = filing.output_json;
-    const taxKobo = 
-      output.taxPayableKobo || 
-      output.vatPayableKobo || 
-      output.whtPayableKobo || 
-      output.cgtPayableKobo || 
+    const taxKobo =
+      output.taxPayableKobo ||
+      output.vatPayableKobo ||
+      output.whtPayableKobo ||
+      output.cgtPayableKobo ||
       output.totalTaxKobo;
-    
+
     if (taxKobo && typeof taxKobo === "string") {
       return taxKobo;
     }
@@ -252,8 +252,8 @@ function FilingsContent() {
     }
   };
 
-  const filteredFilings = activeTab === "all" 
-    ? filings 
+  const filteredFilings = activeTab === "all"
+    ? filings
     : filings.filter((f) => f.status === activeTab);
 
 
@@ -261,7 +261,7 @@ function FilingsContent() {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-grow pt-20 md:pt-28 pb-16">
-        <div className="container mx-auto px-4 md:px-6 max-w-5xl">
+        <div className="container mx-auto px-4 md:px-6 max-w-5xl" data-tour="filings">
           <div className="mb-6">
             <Link
               to="/dashboard"
@@ -298,7 +298,7 @@ function FilingsContent() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Generate a complete PDF/Excel filing pack with all calculations and supporting documents. 
+                  Generate a complete PDF/Excel filing pack with all calculations and supporting documents.
                   You download it and submit manually to FIRS/SIRS.
                 </p>
               </CardContent>
@@ -316,7 +316,7 @@ function FilingsContent() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  {autoFileAvailable 
+                  {autoFileAvailable
                     ? "Submit directly through licensed partner integration with FIRS."
                     : "Direct submission via licensed partner/API. Requires payment integration."}
                 </p>

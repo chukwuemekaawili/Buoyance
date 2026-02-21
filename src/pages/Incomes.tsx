@@ -93,7 +93,7 @@ export default function Incomes() {
   const [whtDeducted, setWhtDeducted] = useState(false);
   const [whtAmount, setWhtAmount] = useState("");
   const [taxExempt, setTaxExempt] = useState(false);
-  
+
   // AI Classification state
   const [isClassifying, setIsClassifying] = useState(false);
   const [classification, setClassification] = useState<ClassificationResult | null>(null);
@@ -105,7 +105,7 @@ export default function Incomes() {
       setClassification(null);
       return;
     }
-    
+
     setIsClassifying(true);
     try {
       const result = await classifyTaxItem({
@@ -131,7 +131,7 @@ export default function Incomes() {
         runAIClassification(source, category, description);
       }
     }, 800); // Wait 800ms after user stops typing
-    
+
     return () => clearTimeout(timer);
   }, [source, category, description, runAIClassification]);
 
@@ -167,7 +167,7 @@ export default function Incomes() {
 
   const fetchIncomes = async () => {
     if (!user) return;
-    
+
     setIsLoading(true);
     try {
       // Only fetch ACTIVE records by default (archived=false AND status='active')
@@ -177,12 +177,12 @@ export default function Incomes() {
         .select("*")
         .eq("user_id", user.id)
         .eq("archived", false);
-      
+
       // Filter out superseded records unless showHistory is enabled
       if (!showHistory) {
         query = query.eq("status", "active");
       }
-      
+
       const { data, error } = await query.order("date", { ascending: false });
 
       if (error) throw error;
@@ -204,13 +204,13 @@ export default function Incomes() {
     setIsAdding(true);
     try {
       const amountKobo = parseNgnToKobo(amount.replace(/,/g, ""));
-      const outputVatKobo = vatable && outputVatAmount 
+      const outputVatKobo = vatable && outputVatAmount
         ? koboToString(parseNgnToKobo(outputVatAmount.replace(/,/g, "")))
         : null;
-      const whtKobo = whtDeducted && whtAmount 
+      const whtKobo = whtDeducted && whtAmount
         ? Number(parseNgnToKobo(whtAmount.replace(/,/g, "")))
         : 0;
-      
+
       const { error } = await supabase.from("incomes").insert({
         user_id: user.id,
         source: source.trim(),
@@ -312,17 +312,17 @@ export default function Incomes() {
 
   // Filter incomes
   const filteredIncomes = incomes.filter(income => {
-    const matchesSearch = 
+    const matchesSearch =
       income.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (income.description?.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+
     const matchesCategory = categoryFilter === "all" || income.category === categoryFilter;
-    
-    const matchesTaxStatus = 
-      taxStatusFilter === "all" || 
+
+    const matchesTaxStatus =
+      taxStatusFilter === "all" ||
       (taxStatusFilter === "taxable" && !income.tax_exempt) ||
       (taxStatusFilter === "exempt" && income.tax_exempt);
-    
+
     const incomeDate = new Date(income.date);
     const matchesDateFrom = !dateRange?.from || incomeDate >= dateRange.from;
     const matchesDateTo = !dateRange?.to || incomeDate <= dateRange.to;
@@ -368,7 +368,7 @@ export default function Incomes() {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-grow pt-20 md:pt-28 pb-16">
-        <div className="container mx-auto px-4 md:px-6 max-w-4xl">
+        <div className="container mx-auto px-4 md:px-6 max-w-4xl" data-tour="income-expenses">
           <Link to="/dashboard" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
@@ -436,17 +436,16 @@ export default function Incomes() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   {/* AI-Powered Tax Classification */}
-                  <div className={`p-4 rounded-lg border ${
-                    isClassifying 
-                      ? 'bg-muted/50 border-muted-foreground/20' 
-                      : classification 
+                  <div className={`p-4 rounded-lg border ${isClassifying
+                      ? 'bg-muted/50 border-muted-foreground/20'
+                      : classification
                         ? getConfidenceBgColor(classification.confidence)
-                        : taxExempt 
-                          ? 'bg-blue-500/10 border-blue-500/20' 
+                        : taxExempt
+                          ? 'bg-blue-500/10 border-blue-500/20'
                           : 'bg-amber-500/10 border-amber-500/20'
-                  }`}>
+                    }`}>
                     <div className="flex items-start gap-3">
                       {isClassifying ? (
                         <>
@@ -511,7 +510,7 @@ export default function Incomes() {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
                     <div>
                       <p className="font-medium">Override Classification</p>
@@ -521,7 +520,7 @@ export default function Incomes() {
                     </div>
                     <Switch checked={taxExempt} onCheckedChange={setTaxExempt} />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label>Description (Optional)</Label>
                     <Textarea
@@ -531,7 +530,7 @@ export default function Incomes() {
                       rows={2}
                     />
                   </div>
-                  
+
                   {/* WHT Section */}
                   <div className="flex items-center justify-between p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                     <div>
@@ -561,7 +560,7 @@ export default function Incomes() {
                       </p>
                     </div>
                   )}
-                  
+
                   {/* VAT Section */}
                   <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
                     <div>
@@ -682,8 +681,8 @@ export default function Incomes() {
               />
               {/* Show history toggle */}
               <div className="flex items-center gap-2">
-                <Switch 
-                  checked={showHistory} 
+                <Switch
+                  checked={showHistory}
                   onCheckedChange={setShowHistory}
                   id="show-history"
                 />
@@ -708,7 +707,7 @@ export default function Incomes() {
                 {incomes.length === 0 ? "No income records yet" : "No matching records"}
               </h3>
               <p className="text-muted-foreground mb-4">
-                {incomes.length === 0 
+                {incomes.length === 0
                   ? "Start tracking your income for accurate tax calculations."
                   : "Try adjusting your filters."}
               </p>
@@ -724,81 +723,82 @@ export default function Incomes() {
               {filteredIncomes.map(income => {
                 const isSuperseded = income.status === 'superseded';
                 return (
-                <Card key={income.id} className={`p-4 ${isSuperseded ? 'opacity-60 border-dashed' : ''}`}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="font-semibold">{income.source}</h3>
-                        <span className="text-xs px-2 py-0.5 bg-muted rounded-full">
-                          {getCategoryLabel(income.category)}
-                        </span>
-                        {isSuperseded && (
-                          <span className="text-xs px-2 py-0.5 bg-gray-500/10 text-gray-500 border border-gray-500/20 rounded-full">
-                            ⛔ Superseded
+                  <Card key={income.id} className={`p-4 ${isSuperseded ? 'opacity-60 border-dashed' : ''}`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h3 className="font-semibold">{income.source}</h3>
+                          <span className="text-xs px-2 py-0.5 bg-muted rounded-full">
+                            {getCategoryLabel(income.category)}
                           </span>
+                          {isSuperseded && (
+                            <span className="text-xs px-2 py-0.5 bg-gray-500/10 text-gray-500 border border-gray-500/20 rounded-full">
+                              ⛔ Superseded
+                            </span>
+                          )}
+                          {!isSuperseded && income.tax_exempt ? (
+                            <span className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-full">
+                              🔵 Tax Exempt
+                            </span>
+                          ) : !isSuperseded ? (
+                            <span className="text-xs px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-full">
+                              💰 Taxable
+                            </span>
+                          ) : null}
+                          {income.wht_deducted && (
+                            <span className="text-xs px-2 py-0.5 bg-purple-500/10 text-purple-600 border border-purple-500/20 rounded-full flex items-center gap-1">
+                              <BadgePercent className="h-3 w-3" />
+                              WHT: {formatKoboToNgn(BigInt(income.wht_credit_kobo || 0))}
+                            </span>
+                          )}
+                          {income.vatable && (
+                            <span className="text-xs px-2 py-0.5 bg-green-500/10 text-green-600 border border-green-500/20 rounded-full">
+                              VATable
+                            </span>
+                          )}
+                        </div>
+                        {income.description && (
+                          <p className="text-sm text-muted-foreground mb-2">{income.description}</p>
                         )}
-                        {!isSuperseded && income.tax_exempt ? (
-                          <span className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-full">
-                            🔵 Tax Exempt
-                          </span>
-                        ) : !isSuperseded ? (
-                          <span className="text-xs px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-full">
-                            💰 Taxable
-                          </span>
-                        ) : null}
-                        {income.wht_deducted && (
-                          <span className="text-xs px-2 py-0.5 bg-purple-500/10 text-purple-600 border border-purple-500/20 rounded-full flex items-center gap-1">
-                            <BadgePercent className="h-3 w-3" />
-                            WHT: {formatKoboToNgn(BigInt(income.wht_credit_kobo || 0))}
-                          </span>
-                        )}
-                        {income.vatable && (
-                          <span className="text-xs px-2 py-0.5 bg-green-500/10 text-green-600 border border-green-500/20 rounded-full">
-                            VATable
-                          </span>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(income.date).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <p className={`text-xl font-mono font-bold ${isSuperseded ? 'text-muted-foreground line-through' : 'text-secondary'}`}>
+                          {formatKoboToNgn(stringToKobo(income.amount_kobo))}
+                        </p>
+                        {!isSuperseded && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setCorrectionTarget(income)}
+                              className="text-muted-foreground hover:text-primary"
+                              title="Correct Record"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleArchive(income.id)}
+                              className="text-muted-foreground hover:text-destructive"
+                              title="Archive"
+                            >
+                              <Archive className="h-4 w-4" />
+                            </Button>
+                          </>
                         )}
                       </div>
-                      {income.description && (
-                        <p className="text-sm text-muted-foreground mb-2">{income.description}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(income.date).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        })}
-                      </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <p className={`text-xl font-mono font-bold ${isSuperseded ? 'text-muted-foreground line-through' : 'text-secondary'}`}>
-                        {formatKoboToNgn(stringToKobo(income.amount_kobo))}
-                      </p>
-                      {!isSuperseded && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setCorrectionTarget(income)}
-                            className="text-muted-foreground hover:text-primary"
-                            title="Correct Record"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleArchive(income.id)}
-                            className="text-muted-foreground hover:text-destructive"
-                            title="Archive"
-                          >
-                            <Archive className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              )})}
+                  </Card>
+                )
+              })}
             </div>
           )}
         </div>

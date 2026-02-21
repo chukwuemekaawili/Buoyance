@@ -93,7 +93,7 @@ export function OnboardingTour({ forceShow = false, onComplete }: OnboardingTour
   useEffect(() => {
     const tourCompleted = localStorage.getItem(TOUR_STORAGE_KEY);
     const savedStep = localStorage.getItem(TOUR_STEP_KEY);
-    
+
     if (forceShow || (!tourCompleted && savedStep === null)) {
       setIsVisible(true);
       if (savedStep) {
@@ -102,24 +102,37 @@ export function OnboardingTour({ forceShow = false, onComplete }: OnboardingTour
     }
   }, [forceShow]);
 
-  // Find and highlight target element
-  useEffect(() => {
-    const step = TOUR_STEPS[currentStep];
-    if (step.targetSelector) {
-      const element = document.querySelector(step.targetSelector) as HTMLElement;
-      setHighlightElement(element);
-    } else {
-      setHighlightElement(null);
-    }
-  }, [currentStep, location.pathname]);
-
-  // Navigate to step's route if needed
+  // Navigate to step's route if needed, THEN find target element after DOM settles
   useEffect(() => {
     const step = TOUR_STEPS[currentStep];
     if (step.route && location.pathname !== step.route) {
       navigate(step.route);
     }
   }, [currentStep, navigate, location.pathname]);
+
+  // Find and highlight target element (with retry for post-navigation rendering)
+  useEffect(() => {
+    const step = TOUR_STEPS[currentStep];
+    if (!step.targetSelector) {
+      setHighlightElement(null);
+      return;
+    }
+
+    // Try immediately
+    const element = document.querySelector(step.targetSelector) as HTMLElement;
+    if (element) {
+      setHighlightElement(element);
+      return;
+    }
+
+    // If not found, retry after a short delay (DOM may still be rendering after navigation)
+    const timer = setTimeout(() => {
+      const retryElement = document.querySelector(step.targetSelector!) as HTMLElement;
+      setHighlightElement(retryElement || null); // null = card will center itself
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [currentStep, location.pathname]);
 
   // Save progress
   useEffect(() => {
@@ -162,11 +175,11 @@ export function OnboardingTour({ forceShow = false, onComplete }: OnboardingTour
   // Calculate tooltip position based on highlighted element
   const getTooltipPosition = () => {
     if (!highlightElement) {
-      return { 
-        position: "fixed" as const, 
-        top: "50%", 
-        left: "50%", 
-        transform: "translate(-50%, -50%)" 
+      return {
+        position: "fixed" as const,
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)"
       };
     }
 
@@ -216,7 +229,7 @@ export function OnboardingTour({ forceShow = false, onComplete }: OnboardingTour
     <>
       {/* Overlay */}
       <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50" />
-      
+
       {/* Highlight ring around target element */}
       {highlightElement && (
         <div
