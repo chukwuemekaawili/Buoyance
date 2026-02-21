@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Buoyance</title>
+  <script>
+    // SPA redirect: when DigitalOcean serves this 404 page,
+    // redirect to the root with the original path stored in sessionStorage.
+    // The main app will then pick it up and navigate to the correct route.
+    var path = window.location.pathname + window.location.search + window.location.hash;
+    sessionStorage.setItem('spa_redirect', path);
+    window.location.replace('/');
+  </script>
+</head>
+<body>
+  <p>Redirecting...</p>
+</body>
+</html>

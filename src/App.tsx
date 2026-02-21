@@ -69,6 +69,25 @@ import BankImport from "./pages/BankImport";
 import Academy from "./pages/Academy";
 import CourseViewer from "./pages/CourseViewer";
 import TaxLibrary from "./pages/TaxLibrary";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
+// SPA redirect handler: works with public/404.html to handle
+// DigitalOcean static site routing. When a 404 occurs on a client
+// route like /dashboard, 404.html stores the path and redirects to /.
+// This component picks up that stored path and navigates to it.
+function SpaRedirectHandler() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const redirectPath = sessionStorage.getItem('spa_redirect');
+    if (redirectPath) {
+      sessionStorage.removeItem('spa_redirect');
+      navigate(redirectPath, { replace: true });
+    }
+  }, [navigate]);
+  return null;
+}
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -82,6 +101,7 @@ const App = () => (
             <ConsentProvider>
               <ScrollToTop />
               <ScrollToHash />
+              <SpaRedirectHandler />
               <OfflineBanner />
               <AIChatWidget />
               <Routes>
