@@ -48,7 +48,7 @@ export function AIPreSubmitCheck({
                     .lte("date", filingPeriodEnd),
                 supabase
                     .from("expenses")
-                    .select("amount_kobo, is_deductible")
+                    .select("amount_kobo, deductible")
                     .gte("date", filingPeriodStart)
                     .lte("date", filingPeriodEnd),
             ]);
@@ -59,7 +59,7 @@ export function AIPreSubmitCheck({
                 ledgerIncomeKobo = addKobo(ledgerIncomeKobo, stringToKobo(i.amount_kobo));
             });
             (expenses || []).forEach((e: any) => {
-                if (e.is_deductible) {
+                if (e.deductible) {
                     ledgerDeductibleKobo = addKobo(ledgerDeductibleKobo, stringToKobo(e.amount_kobo));
                 }
             });
