@@ -15,6 +15,7 @@ import { OfflineBanner } from "./components/OfflineBanner";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
+import Pricing from "./pages/Pricing";
 import Careers from "./pages/Careers";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
@@ -192,6 +193,7 @@ const App = () => (
 
                     {/* Company */}
                     <Route path="/about" element={<About />} />
+                    <Route path="/pricing" element={<Pricing />} />
                     <Route path="/careers" element={<Careers />} />
                     <Route path="/blog" element={<Blog />} />
                     <Route path="/blog/:slug" element={<BlogPost />} />

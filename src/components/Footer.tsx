@@ -7,6 +7,7 @@ import logoDark from "@/assets/buoyance_logo_dark.png";
 const footerLinks = {
   product: [
     { label: "Features", href: "/#features", isAnchor: true },
+    { label: "Pricing", href: "/pricing" },
     { label: "All Calculators", href: "/calculators" },
     { label: "PIT Calculator", href: "/calculators/pit" },
     { label: "VAT Calculator", href: "/calculators/vat" },
