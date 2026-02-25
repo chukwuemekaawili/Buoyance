@@ -59,12 +59,16 @@ export function Header() {
         .from("profiles")
         .select("display_name, tax_identity, tin, onboarding_completed")
         .eq("id", user.id)
-        .single()
-        .then(({ data }) => {
-          setDisplayName(data?.display_name || null);
-          setTaxIdentity(data?.tax_identity || null);
-          setTin(data?.tin || null);
-          setOnboardingCompleted(data?.onboarding_completed || false);
+        .limit(1)
+        .then(({ data, error }) => {
+          if (error) {
+            console.error("Failed to load profile header data:", error);
+          }
+          const profileRow = data?.[0];
+          setDisplayName(profileRow?.display_name || null);
+          setTaxIdentity(profileRow?.tax_identity || null);
+          setTin(profileRow?.tin || null);
+          setOnboardingCompleted(profileRow?.onboarding_completed || false);
         });
     } else {
       setDisplayName(null);
@@ -251,6 +255,16 @@ export function Header() {
                   <Brain className="h-4 w-4" />
                   Academy
                 </Link>
+                <Link
+                  to="/settings"
+                  className={cn(
+                    "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5",
+                    currentPath.startsWith("/settings") ? activeLinkClass : inactiveLinkClass
+                  )}
+                >
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Link>
               </nav>
             )}
 
@@ -429,6 +443,18 @@ export function Header() {
                   >
                     <Brain className="h-4 w-4" />
                     Academy
+                  </Link>
+
+                  {/* Settings Link */}
+                  <Link
+                    to="/settings"
+                    className={cn(
+                      "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5",
+                      currentPath.startsWith("/settings") ? activeLinkClass : inactiveLinkClass
+                    )}
+                  >
+                    <Settings className="h-4 w-4" />
+                    Settings
                   </Link>
 
                   {/* Admin Dropdown */}

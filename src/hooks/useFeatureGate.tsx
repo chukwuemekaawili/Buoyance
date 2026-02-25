@@ -57,9 +57,9 @@ export function FeatureGateProvider({ children }: { children: ReactNode }) {
                     .from("organizations")
                     .select("billing_plan, subscription_status")
                     .eq("id", activeWorkspace.id)
-                    .single();
+                    .maybeSingle();
 
-                if (error) throw error;
+                if (error && error.code !== 'PGRST116') throw error;
 
                 // If subscription is canceled/past_due, fallback to free limits regardless of what the string says
                 if (data && data.billing_plan && data.subscription_status === 'active') {
