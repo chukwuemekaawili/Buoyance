@@ -130,7 +130,7 @@ function DashboardContent() {
         .from("profiles")
         .select("user_type, display_name")
         .eq("id", user!.id)
-        .single();
+        .maybeSingle();
 
       // Get TIN from settings if stored there (or profile if we add it)
       // For now, we'll simulate - in production this would be from profile.tin

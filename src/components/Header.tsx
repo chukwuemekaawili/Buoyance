@@ -176,9 +176,9 @@ export function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 backdrop-blur-md border-b border-primary-foreground/10 transition-colors duration-300 overflow-hidden">
-        <div className="container mx-auto px-4 md:px-6 overflow-hidden">
-          <div className="flex items-center h-14 md:h-16 overflow-hidden">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 backdrop-blur-md border-b border-primary-foreground/10 transition-colors duration-300">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="flex items-center h-14 md:h-16">
             {/* Logo - fixed width, never shrinks */}
             <Link
               to="/"
@@ -254,16 +254,6 @@ export function Header() {
                 >
                   <Brain className="h-4 w-4" />
                   Academy
-                </Link>
-                <Link
-                  to="/settings"
-                  className={cn(
-                    "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5",
-                    currentPath.startsWith("/settings") ? activeLinkClass : inactiveLinkClass
-                  )}
-                >
-                  <Settings className="h-4 w-4" />
-                  Settings
                 </Link>
               </nav>
             )}
