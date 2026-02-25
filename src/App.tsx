@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { RBACProvider } from "@/hooks/useRBAC";
 import { ConsentProvider } from "@/hooks/useConsent";
 import { WorkspaceProvider } from "@/hooks/useWorkspace";
+import { FeatureGateProvider } from "@/hooks/useFeatureGate";
 import ScrollToTop from "./components/ScrollToTop";
 import ScrollToHash from "./components/ScrollToHash";
 import { AIChatWidget } from "./components/AIChatWidget";
@@ -103,14 +104,15 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <WorkspaceProvider>
-            <RBACProvider>
-              <ConsentProvider>
-                <ScrollToTop />
-                <ScrollToHash />
-                <SpaRedirectHandler />
-                <OfflineBanner />
-                <AIChatWidget />
-                <Routes>
+            <FeatureGateProvider>
+              <RBACProvider>
+                <ConsentProvider>
+                  <ScrollToTop />
+                  <ScrollToHash />
+                  <SpaRedirectHandler />
+                  <OfflineBanner />
+                  <AIChatWidget />
+                  <Routes>
                   <Route path="/" element={<Index />} />
 
                   {/* Auth */}
@@ -207,9 +209,10 @@ const App = () => (
 
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
-                </Routes>
-              </ConsentProvider>
-            </RBACProvider>
+                  </Routes>
+                </ConsentProvider>
+              </RBACProvider>
+            </FeatureGateProvider>
           </WorkspaceProvider>
         </AuthProvider>
       </BrowserRouter>

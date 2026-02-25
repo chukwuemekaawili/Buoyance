@@ -692,48 +692,10 @@ export function Header() {
                     </Link>
                   </Button>
                   <NotificationBell />
-
-                  {/* User Dropdown for laptop-size screens */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="hidden lg:flex items-center gap-1.5 px-2 py-1.5 rounded-md hover:bg-primary-foreground/10 transition-colors outline-none">
-                      <Avatar className="h-7 w-7 bg-primary-foreground/20 text-primary-foreground text-xs">
-                        <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-xs font-medium">
-                          {getInitials()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <ChevronDown className="h-3 w-3 text-primary-foreground/60" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 bg-popover z-50">
-                      <div className="px-3 py-2 border-b">
-                        <p className="text-sm font-medium">{displayName || "User"}</p>
-                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                      </div>
-                      <DropdownMenuItem asChild>
-                        <Link to="/dashboard" className="flex items-center gap-2 cursor-pointer">
-                          <LayoutDashboard className="h-4 w-4" />
-                          Dashboard
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
-                          <Settings className="h-4 w-4" />
-                          Settings
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={handleSignOut}
-                        className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Sign Out
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </>
               )}
               <button
-                className="flex lg:hidden items-center justify-center w-10 h-10 text-primary-foreground"
+                className="flex 2xl:hidden items-center justify-center w-10 h-10 text-primary-foreground"
                 onClick={() => setIsMenuOpen(true)}
                 aria-label="Open menu"
               >

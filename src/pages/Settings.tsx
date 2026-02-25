@@ -57,7 +57,6 @@ import {
   Server
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { validateTINOptional } from "@/lib/validators";
 import { ConsentVersionLink } from "@/components/ConsentVersionLink";
 import { TeamSettingsCard } from "@/components/settings/TeamSettingsCard";
