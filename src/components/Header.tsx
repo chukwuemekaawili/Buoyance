@@ -194,11 +194,11 @@ export function Header() {
 
             {/* Laptop Navigation - Show on lg to 2xl (1024px - 1535px) for authenticated users */}
             {user && (
-              <nav className="hidden lg:flex 2xl:hidden items-center gap-1 ml-8 flex-shrink-0">
+              <nav className="hidden lg:flex 2xl:hidden items-center gap-1 ml-6 flex-shrink min-w-0">
                 <Link
                   to="/dashboard"
                   className={cn(
-                    "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5",
+                    "transition-colors text-sm font-medium px-2.5 py-2 rounded-md flex items-center gap-1.5 whitespace-nowrap",
                     isPathActive(currentPath, "/dashboard") ? activeLinkClass : inactiveLinkClass
                   )}
                 >
@@ -208,7 +208,7 @@ export function Header() {
                 <Link
                   to="/filings"
                   className={cn(
-                    "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5",
+                    "transition-colors text-sm font-medium px-2.5 py-2 rounded-md flex items-center gap-1.5 whitespace-nowrap",
                     currentPath.startsWith("/filings") ? activeLinkClass : inactiveLinkClass
                   )}
                 >
@@ -216,29 +216,9 @@ export function Header() {
                   Filings
                 </Link>
                 <Link
-                  to="/incomes?action=add"
-                  className={cn(
-                    "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5",
-                    inactiveLinkClass
-                  )}
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Income
-                </Link>
-                <Link
-                  to="/expenses?action=add"
-                  className={cn(
-                    "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5",
-                    inactiveLinkClass
-                  )}
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Expense
-                </Link>
-                <Link
                   to="/calculators"
                   className={cn(
-                    "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5",
+                    "transition-colors text-sm font-medium px-2.5 py-2 rounded-md flex items-center gap-1.5 whitespace-nowrap",
                     isCalculatorsActive ? activeLinkClass : inactiveLinkClass
                   )}
                 >
@@ -248,7 +228,7 @@ export function Header() {
                 <Link
                   to="/academy"
                   className={cn(
-                    "transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1.5",
+                    "transition-colors text-sm font-medium px-2.5 py-2 rounded-md flex items-center gap-1.5 whitespace-nowrap",
                     isAcademyActive ? activeLinkClass : inactiveLinkClass
                   )}
                 >
@@ -700,7 +680,7 @@ export function Header() {
             <div className="2xl:hidden flex items-center gap-2 flex-shrink-0">
               {user && (
                 <>
-                  <WorkspaceSwitcher className="hidden md:flex max-w-[240px] mr-1 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10 hover:text-primary-foreground" />
+                  <WorkspaceSwitcher className="hidden xl:flex max-w-[200px] mr-1 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10 hover:text-primary-foreground" />
                   <Button variant="accent" size="sm" asChild className="hidden sm:flex">
                     <Link to="/filings/new">
                       <Plus className="h-4 w-4 mr-1" />
