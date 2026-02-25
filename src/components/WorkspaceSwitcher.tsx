@@ -30,11 +30,11 @@ export function WorkspaceSwitcher({ className }: { className?: string }) {
                 <Button variant="outline" className={cn("w-[200px] justify-between", className)}>
                     <span className="flex items-center gap-2 truncate">
                         {activeWorkspace.entity_type === 'Individual' ? (
-                            <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <User className="h-4 w-4 opacity-70 shrink-0" />
                         ) : (
-                            <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <Building2 className="h-4 w-4 opacity-70 shrink-0" />
                         )}
-                        <span className="truncate">{activeWorkspace.name}</span>
+                        <span className="truncate text-inherit">{activeWorkspace.name}</span>
                     </span>
                     <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
                 </Button>
