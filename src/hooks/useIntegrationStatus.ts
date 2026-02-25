@@ -23,7 +23,8 @@ let adminCacheTime: number = 0;
 
 const CACHE_DURATION = 60000; // 1 minute
 
-const SUPABASE_URL = "https://bajwsjrqrsglsndgtfpp.supabase.co";
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL || "https://bajwsjrqrsglsndgtfpp.supabase.co";
 
 /**
  * Hook for normal users - returns configured status without provider names

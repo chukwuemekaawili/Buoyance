@@ -42,18 +42,28 @@ serve(async (req) => {
 
     console.log('integration-health: Checking configuration for user', user.id);
 
-    // Check configuration (server-side secrets only)
-    // Uses the actual env var names set by the user in Supabase secrets
+    // Check configuration (server-side secrets only).
+    // Supports both "generic" secret naming (PAYMENT_PROVIDER/PAYMENT_SECRET_KEY, etc.)
+    // and provider-specific keys used by some edge functions (PAYSTACK_SECRET_KEY, RESEND_API_KEY, MONO_SECRET_KEY, ...).
     const paymentConfigured = !!(
-      Deno.env.get('PAYSTACK_SECRET_KEY') || Deno.env.get('FLUTTERWAVE_SECRET_KEY')
+      (Deno.env.get('PAYMENT_PROVIDER') && Deno.env.get('PAYMENT_SECRET_KEY')) ||
+      Deno.env.get('PAYSTACK_SECRET_KEY') ||
+      Deno.env.get('FLUTTERWAVE_SECRET_KEY') ||
+      Deno.env.get('STRIPE_SECRET_KEY')
     );
 
     const emailConfigured = !!(
-      Deno.env.get('RESEND_API_KEY') || Deno.env.get('SENDGRID_API_KEY')
+      (Deno.env.get('EMAIL_PROVIDER') && Deno.env.get('EMAIL_API_KEY')) ||
+      Deno.env.get('RESEND_API_KEY') ||
+      Deno.env.get('SENDGRID_API_KEY') ||
+      Deno.env.get('MAILGUN_API_KEY')
     );
 
     const bankingConfigured = !!(
-      Deno.env.get('MONO_SECRET_KEY') || Deno.env.get('OKRA_SECRET_KEY')
+      (Deno.env.get('BANKING_PROVIDER') && Deno.env.get('BANKING_SECRET_KEY')) ||
+      Deno.env.get('MONO_SECRET_KEY') ||
+      Deno.env.get('OKRA_SECRET_KEY') ||
+      Deno.env.get('PLAID_SECRET_KEY')
     );
 
     // Auto-file requires both payment and email to be configured

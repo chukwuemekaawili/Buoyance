@@ -121,7 +121,7 @@ As of documentation date, Supabase offers:
 
 | External Service | Data Transferred | Purpose | Safeguards |
 |------------------|------------------|---------|------------|
-| Lovable AI Gateway | Query text only | AI explanations | No PII transmitted |
+| Anthropic API | Query text only | AI explanations | No PII transmitted |
 | Payment Gateway | Transaction data | Payment processing | PCI DSS compliant |
 | Email Provider | Email addresses | Notifications | DPA in place |
 | Banking API | Account tokens | Transaction import | OAuth, no credentials stored |

@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
@@ -12,8 +10,7 @@ import { Footer } from "@/components/Footer";
 import { Loader2 } from "lucide-react";
 
 const Index = () => {
-  const { user, loading } = useAuth();
-  const navigate = useNavigate();
+  const { loading } = useAuth();
 
   // Show loading spinner while checking auth
   if (loading) {

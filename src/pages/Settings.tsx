@@ -219,21 +219,21 @@ function SettingsContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   const defaultTab = searchParams.get("tab") || "profile";
   const { plan, isPro, isLoading: billingLoading, checkQuota } = useFeatureGate();
-  const { currentWorkspace } = useWorkspace();
+  const { activeWorkspace } = useWorkspace();
 
   const [promoCode, setPromoCode] = useState("");
   const [isProcessingPromo, setIsProcessingPromo] = useState(false);
 
   const handlePromoUpgrade = async () => {
-    if (!currentWorkspace?.id) return;
+    if (!activeWorkspace?.id) return;
     if (!promoCode.trim()) return;
 
     if (promoCode.trim().toUpperCase() === "FEEE2025") {
       setIsProcessingPromo(true);
       const { error } = await supabase
-        .from('workspaces')
+        .from('organizations')
         .update({ billing_plan: 'pro', subscription_status: 'active' })
-        .eq('id', currentWorkspace.id);
+        .eq('id', activeWorkspace.id);
 
       setIsProcessingPromo(false);
 

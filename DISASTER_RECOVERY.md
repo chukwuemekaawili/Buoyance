@@ -33,7 +33,7 @@ This document outlines the disaster recovery (DR) procedures for the Buoyance ta
 - Payment Gateway (Paystack/Flutterwave)
 - Banking Integration (Mono/Okra)
 - Email Service (Resend/SendGrid)
-- AI Gateway (Lovable AI)
+- AI Gateway (Anthropic)
 
 ## 4. Backup Procedures
 

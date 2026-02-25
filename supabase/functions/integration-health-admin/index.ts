@@ -88,29 +88,79 @@ serve(async (req) => {
       });
     }
 
-    // Check configuration and return provider names
+    // Check configuration and return provider names.
+    // Supports both "generic" naming (PAYMENT_PROVIDER/PAYMENT_SECRET_KEY, etc.)
+    // and provider-specific keys used by some edge functions (PAYSTACK_SECRET_KEY, RESEND_API_KEY, MONO_SECRET_KEY, ...).
+    const paymentProviderEnv = Deno.env.get('PAYMENT_PROVIDER') || null;
     const paymentSecretKey = Deno.env.get('PAYMENT_SECRET_KEY');
-    const paymentProvider = Deno.env.get('PAYMENT_PROVIDER');
-    
+    const paystackSecretKey = Deno.env.get('PAYSTACK_SECRET_KEY');
+    const flutterwaveSecretKey = Deno.env.get('FLUTTERWAVE_SECRET_KEY');
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+
+    const inferredPaymentProvider =
+      paymentProviderEnv ||
+      (paystackSecretKey ? 'paystack' : null) ||
+      (flutterwaveSecretKey ? 'flutterwave' : null) ||
+      (stripeSecretKey ? 'stripe' : null);
+
+    const paymentConfigured = !!(
+      (paymentProviderEnv && paymentSecretKey) ||
+      paystackSecretKey ||
+      flutterwaveSecretKey ||
+      stripeSecretKey
+    );
+
+    const emailProviderEnv = Deno.env.get('EMAIL_PROVIDER') || null;
     const emailApiKey = Deno.env.get('EMAIL_API_KEY');
-    const emailProvider = Deno.env.get('EMAIL_PROVIDER');
     const emailFrom = Deno.env.get('EMAIL_FROM');
-    
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const sendgridApiKey = Deno.env.get('SENDGRID_API_KEY');
+    const mailgunApiKey = Deno.env.get('MAILGUN_API_KEY');
+
+    const inferredEmailProvider =
+      emailProviderEnv ||
+      (resendApiKey ? 'resend' : null) ||
+      (sendgridApiKey ? 'sendgrid' : null) ||
+      (mailgunApiKey ? 'mailgun' : null);
+
+    const emailConfigured = !!(
+      (emailProviderEnv && emailApiKey && emailFrom) ||
+      resendApiKey ||
+      sendgridApiKey ||
+      mailgunApiKey
+    );
+
+    const bankingProviderEnv = Deno.env.get('BANKING_PROVIDER') || null;
     const bankingSecretKey = Deno.env.get('BANKING_SECRET_KEY');
-    const bankingProvider = Deno.env.get('BANKING_PROVIDER');
+    const monoSecretKey = Deno.env.get('MONO_SECRET_KEY');
+    const okraSecretKey = Deno.env.get('OKRA_SECRET_KEY');
+    const plaidSecretKey = Deno.env.get('PLAID_SECRET_KEY');
+
+    const inferredBankingProvider =
+      bankingProviderEnv ||
+      (monoSecretKey ? 'mono' : null) ||
+      (okraSecretKey ? 'okra' : null) ||
+      (plaidSecretKey ? 'plaid' : null);
+
+    const bankingConfigured = !!(
+      (bankingProviderEnv && bankingSecretKey) ||
+      monoSecretKey ||
+      okraSecretKey ||
+      plaidSecretKey
+    );
 
     const result = {
       payment: {
-        configured: !!(paymentSecretKey && paymentProvider),
-        provider: paymentProvider || null,
+        configured: paymentConfigured,
+        provider: inferredPaymentProvider,
       },
       email: {
-        configured: !!(emailApiKey && emailProvider && emailFrom),
-        provider: emailProvider || null,
+        configured: emailConfigured,
+        provider: inferredEmailProvider,
       },
       banking: {
-        configured: !!(bankingSecretKey && bankingProvider),
-        provider: bankingProvider || null,
+        configured: bankingConfigured,
+        provider: inferredBankingProvider,
       },
     };
 
