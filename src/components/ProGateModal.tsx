@@ -64,7 +64,7 @@ export function ProGateModal({ isOpen, onClose, featureName, description }: ProG
                         }}
                     >
                         <Zap className="w-4 h-4" />
-                        Upgrade to Pro
+                        Unlock Pro Edition
                     </Button>
                 </DialogFooter>
 

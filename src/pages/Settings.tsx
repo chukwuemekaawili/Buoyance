@@ -32,6 +32,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import {
   Loader2,
   ArrowLeft,
@@ -217,6 +219,34 @@ function SettingsContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   const defaultTab = searchParams.get("tab") || "profile";
   const { plan, isPro, isLoading: billingLoading, checkQuota } = useFeatureGate();
+  const { currentWorkspace } = useWorkspace();
+
+  const [promoCode, setPromoCode] = useState("");
+  const [isProcessingPromo, setIsProcessingPromo] = useState(false);
+
+  const handlePromoUpgrade = async () => {
+    if (!currentWorkspace?.id) return;
+    if (!promoCode.trim()) return;
+
+    if (promoCode.trim().toUpperCase() === "FEEE2025") {
+      setIsProcessingPromo(true);
+      const { error } = await supabase
+        .from('workspaces')
+        .update({ billing_plan: 'pro', subscription_status: 'active' })
+        .eq('id', currentWorkspace.id);
+
+      setIsProcessingPromo(false);
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Pro Unlocked!", description: "Promo code FEEE2025 applied successfully." });
+        window.location.reload();
+      }
+    } else {
+      toast({ title: "Invalid Code", description: "The promo code entered is not valid.", variant: "destructive" });
+    }
+  };
 
   // Metrics state for Billing dashboard
   const [metrics, setMetrics] = useState<Record<MetricName, { allowed: boolean; remaining: number; limit: number } | null>>({
@@ -827,10 +857,25 @@ function SettingsContent() {
                         </p>
                       </div>
                       {!isPro && (
-                        <Button className="shrink-0 gap-2 shadow-md bg-gradient-to-r from-primary to-primary/80" onClick={() => toast({ title: "Opening Paystack...", description: "Payment gateway integration is pending." })}>
-                          <Zap className="h-4 w-4" />
-                          Upgrade to Pro
-                        </Button>
+                        <div className="flex flex-col gap-2 w-full md:w-auto mt-4 md:mt-0">
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              placeholder="Have a promo code?"
+                              value={promoCode}
+                              onChange={(e) => setPromoCode(e.target.value)}
+                              className="w-[200px]"
+                            />
+                            <Button
+                              onClick={handlePromoUpgrade}
+                              disabled={isProcessingPromo || !promoCode.trim()}
+                              className="shrink-0 gap-2 shadow-md bg-gradient-to-r from-primary to-primary/80"
+                            >
+                              {isProcessingPromo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                              Upgrade
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground self-end">Paystack integration disabled</p>
+                        </div>
                       )}
                     </div>
                   )}

@@ -242,17 +242,15 @@ export default function BankConnections() {
               <p className="text-muted-foreground">Connect your bank accounts to import transactions</p>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="secondary" asChild>
-                <Link to="/bank-import">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Reconcile Bank Feed
-                </Link>
+              <Button variant="secondary" disabled title="Mono API integration coming soon">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Reconcile Bank Feed (Coming Soon)
               </Button>
-              <Dialog open={showConnectDialog} onOpenChange={setShowConnectDialog}>
+              <Dialog open={false} onOpenChange={() => { }}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button disabled title="Mono API integration coming soon">
                     <Plus className="h-4 w-4 mr-2" />
-                    Connect Bank
+                    Connect Bank (Coming Soon)
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
