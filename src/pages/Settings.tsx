@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGuard } from "@/components/AuthGuard";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useIntegrationStatus } from "@/hooks/useIntegrationStatus";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -15,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useFeatureGate, MetricName, PLAN_LIMITS } from "@/hooks/useFeatureGate";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -314,14 +316,15 @@ function SettingsContent() {
         .from("profiles")
         .select("display_name, tin, tax_identity")
         .eq("id", user!.id)
-        .single();
+        .limit(1);
 
       if (error) throw error;
-      setDisplayName(data?.display_name || "");
-      setTin(data?.tin || "");
+      const profileRow = data?.[0];
+      setDisplayName(profileRow?.display_name || "");
+      setTin(profileRow?.tin || "");
       // Load tax_identity directly from the dedicated column
-      if (data?.tax_identity && TAX_IDENTITY_OPTIONS.some(opt => opt.value === data.tax_identity)) {
-        setTaxIdentity(data.tax_identity as TaxIdentity);
+      if (profileRow?.tax_identity && TAX_IDENTITY_OPTIONS.some(opt => opt.value === profileRow.tax_identity)) {
+        setTaxIdentity(profileRow.tax_identity as TaxIdentity);
       } else {
         setTaxIdentity(""); // Not set
       }
@@ -348,12 +351,12 @@ function SettingsContent() {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({
+        .upsert({
+          id: user.id,
           display_name: displayName,
           tin: tin || null,
           updated_at: new Date().toISOString()
-        })
-        .eq("id", user.id);
+        }, { onConflict: "id" });
 
       if (error) throw error;
 
@@ -380,11 +383,11 @@ function SettingsContent() {
       // Save to the dedicated tax_identity column
       const { error } = await supabase
         .from("profiles")
-        .update({
+        .upsert({
+          id: user.id,
           tax_identity: taxIdentity,
           updated_at: new Date().toISOString()
-        })
-        .eq("id", user.id);
+        }, { onConflict: "id" });
 
       if (error) throw error;
 
@@ -974,7 +977,9 @@ function SettingsContent() {
 export default function Settings() {
   return (
     <AuthGuard>
-      <SettingsContent />
+      <ErrorBoundary label="Settings">
+        <SettingsContent />
+      </ErrorBoundary>
     </AuthGuard>
   );
 }
