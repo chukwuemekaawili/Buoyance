@@ -27,7 +27,7 @@ export function WorkspaceSwitcher({ className }: { className?: string }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" className={cn("w-[200px] justify-between", className)}>
+                <Button variant="outline" className={cn("w-full justify-between", className)}>
                     <span className="flex items-center gap-2 truncate">
                         {activeWorkspace.entity_type === 'Individual' ? (
                             <User className="h-4 w-4 opacity-70 shrink-0" />

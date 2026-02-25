@@ -125,11 +125,7 @@ export function Header() {
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsMenuOpen(false);
-    if (user) {
-      navigate("/dashboard");
-    } else {
-      window.location.href = "/";
-    }
+    navigate("/");
   };
 
   const handleSignOut = async () => {

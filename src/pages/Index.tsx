@@ -15,13 +15,6 @@ const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect authenticated users to dashboard
-  useEffect(() => {
-    if (!loading && user) {
-      navigate("/dashboard", { replace: true });
-    }
-  }, [user, loading, navigate]);
-
   // Show loading spinner while checking auth
   if (loading) {
     return (
@@ -29,11 +22,6 @@ const Index = () => {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
-  }
-
-  // Only show landing page if not authenticated
-  if (user) {
-    return null; // Will redirect via useEffect
   }
 
   return (
