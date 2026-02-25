@@ -876,7 +876,6 @@ function SettingsContent() {
                               Upgrade
                             </Button>
                           </div>
-                          <p className="text-xs text-muted-foreground self-end">Paystack integration disabled</p>
                         </div>
                       )}
                     </div>

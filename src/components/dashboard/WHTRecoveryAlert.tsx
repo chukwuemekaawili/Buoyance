@@ -53,7 +53,7 @@ export function WHTRecoveryAlert() {
 
             const [{ data: expenses }, { data: whtCerts }] = await Promise.all([
                 supabase.from("expenses").select("amount_kobo, category").gte("date", yearStart),
-                supabase.from("wht_certificates").select("amount_kobo"),
+                supabase.from("wht_certificates" as any).select("amount_kobo"),
             ]);
 
             // Sum expenses by WHT-attracting category

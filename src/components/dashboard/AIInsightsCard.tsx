@@ -43,9 +43,9 @@ export function AIInsightsCard() {
                 { data: filingEvents },
             ] = await Promise.all([
                 supabase.from("incomes").select("amount_kobo, category, date").gte("date", yearStart),
-                supabase.from("expenses").select("amount_kobo, category, date, is_deductible").gte("date", yearStart),
+                supabase.from("expenses").select("amount_kobo, category, date, deductible").gte("date", yearStart),
                 supabase.from("filings").select("tax_type, status, period_start, period_end"),
-                supabase.from("wht_certificates").select("amount_kobo, status"),
+                supabase.from("wht_certificates" as any).select("amount_kobo, status"),
                 supabase.from("filing_events").select("tax_type, due_date, filed"),
             ]);
 
@@ -66,7 +66,7 @@ export function AIInsightsCard() {
             (expenses || []).forEach((e: any) => {
                 const k = stringToKobo(e.amount_kobo);
                 totalExpensesKobo = addKobo(totalExpensesKobo, k);
-                if (e.is_deductible) totalDeductibleKobo = addKobo(totalDeductibleKobo, k);
+                if (e.deductible) totalDeductibleKobo = addKobo(totalDeductibleKobo, k);
                 expenseCategories[e.category || "uncategorized"] = (expenseCategories[e.category || "uncategorized"] || 0) + 1;
             });
 
