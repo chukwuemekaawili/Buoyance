@@ -688,7 +688,7 @@ export function Header() {
             <div className="2xl:hidden flex items-center gap-2 flex-shrink-0">
               {user && (
                 <>
-                  <WorkspaceSwitcher className="hidden md:flex w-[160px] mr-1 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10 hover:text-primary-foreground" />
+                  <WorkspaceSwitcher className="hidden md:flex max-w-[240px] mr-1 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10 hover:text-primary-foreground" />
                   <Button variant="accent" size="sm" asChild className="hidden sm:flex">
                     <Link to="/filings/new">
                       <Plus className="h-4 w-4 mr-1" />
