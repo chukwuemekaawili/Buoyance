@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Banknote, Plus, Archive, Loader2, ArrowLeft, Search, Filter, BadgePercent, Receipt, Sparkles, CheckCircle2, AlertCircle, History, Edit } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useWorkspace } from "@/hooks/useWorkspace";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -138,7 +137,6 @@ export default function Incomes() {
   }, [source, category, description, runAIClassification]);
 
   const { user, loading: authLoading } = useAuth();
-  const { activeWorkspace } = useWorkspace();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -165,10 +163,8 @@ export default function Incomes() {
       navigate("/signin");
       return;
     }
-    if (activeWorkspace) {
-      fetchIncomes();
-    }
-  }, [user, authLoading, navigate, showHistory, activeWorkspace]);
+    fetchIncomes();
+  }, [user, authLoading, navigate, showHistory]);
 
   const fetchIncomes = async () => {
     if (!user) return;
@@ -181,7 +177,6 @@ export default function Incomes() {
         .from("incomes")
         .select("*")
         .eq("user_id", user.id)
-        .eq("organization_id", activeWorkspace?.id)
         .eq("archived", false);
 
       // Filter out superseded records unless showHistory is enabled
@@ -205,7 +200,7 @@ export default function Incomes() {
   };
 
   const handleAdd = async () => {
-    if (!user || !source.trim() || !amount || !activeWorkspace?.id) return;
+    if (!user || !source.trim() || !amount) return;
 
     setIsAdding(true);
     try {
@@ -219,7 +214,6 @@ export default function Incomes() {
 
       const { error } = await supabase.from("incomes").insert({
         user_id: user.id,
-        organization_id: activeWorkspace.id,
         source: source.trim(),
         amount_kobo: koboToString(amountKobo),
         date,

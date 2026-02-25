@@ -5,9 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Receipt, Plus, Archive, Loader2, ArrowLeft, Search, Filter, CheckCircle2, Sparkles, AlertCircle, Edit, History, Camera } from "lucide-react";
+import { Receipt, Plus, Archive, Loader2, ArrowLeft, Search, Filter, CheckCircle2, Sparkles, AlertCircle, Edit, History } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useWorkspace } from "@/hooks/useWorkspace";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -166,7 +165,6 @@ export default function Expenses() {
   }, [description, category, runAIClassification]);
 
   const { user, loading: authLoading } = useAuth();
-  const { activeWorkspace } = useWorkspace();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -193,10 +191,8 @@ export default function Expenses() {
       navigate("/signin");
       return;
     }
-    if (activeWorkspace) {
-      fetchExpenses();
-    }
-  }, [user, authLoading, navigate, showHistory, activeWorkspace]);
+    fetchExpenses();
+  }, [user, authLoading, navigate, showHistory]);
 
   const fetchExpenses = async () => {
     if (!user) return;
@@ -209,7 +205,6 @@ export default function Expenses() {
         .from("expenses")
         .select("*")
         .eq("user_id", user.id)
-        .eq("organization_id", activeWorkspace?.id)
         .eq("archived", false);
 
       // Filter out superseded records unless showHistory is enabled
@@ -233,7 +228,7 @@ export default function Expenses() {
   };
 
   const handleAdd = async () => {
-    if (!user || !description.trim() || !amount || !activeWorkspace?.id) return;
+    if (!user || !description.trim() || !amount) return;
 
     setIsAdding(true);
     try {
@@ -244,7 +239,6 @@ export default function Expenses() {
 
       const { error } = await supabase.from("expenses").insert({
         user_id: user.id,
-        organization_id: activeWorkspace.id,
         description: description.trim(),
         amount_kobo: koboToString(amountKobo),
         date,
