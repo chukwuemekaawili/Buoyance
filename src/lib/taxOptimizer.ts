@@ -42,7 +42,7 @@ const OPTIMIZATION_DATABASE: OptimizationSuggestion[] = [
     title: "Pension Contribution Relief",
     description: "Contributions to a Retirement Savings Account (RSA) are tax-deductible. You can contribute up to 8% of your gross emoluments.",
     potentialSavingsPercent: 8,
-    legalBasis: "Personal Income Tax Act (PITA) Section 4",
+    legalBasis: "Nigeria Tax Act (NTA) 2025",
     actionSteps: [
       "Ensure you're enrolled in a Pension Fund Administrator (PFA)",
       "Maximize monthly contributions up to 8% of gross salary",
@@ -58,7 +58,7 @@ const OPTIMIZATION_DATABASE: OptimizationSuggestion[] = [
     title: "National Housing Fund (NHF) Relief",
     description: "NHF contributions of 2.5% of basic salary are tax-deductible and can reduce your taxable income.",
     potentialSavingsPercent: 2.5,
-    legalBasis: "National Housing Fund Act 1992",
+    legalBasis: "National Housing Fund Act (as retained in NTA)",
     actionSteps: [
       "Register with the Federal Mortgage Bank of Nigeria",
       "Ensure employer deducts NHF contributions",
@@ -73,7 +73,7 @@ const OPTIMIZATION_DATABASE: OptimizationSuggestion[] = [
     id: "life-insurance",
     title: "Life Insurance Premium Relief",
     description: "Premiums paid on life insurance policies are deductible for PIT purposes, providing both tax savings and financial protection.",
-    legalBasis: "Personal Income Tax Act (PITA) Section 33",
+    legalBasis: "Nigeria Tax Act (NTA) 2025",
     actionSteps: [
       "Purchase a qualifying life insurance policy",
       "Ensure premiums are paid and documented",
@@ -90,7 +90,7 @@ const OPTIMIZATION_DATABASE: OptimizationSuggestion[] = [
     title: "Capital Allowances",
     description: "Claim depreciation on qualifying capital expenditure including plant, machinery, buildings, and motor vehicles.",
     potentialSavingsPercent: 5,
-    legalBasis: "Companies Income Tax Act (CITA) Second Schedule",
+    legalBasis: "Nigeria Tax Act (NTA) 2025 - Capital Allowances Schedule",
     actionSteps: [
       "Maintain a fixed asset register",
       "Calculate initial and annual allowances",
@@ -106,7 +106,7 @@ const OPTIMIZATION_DATABASE: OptimizationSuggestion[] = [
     title: "Research & Development Incentives",
     description: "Companies engaged in R&D activities may claim enhanced deductions on qualifying R&D expenditure.",
     potentialSavingsPercent: 20,
-    legalBasis: "Companies Income Tax Act (CITA) Section 26",
+    legalBasis: "Nigeria Tax Act (NTA) 2025",
     actionSteps: [
       "Document all R&D activities and expenses",
       "Ensure R&D is related to business operations",
@@ -326,7 +326,7 @@ export function getOptimizationCategories(): string[] {
  * Get suggestions by category
  */
 export function getSuggestionsByCategory(
-  taxType: TaxType, 
+  taxType: TaxType,
   category: OptimizationSuggestion["category"]
 ): OptimizationSuggestion[] {
   return getOptimizationSuggestions(taxType).filter(s => s.category === category);

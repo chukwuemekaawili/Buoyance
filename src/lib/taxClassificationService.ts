@@ -46,26 +46,26 @@ function getFallbackClassification(type: 'expense' | 'income', category: string)
       'maintenance', 'software', 'training'
     ];
     const isDeductible = deductibleCategories.includes(category);
-    
+
     return {
       deductible: isDeductible,
       confidence: 'low',
-      reasoning: isDeductible 
+      reasoning: isDeductible
         ? 'Business expense - typically deductible.'
         : 'Personal expense - typically not deductible.',
-      legal_reference: 'PITA/CITA Section 24'
+      legal_reference: 'Nigeria Tax Act (NTA) 2025'
     };
   } else {
     const exemptCategories = ['loan', 'gift', 'grant', 'refund'];
     const isExempt = exemptCategories.includes(category);
-    
+
     return {
       tax_exempt: isExempt,
       confidence: 'low',
       reasoning: isExempt
         ? 'Generally exempt from tax.'
         : 'Subject to Personal Income Tax.',
-      legal_reference: 'PITA Section 3'
+      legal_reference: 'Nigeria Tax Act (NTA) 2025'
     };
   }
 }

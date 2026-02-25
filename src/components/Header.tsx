@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/sheet";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Separator } from "@/components/ui/separator";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import logoDark from "@/assets/buoyance_logo_dark.png";
 import { cn } from "@/lib/utils";
 
@@ -556,6 +557,7 @@ export function Header() {
             <div className="hidden 2xl:flex items-center gap-2 ml-4 flex-shrink-0">
               {user && (
                 <>
+                  <WorkspaceSwitcher className="mr-2" />
                   <Button variant="accent" size="sm" asChild>
                     <Link to="/filings/new">
                       <Plus className="h-4 w-4 mr-1.5" />
@@ -682,6 +684,7 @@ export function Header() {
             <div className="2xl:hidden flex items-center gap-2 flex-shrink-0">
               {user && (
                 <>
+                  <WorkspaceSwitcher className="hidden md:flex w-[160px] mr-1" />
                   <Button variant="accent" size="sm" asChild className="hidden sm:flex">
                     <Link to="/filings/new">
                       <Plus className="h-4 w-4 mr-1" />
@@ -721,33 +724,38 @@ export function Header() {
               // Authenticated mobile menu
               <>
                 {/* User Profile Card */}
-                <div className="flex items-center gap-3 p-4 rounded-lg bg-primary-foreground/10 mb-4">
-                  <Avatar className="h-12 w-12 bg-primary-foreground/20 text-primary-foreground">
-                    <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-lg font-medium">
-                      {getInitials()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-primary-foreground truncate">
-                      {displayName || user.email?.split("@")[0] || "User"}
-                    </p>
-                    <p className="text-xs text-primary-foreground/60 truncate">{user.email}</p>
-                    {getTaxIdentityLabel() ? (
-                      <span className="inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-primary-foreground/20 text-primary-foreground">
-                        {getTaxIdentityLabel()}
-                      </span>
-                    ) : (
-                      <SheetClose asChild>
-                        <Link
-                          to="/settings"
-                          className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 text-xs font-medium rounded-md bg-amber-400/90 text-amber-900 hover:bg-amber-300 transition-colors"
-                          onClick={handleNavClick}
-                        >
-                          <User className="h-3 w-3" />
-                          Complete profile
-                        </Link>
-                      </SheetClose>
-                    )}
+                <div className="flex flex-col gap-3 p-4 rounded-lg bg-primary-foreground/10 mb-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12 bg-primary-foreground/20 text-primary-foreground">
+                      <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-lg font-medium">
+                        {getInitials()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-primary-foreground truncate">
+                        {displayName || user.email?.split("@")[0] || "User"}
+                      </p>
+                      <p className="text-xs text-primary-foreground/60 truncate">{user.email}</p>
+                      {getTaxIdentityLabel() ? (
+                        <span className="inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-primary-foreground/20 text-primary-foreground">
+                          {getTaxIdentityLabel()}
+                        </span>
+                      ) : (
+                        <SheetClose asChild>
+                          <Link
+                            to="/settings"
+                            className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 text-xs font-medium rounded-md bg-amber-400/90 text-amber-900 hover:bg-amber-300 transition-colors"
+                            onClick={handleNavClick}
+                          >
+                            <User className="h-3 w-3" />
+                            Complete profile
+                          </Link>
+                        </SheetClose>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-1">
+                    <WorkspaceSwitcher className="w-full bg-primary/40 border-primary-foreground/20 text-primary-foreground hover:bg-primary/60 hover:text-primary-foreground" />
                   </div>
                 </div>
 

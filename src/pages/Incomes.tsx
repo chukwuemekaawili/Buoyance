@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { CSVUploader } from "@/components/calculator/CSVUploader";
 import {
   Dialog,
   DialogContent,
@@ -379,237 +380,239 @@ export default function Incomes() {
               <h1 className="text-2xl font-bold">Income Records</h1>
               <p className="text-muted-foreground">Track your income sources for tax calculations</p>
             </div>
-            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Income
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Record New Income</DialogTitle>
-                  <DialogDescription>
-                    Add an income entry for tracking and tax calculations.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-                  <div className="space-y-2">
-                    <Label>Source *</Label>
-                    <Input
-                      placeholder="e.g., ABC Company, Client Name"
-                      value={source}
-                      onChange={(e) => setSource(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+            <div className="flex gap-2">
+              <CSVUploader type="income" onSuccess={fetchIncomes} />
+              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Income
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Record New Income</DialogTitle>
+                    <DialogDescription>
+                      Add an income entry for tracking and tax calculations.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
                     <div className="space-y-2">
-                      <Label>Amount (₦) *</Label>
+                      <Label>Source *</Label>
                       <Input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="0"
-                        value={amount}
-                        onChange={handleAmountInput}
-                        className="font-mono"
+                        placeholder="e.g., ABC Company, Client Name"
+                        value={source}
+                        onChange={(e) => setSource(e.target.value)}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Date *</Label>
-                      <Input
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Amount (₦) *</Label>
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="0"
+                          value={amount}
+                          onChange={handleAmountInput}
+                          className="font-mono"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Date *</Label>
+                        <Input
+                          type="date"
+                          value={date}
+                          onChange={(e) => setDate(e.target.value)}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {INCOME_CATEGORIES.map(c => (
-                          <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Category</Label>
+                      <Select value={category} onValueChange={setCategory}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {INCOME_CATEGORIES.map(c => (
+                            <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  {/* AI-Powered Tax Classification */}
-                  <div className={`p-4 rounded-lg border ${isClassifying
+                    {/* AI-Powered Tax Classification */}
+                    <div className={`p-4 rounded-lg border ${isClassifying
                       ? 'bg-muted/50 border-muted-foreground/20'
                       : classification
                         ? getConfidenceBgColor(classification.confidence)
                         : taxExempt
                           ? 'bg-blue-500/10 border-blue-500/20'
                           : 'bg-amber-500/10 border-amber-500/20'
-                    }`}>
-                    <div className="flex items-start gap-3">
-                      {isClassifying ? (
-                        <>
-                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground flex-shrink-0 mt-0.5" />
-                          <div>
-                            <p className="font-medium flex items-center gap-2">
-                              <Sparkles className="h-4 w-4" />
-                              AI Analyzing...
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              Checking against Nigerian tax rules
-                            </p>
-                          </div>
-                        </>
-                      ) : classification ? (
-                        <>
-                          <div className="flex-shrink-0 mt-0.5">
-                            {taxExempt ? (
-                              <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            ) : (
-                              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
+                      }`}>
+                      <div className="flex items-start gap-3">
+                        {isClassifying ? (
+                          <>
+                            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-medium flex items-center gap-2">
+                                <Sparkles className="h-4 w-4" />
+                                AI Analyzing...
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Checking against Nigerian tax rules
+                              </p>
+                            </div>
+                          </>
+                        ) : classification ? (
+                          <>
+                            <div className="flex-shrink-0 mt-0.5">
+                              {taxExempt ? (
+                                <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              ) : (
+                                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className={`font-medium ${taxExempt ? 'text-blue-700 dark:text-blue-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                                  {taxExempt ? '🔵 Tax Exempt' : '💰 Taxable Income'}
+                                </p>
+                                <span className={`text-xs px-2 py-0.5 rounded-full border flex items-center gap-1 ${getConfidenceBgColor(classification.confidence)} ${getConfidenceColor(classification.confidence)}`}>
+                                  <Sparkles className="h-3 w-3" />
+                                  {classification.confidence} confidence
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {classification.reasoning}
+                              </p>
+                              {classification.legal_reference && (
+                                <p className="text-xs text-muted-foreground mt-1 font-mono">
+                                  📖 {classification.legal_reference}
+                                </p>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex-shrink-0 mt-0.5">
+                              {taxExempt ? (
+                                <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              ) : (
+                                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                              )}
+                            </div>
+                            <div>
                               <p className={`font-medium ${taxExempt ? 'text-blue-700 dark:text-blue-400' : 'text-amber-700 dark:text-amber-400'}`}>
                                 {taxExempt ? '🔵 Tax Exempt' : '💰 Taxable Income'}
                               </p>
-                              <span className={`text-xs px-2 py-0.5 rounded-full border flex items-center gap-1 ${getConfidenceBgColor(classification.confidence)} ${getConfidenceColor(classification.confidence)}`}>
-                                <Sparkles className="h-3 w-3" />
-                                {classification.confidence} confidence
-                              </span>
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {classification.reasoning}
-                            </p>
-                            {classification.legal_reference && (
-                              <p className="text-xs text-muted-foreground mt-1 font-mono">
-                                📖 {classification.legal_reference}
+                              <p className="text-sm text-muted-foreground">
+                                Enter a source to get AI classification
                               </p>
-                            )}
-                          </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                      <div>
+                        <p className="font-medium">Override Classification</p>
+                        <p className="text-sm text-muted-foreground">
+                          Manually set if AI got it wrong
+                        </p>
+                      </div>
+                      <Switch checked={taxExempt} onCheckedChange={setTaxExempt} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Description (Optional)</Label>
+                      <Textarea
+                        placeholder="Additional notes..."
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+
+                    {/* WHT Section */}
+                    <div className="flex items-center justify-between p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                      <div>
+                        <p className="font-medium flex items-center gap-2">
+                          <BadgePercent className="h-4 w-4 text-amber-500" />
+                          WHT Deducted at Source?
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Toggle if WHT was already deducted from this income
+                        </p>
+                      </div>
+                      <Switch checked={whtDeducted} onCheckedChange={setWhtDeducted} />
+                    </div>
+                    {whtDeducted && (
+                      <div className="space-y-2">
+                        <Label>WHT Amount Deducted (₦)</Label>
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="e.g., 10,000"
+                          value={whtAmount}
+                          onChange={handleWhtAmountInput}
+                          className="font-mono"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          This amount will be credited against your PIT/CIT liability
+                        </p>
+                      </div>
+                    )}
+
+                    {/* VAT Section */}
+                    <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                      <div>
+                        <p className="font-medium flex items-center gap-2">
+                          <Receipt className="h-4 w-4" />
+                          VATable Income?
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Toggle if this income is subject to VAT
+                        </p>
+                      </div>
+                      <Switch checked={vatable} onCheckedChange={setVatable} />
+                    </div>
+                    {vatable && (
+                      <div className="space-y-2">
+                        <Label>Output VAT Amount (₦)</Label>
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="Auto-calculated at 7.5% if empty"
+                          value={outputVatAmount}
+                          onChange={handleVatAmountInput}
+                          className="font-mono"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Enter the actual VAT charged, or leave blank for 7.5% default
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleAdd} disabled={isAdding || !source.trim() || !amount}>
+                      {isAdding ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Adding...
                         </>
                       ) : (
-                        <>
-                          <div className="flex-shrink-0 mt-0.5">
-                            {taxExempt ? (
-                              <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            ) : (
-                              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                            )}
-                          </div>
-                          <div>
-                            <p className={`font-medium ${taxExempt ? 'text-blue-700 dark:text-blue-400' : 'text-amber-700 dark:text-amber-400'}`}>
-                              {taxExempt ? '🔵 Tax Exempt' : '💰 Taxable Income'}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              Enter a source to get AI classification
-                            </p>
-                          </div>
-                        </>
+                        "Add Income"
                       )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                    <div>
-                      <p className="font-medium">Override Classification</p>
-                      <p className="text-sm text-muted-foreground">
-                        Manually set if AI got it wrong
-                      </p>
-                    </div>
-                    <Switch checked={taxExempt} onCheckedChange={setTaxExempt} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Description (Optional)</Label>
-                    <Textarea
-                      placeholder="Additional notes..."
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      rows={2}
-                    />
-                  </div>
-
-                  {/* WHT Section */}
-                  <div className="flex items-center justify-between p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                    <div>
-                      <p className="font-medium flex items-center gap-2">
-                        <BadgePercent className="h-4 w-4 text-amber-500" />
-                        WHT Deducted at Source?
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Toggle if WHT was already deducted from this income
-                      </p>
-                    </div>
-                    <Switch checked={whtDeducted} onCheckedChange={setWhtDeducted} />
-                  </div>
-                  {whtDeducted && (
-                    <div className="space-y-2">
-                      <Label>WHT Amount Deducted (₦)</Label>
-                      <Input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="e.g., 10,000"
-                        value={whtAmount}
-                        onChange={handleWhtAmountInput}
-                        className="font-mono"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        This amount will be credited against your PIT/CIT liability
-                      </p>
-                    </div>
-                  )}
-
-                  {/* VAT Section */}
-                  <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                    <div>
-                      <p className="font-medium flex items-center gap-2">
-                        <Receipt className="h-4 w-4" />
-                        VATable Income?
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Toggle if this income is subject to VAT
-                      </p>
-                    </div>
-                    <Switch checked={vatable} onCheckedChange={setVatable} />
-                  </div>
-                  {vatable && (
-                    <div className="space-y-2">
-                      <Label>Output VAT Amount (₦)</Label>
-                      <Input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="Auto-calculated at 7.5% if empty"
-                        value={outputVatAmount}
-                        onChange={handleVatAmountInput}
-                        className="font-mono"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Enter the actual VAT charged, or leave blank for 7.5% default
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleAdd} disabled={isAdding || !source.trim() || !amount}>
-                    {isAdding ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Adding...
-                      </>
-                    ) : (
-                      "Add Income"
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
-
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card className="p-4 bg-secondary/10 border-secondary/20">
@@ -802,22 +805,24 @@ export default function Incomes() {
             </div>
           )}
         </div>
-      </main>
+      </main >
       <Footer />
 
       {/* Correction Dialog */}
-      {correctionTarget && (
-        <IncomeCorrectionDialog
-          open={!!correctionTarget}
-          onOpenChange={(open) => !open && setCorrectionTarget(null)}
-          record={correctionTarget}
-          categories={INCOME_CATEGORIES}
-          onCorrected={() => {
-            setCorrectionTarget(null);
-            fetchIncomes();
-          }}
-        />
-      )}
-    </div>
+      {
+        correctionTarget && (
+          <IncomeCorrectionDialog
+            open={!!correctionTarget}
+            onOpenChange={(open) => !open && setCorrectionTarget(null)}
+            record={correctionTarget}
+            categories={INCOME_CATEGORIES}
+            onCorrected={() => {
+              setCorrectionTarget(null);
+              fetchIncomes();
+            }}
+          />
+        )
+      }
+    </div >
   );
 }

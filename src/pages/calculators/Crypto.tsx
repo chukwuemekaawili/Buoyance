@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,9 +10,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ConsentModal } from "@/components/ConsentModal";
+import { ProGateModal } from "@/components/ProGateModal";
+import { useFeatureGate } from "@/hooks/useFeatureGate";
 import { Header } from "@/components/Header";
+import { NTATransitionGuide } from "@/components/calculator/NTATransitionGuide";
 import { Footer } from "@/components/Footer";
 import { calculateCryptoTax, formatCryptoTaxResult, CryptoTransaction } from "@/lib/cryptoTaxCalculator";
 import { parseNgnToKobo, formatKoboToNgn, koboToString } from "@/lib/money";
@@ -44,6 +47,17 @@ export default function CryptoCalculator() {
   const { toast } = useToast();
   const hasCalculationConsent = hasConsent("calculation");
 
+  const navigate = useNavigate();
+  const { isPro, isLoading: isBillingLoading } = useFeatureGate();
+  const [showProGate, setShowProGate] = useState(false);
+
+  // Lock feature for free users
+  useEffect(() => {
+    if (!isBillingLoading && !isPro) {
+      setShowProGate(true);
+    }
+  }, [isPro, isBillingLoading]);
+
   const addTransaction = () => {
     setTransactions(prev => [...prev, {
       id: crypto.randomUUID(),
@@ -60,7 +74,7 @@ export default function CryptoCalculator() {
   };
 
   const updateTransaction = (id: string, field: string, value: string) => {
-    setTransactions(prev => prev.map(t => 
+    setTransactions(prev => prev.map(t =>
       t.id === id ? { ...t, [field]: value } : t
     ));
   };
@@ -86,7 +100,7 @@ export default function CryptoCalculator() {
         const amount = parseFloat(t.amount.replace(/,/g, ""));
         const priceNgn = parseFloat(t.priceNgn.replace(/,/g, ""));
         const totalNgn = amount * priceNgn;
-        
+
         return {
           id: t.id,
           transaction_type: t.type as CryptoTransaction["transaction_type"],
@@ -106,7 +120,7 @@ export default function CryptoCalculator() {
 
   const handleSaveCalculation = async () => {
     if (!user || !taxResult) return;
-    
+
     if (!hasCalculationConsent) {
       setShowConsentModal(true);
       return;
@@ -411,7 +425,20 @@ export default function CryptoCalculator() {
               onConsentGiven={() => setShowConsentModal(false)}
               context="calculation"
             />
+
+            <ProGateModal
+              isOpen={showProGate}
+              onClose={() => {
+                setShowProGate(false);
+                navigate("/calculators");
+              }}
+              featureName="Crypto Tax Calculator"
+              description="Calculating tax on cryptocurrency capital gains, mining, and staking is a premium workspace feature."
+            />
           </Card>
+          <div className="mt-6">
+            <NTATransitionGuide taxType="CRYPTO" />
+          </div>
         </div>
       </main>
       <Footer />

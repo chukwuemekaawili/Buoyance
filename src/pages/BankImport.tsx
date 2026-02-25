@@ -1,253 +1,310 @@
-import { useState, useCallback } from "react";
-import { AuthGuard } from "@/components/AuthGuard";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useWorkspace } from "@/hooks/useWorkspace";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { useDropzone } from "react-dropzone";
-import { Upload, FileSpreadsheet, CheckCircle, ArrowRight, Loader2, Check, X } from "lucide-react";
-import { parseStatementFile, type ParseResult, type ParsedTransaction } from "@/lib/parsers/bankStatementParser";
-import { categorizeTransaction, getCategoryIcon } from "@/lib/categorizationEngine";
+import { Loader2, ArrowLeft, RefreshCw, CheckCircle2, XCircle, ArrowRight, Landmark, Filter } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { categorizeTransaction } from "@/lib/categorizationEngine";
 
-function BankImportContent() {
+interface ImportedTransaction {
+    id: string;
+    bank_connection_id: string;
+    raw_description: string;
+    amount_kobo: number;
+    transaction_date: string;
+    suggested_category: string | null;
+    confidence_score: number | null;
+    status: "pending" | "approved" | "dismissed";
+    bank_name?: string;
+}
+
+export default function BankImport() {
+    const { user, loading: authLoading } = useAuth();
+    const { activeWorkspace } = useWorkspace();
     const { toast } = useToast();
-    const { user } = useAuth();
-    const [loading, setLoading] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [parseResult, setParseResult] = useState<ParseResult | null>(null);
-    const [categorized, setCategorized] = useState<Map<number, { category: string; confidence: number; tax_deductible: boolean }>>(new Map());
-    const [approved, setApproved] = useState<Set<number>>(new Set());
+    const navigate = useNavigate();
 
-    const onDrop = useCallback(async (acceptedFiles: File[]) => {
-        const file = acceptedFiles[0];
-        if (!file) return;
+    const [transactions, setTransactions] = useState<ImportedTransaction[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [filterBank, setFilterBank] = useState<string>("all");
+    const [uniqueBanks, setUniqueBanks] = useState<{ id: string, name: string }[]>([]);
 
-        setLoading(true);
-        setParseResult(null);
-        setCategorized(new Map());
-        setApproved(new Set());
+    // Action states
+    const [isProcessing, setIsProcessing] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (authLoading) return;
+        if (!user) {
+            navigate("/signin");
+            return;
+        }
+        fetchPendingTransactions();
+    }, [user, authLoading, activeWorkspace]);
+
+    const fetchPendingTransactions = async () => {
+        if (!activeWorkspace) return;
+        setIsLoading(true);
 
         try {
-            const result = await parseStatementFile(file);
-            setParseResult(result);
+            const { data, error } = await supabase
+                .from("imported_transactions")
+                .select(`
+          *,
+          bank_connections ( id, account_name, provider )
+        `)
+                .eq("workspace_id", activeWorkspace.id)
+                .eq("status", "pending")
+                .order("transaction_date", { ascending: false });
 
-            // Auto-categorize all transactions
-            const cats = new Map<number, { category: string; confidence: number; tax_deductible: boolean }>();
-            result.transactions.forEach((txn, i) => {
-                const suggestion = categorizeTransaction(txn.description, txn.amount_kobo, txn.debit_credit === 'debit');
-                cats.set(i, { category: suggestion.category, confidence: suggestion.confidence, tax_deductible: suggestion.tax_deductible });
-            });
-            setCategorized(cats);
+            if (error) throw error;
 
-            toast({
-                title: `${result.transactions.length} transactions imported!`,
-                description: `Bank detected: ${result.bank_detected}. Review and approve below.`,
-            });
-        } catch (err) {
-            toast({ title: "Parse Failed", description: String(err), variant: "destructive" });
-        } finally {
-            setLoading(false);
-        }
-    }, [toast]);
-
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop,
-        accept: {
-            'text/csv': ['.csv'],
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-            'application/vnd.ms-excel': ['.xls'],
-        },
-        maxFiles: 1,
-    });
-
-    const toggleApprove = (i: number) => {
-        setApproved(prev => {
-            const next = new Set(prev);
-            if (next.has(i)) next.delete(i);
-            else next.add(i);
-            return next;
-        });
-    };
-
-    const approveAll = () => {
-        if (parseResult) {
-            setApproved(new Set(parseResult.transactions.map((_, i) => i)));
-        }
-    };
-
-    const saveApproved = async () => {
-        if (!user || !parseResult || approved.size === 0) return;
-        setSaving(true);
-
-        try {
-            const rows = Array.from(approved).map(i => {
-                const txn = parseResult.transactions[i];
-                const cat = categorized.get(i);
+            // Extract unique banks for filter dropdown
+            const banksMap = new Map();
+            const mappedTxs = (data || []).map((tx: any) => {
+                const bconn = tx.bank_connections;
+                if (bconn) {
+                    banksMap.set(bconn.id, bconn.account_name || bconn.provider);
+                }
                 return {
-                    user_id: user.id,
-                    source_type: 'bank_statement',
-                    transaction_date: txn.date || null,
-                    description: txn.description,
-                    amount_kobo: txn.amount_kobo,
-                    debit_credit: txn.debit_credit,
-                    raw_data: { bank: parseResult.bank_detected, balance_kobo: txn.balance_kobo },
-                    confidence_score: cat?.confidence ?? 0,
-                    category_suggestion: cat?.category ?? 'uncategorized',
-                    status: 'approved',
-                    approved_at: new Date().toISOString(),
+                    ...tx,
+                    bank_name: bconn ? (bconn.account_name || bconn.provider) : 'Unknown Bank'
                 };
             });
 
-            const { error } = await supabase.from('imported_transactions' as any).insert(rows);
-            if (error) throw error;
-
-            toast({
-                title: `${approved.size} transactions saved!`,
-                description: "They're now available in your records.",
-            });
-            setParseResult(null);
-            setCategorized(new Map());
-            setApproved(new Set());
+            setUniqueBanks(Array.from(banksMap, ([id, name]) => ({ id, name })));
+            setTransactions(mappedTxs);
         } catch (err: any) {
-            toast({ title: "Save Failed", description: err.message || String(err), variant: "destructive" });
+            toast({
+                title: "Failed to load un-reconciled items",
+                description: err.message,
+                variant: "destructive"
+            });
         } finally {
-            setSaving(false);
+            setIsLoading(false);
         }
     };
 
-    const formatNgn = (kobo: number) => `₦${(kobo / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
+    const handleReconcile = async (tx: ImportedTransaction, action: "approve" | "dismiss") => {
+        if (!activeWorkspace || !user) return;
+        setIsProcessing(tx.id);
+
+        try {
+            if (action === "dismiss") {
+                const { error } = await supabase
+                    .from("imported_transactions")
+                    .update({ status: "dismissed" })
+                    .eq("id", tx.id);
+                if (error) throw error;
+                toast({ title: "Transaction dismissed", description: "Removed from reconciliation queue." });
+            }
+
+            else if (action === "approve") {
+                // Run it through the categorization engine one final time to ensure standard tagging natively
+                const isExpense = tx.amount_kobo < 0;
+                const categoryMatch = categorizeTransaction(tx.raw_description, Math.abs(tx.amount_kobo), isExpense);
+
+                const ledgerTable = isExpense ? "expenses" : "incomes";
+                const payload = {
+                    workspace_id: activeWorkspace.id,
+                    user_id: user.id,
+                    amount_kobo: Math.abs(tx.amount_kobo).toString(),
+                    category: tx.suggested_category || categoryMatch.category,
+                    date: tx.transaction_date,
+                    description: tx.raw_description,
+                    archived: false,
+                };
+
+                // Insert into core ledger
+                const { data: insertedRec, error: insertErr } = await supabase
+                    .from(ledgerTable)
+                    .insert(payload)
+                    .select()
+                    .single();
+
+                if (insertErr) throw insertErr;
+
+                // Update the imported_transactions bridge linking the two explicitly
+                const { error: bridgeErr } = await supabase
+                    .from("imported_transactions")
+                    .update({
+                        status: "approved",
+                        reconciled_ledger_type: isExpense ? "expense" : "income",
+                        reconciled_ledger_id: insertedRec.id
+                    })
+                    .eq("id", tx.id);
+
+                if (bridgeErr) throw bridgeErr;
+
+                toast({ title: "Reconciled", description: `Added to your ${ledgerTable} ledger.` });
+            }
+
+            // Slice out of local state
+            setTransactions(prev => prev.filter(t => t.id !== tx.id));
+        } catch (err: any) {
+            toast({
+                title: "Reconciliation Failed",
+                description: err.message,
+                variant: "destructive"
+            });
+        } finally {
+            setIsProcessing(null);
+        }
+    };
+
+    // derived filtered state
+    const visibleTransactions = filterBank === "all"
+        ? transactions
+        : transactions.filter(t => t.bank_connection_id === filterBank);
 
     return (
         <div className="min-h-screen flex flex-col bg-background">
             <Header />
             <main className="flex-grow pt-20 md:pt-28 pb-16">
-                <div className="container mx-auto px-4 md:px-6 max-w-6xl">
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-foreground">Bank Statement Import</h1>
-                        <p className="text-muted-foreground mt-2">
-                            Upload your bank statement. We'll auto-detect the bank, parse transactions, and categorize them.
-                        </p>
+                <div className="container mx-auto px-4 md:px-6 max-w-5xl">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                        <div>
+                            <Link to="/dashboard" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-4">
+                                <ArrowLeft className="h-4 w-4 mr-2" />
+                                Back to Dashboard
+                            </Link>
+                            <h1 className="text-3xl font-bold flex items-center gap-2 text-foreground">
+                                <ArrowRight className="h-6 w-6 text-primary" />
+                                Bank Reconciliation
+                            </h1>
+                            <p className="text-muted-foreground mt-1">
+                                Map unassigned transactions from your connected banks into the permanent tax ledgers.
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Select value={filterBank} onValueChange={setFilterBank}>
+                                <SelectTrigger className="w-[180px]">
+                                    <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
+                                    <SelectValue placeholder="All Connections" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Connections</SelectItem>
+                                    {uniqueBanks.map(b => (
+                                        <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Button variant="outline" onClick={fetchPendingTransactions} disabled={isLoading}>
+                                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                                Refresh
+                            </Button>
+                        </div>
                     </div>
 
-                    {/* Upload Area */}
-                    {!parseResult && (
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div
-                                    {...getRootProps()}
-                                    className={`border-2 border-dashed rounded-lg p-16 text-center cursor-pointer transition-colors
-                    ${isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/20 hover:border-primary/50'}`}
-                                >
-                                    <input {...getInputProps()} />
-                                    {loading ? (
-                                        <div className="space-y-3">
-                                            <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary" />
-                                            <p className="text-sm text-muted-foreground">Parsing transactions...</p>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <FileSpreadsheet className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                                            <p className="text-lg font-medium">Drop bank statement here</p>
-                                            <p className="text-sm text-muted-foreground mt-2">Supports CSV and Excel files from GTBank, Access, UBA, and more</p>
-                                        </>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Results */}
-                    {parseResult && (
-                        <>
-                            {/* Summary */}
-                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-                                <Card>
-                                    <CardHeader className="pb-2"><CardDescription>Transactions</CardDescription></CardHeader>
-                                    <CardContent><p className="text-2xl font-bold">{parseResult.transactions.length}</p></CardContent>
-                                </Card>
-                                <Card>
-                                    <CardHeader className="pb-2"><CardDescription>Bank Detected</CardDescription></CardHeader>
-                                    <CardContent><p className="text-xl font-bold capitalize">{parseResult.bank_detected}</p></CardContent>
-                                </Card>
-                                <Card>
-                                    <CardHeader className="pb-2"><CardDescription>Total Debits</CardDescription></CardHeader>
-                                    <CardContent><p className="text-lg font-bold text-red-500">{formatNgn(parseResult.total_debits_kobo)}</p></CardContent>
-                                </Card>
-                                <Card>
-                                    <CardHeader className="pb-2"><CardDescription>Total Credits</CardDescription></CardHeader>
-                                    <CardContent><p className="text-lg font-bold text-green-600">{formatNgn(parseResult.total_credits_kobo)}</p></CardContent>
-                                </Card>
-                            </div>
-
-                            {/* Controls */}
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex gap-3">
-                                    <Button variant="outline" onClick={approveAll}>
-                                        <CheckCircle className="h-4 w-4 mr-2" /> Approve All ({parseResult.transactions.length})
-                                    </Button>
-                                    <Button onClick={() => { setParseResult(null); setCategorized(new Map()); setApproved(new Set()); }}>
-                                        <Upload className="h-4 w-4 mr-2" /> Upload New
-                                    </Button>
-                                </div>
-                                <Button disabled={approved.size === 0 || saving} onClick={saveApproved}>
-                                    {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArrowRight className="h-4 w-4 mr-2" />}
-                                    Save {approved.size} Transactions
+                    <div className="grid gap-6">
+                        {isLoading ? (
+                            <Card className="p-12 flex flex-col items-center justify-center bg-muted/20 border-border">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                                <p className="text-muted-foreground">Pulling queue arrays from the database...</p>
+                            </Card>
+                        ) : visibleTransactions.length === 0 ? (
+                            <Card className="p-12 text-center shadow-none border-dashed bg-muted/10">
+                                <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500/50" />
+                                <h3 className="text-xl font-semibold mb-2">You're all caught up!</h3>
+                                <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-6">
+                                    There are zero pending Bank transactions left to reconcile for this workspace. Use the Sync function on the Connections page to pull new batches.
+                                </p>
+                                <Button variant="outline" asChild>
+                                    <Link to="/bank-connections">Manage Bank Connections</Link>
                                 </Button>
-                            </div>
+                            </Card>
+                        ) : (
+                            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex flex-col">
+                                <div className="grid grid-cols-12 gap-4 p-4 font-semibold text-sm border-b bg-muted/50 text-muted-foreground">
+                                    <div className="col-span-2">Date</div>
+                                    <div className="col-span-4">Raw Bank Description</div>
+                                    <div className="col-span-2 text-right">Amount</div>
+                                    <div className="col-span-2">AI Guess</div>
+                                    <div className="col-span-2 text-center">Action</div>
+                                </div>
 
-                            {/* Transaction List */}
-                            <Card>
-                                <CardContent className="pt-6">
-                                    <div className="space-y-2">
-                                        {parseResult.transactions.map((txn, i) => {
-                                            const cat = categorized.get(i);
-                                            const isApproved = approved.has(i);
+                                <ScrollArea className="h-[60vh]">
+                                    <div className="flex flex-col">
+                                        {visibleTransactions.map((tx) => {
+                                            const isExpense = tx.amount_kobo < 0;
+                                            const displayAmount = Math.abs(tx.amount_kobo) / 100;
+
                                             return (
-                                                <div key={i} className={`flex items-center justify-between p-3 rounded-lg transition-colors
-                          ${isApproved ? 'bg-green-500/5 border border-green-500/20' : 'bg-muted/50'}`}>
-                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => toggleApprove(i)}>
-                                                            {isApproved ? <Check className="h-4 w-4 text-green-600" /> : <div className="h-4 w-4 border rounded" />}
-                                                        </Button>
-                                                        <div className="min-w-0">
-                                                            <p className="font-medium text-sm truncate">{txn.description || 'No description'}</p>
-                                                            <p className="text-xs text-muted-foreground">{txn.date}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-3 shrink-0">
-                                                        {cat && (
-                                                            <Badge variant="outline" className="text-xs">
-                                                                {getCategoryIcon(cat.category)} {cat.category}
-                                                                {cat.tax_deductible && <span className="ml-1 text-green-600">✓ deductible</span>}
-                                                            </Badge>
-                                                        )}
-                                                        <span className={`font-medium text-sm ${txn.debit_credit === 'debit' ? 'text-red-500' : 'text-green-600'}`}>
-                                                            {txn.debit_credit === 'debit' ? '-' : '+'}{formatNgn(txn.amount_kobo)}
+                                                <div key={tx.id} className="grid grid-cols-12 gap-4 p-4 border-b last:border-0 hover:bg-muted/10 items-center transition-colors">
+                                                    {/* Date & Source */}
+                                                    <div className="col-span-2 flex flex-col">
+                                                        <span className="text-sm font-medium">{new Date(tx.transaction_date).toLocaleDateString()}</span>
+                                                        <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1 truncate">
+                                                            <Landmark className="h-3 w-3" />
+                                                            {tx.bank_name}
                                                         </span>
+                                                    </div>
+
+                                                    {/* Description */}
+                                                    <div className="col-span-4 flex items-center">
+                                                        <span className="text-sm line-clamp-2" title={tx.raw_description}>
+                                                            {tx.raw_description}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Amount */}
+                                                    <div className={`col-span-2 text-right font-mono font-medium ${isExpense ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                                        {isExpense ? '- ' : '+ '}₦{displayAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                    </div>
+
+                                                    {/* Categorization Pre-fill */}
+                                                    <div className="col-span-2">
+                                                        <Badge variant={isExpense ? "outline" : "secondary"} className="text-xs">
+                                                            {tx.suggested_category || categorizeTransaction(tx.raw_description, Math.abs(tx.amount_kobo), isExpense).category}
+                                                        </Badge>
+                                                    </div>
+
+                                                    {/* Decision Actions */}
+                                                    <div className="col-span-2 flex justify-end gap-2 pr-2">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                                            onClick={() => handleReconcile(tx, "dismiss")}
+                                                            disabled={isProcessing === tx.id}
+                                                            title="Dismiss / Ignore"
+                                                        >
+                                                            <XCircle className="h-5 w-5" />
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="default"
+                                                            className="h-8 gap-1 pl-2 pr-3 bg-primary hover:bg-primary/90 text-primary-foreground"
+                                                            onClick={() => handleReconcile(tx, "approve")}
+                                                            disabled={isProcessing === tx.id}
+                                                        >
+                                                            {isProcessing === tx.id ? (
+                                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                            ) : (
+                                                                <CheckCircle2 className="h-4 w-4" />
+                                                            )}
+                                                            Accept
+                                                        </Button>
                                                     </div>
                                                 </div>
                                             );
                                         })}
                                     </div>
-                                </CardContent>
-                            </Card>
-                        </>
-                    )}
+                                </ScrollArea>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </main>
             <Footer />
         </div>
-    );
-}
-
-export default function BankImport() {
-    return (
-        <AuthGuard>
-            <BankImportContent />
-        </AuthGuard>
     );
 }

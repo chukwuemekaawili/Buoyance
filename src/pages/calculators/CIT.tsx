@@ -17,7 +17,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { ConsentModal } from "@/components/ConsentModal";
 import { Header } from "@/components/Header";
+import { NTATransitionGuide } from "@/components/calculator/NTATransitionGuide";
 import { Footer } from "@/components/Footer";
+import { AITaxDrawer } from "@/components/calculators/AITaxDrawer";
 import { OptimizationOpportunities } from "@/components/OptimizationOpportunities";
 import { RecordsLoader } from "@/components/calculator/RecordsLoader";
 import { RecordsSummary } from "@/hooks/useRecordsForPeriod";
@@ -63,18 +65,22 @@ interface TaxRule {
 export default function CITCalculator() {
   const [revenueInput, setRevenueInput] = useState<string>("");
   const [expensesInput, setExpensesInput] = useState<string>("");
+  const [capitalAllowancesInput, setCapitalAllowancesInput] = useState<string>("");
+  const [lossCarryForwardInput, setLossCarryForwardInput] = useState<string>("");
   const [isSmallCompany, setIsSmallCompany] = useState(false);
+  const [isProfessionalServices, setIsProfessionalServices] = useState(false);
   const [isLargeMNE, setIsLargeMNE] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
+  const [isAIDrawerOpen, setIsAIDrawerOpen] = useState(false);
   const [taxRule, setTaxRule] = useState<TaxRule | null>(null);
   const [ruleLoading, setRuleLoading] = useState(true);
   const [ruleError, setRuleError] = useState<string | null>(null);
   const [recordsSummary, setRecordsSummary] = useState<RecordsSummary | null>(null);
   const { user } = useAuth();
-  const { hasConsent } = useConsent();
+  const { hasAgreedToLatestTerms } = useConsent();
   const { toast } = useToast();
-  const hasCalculationConsent = hasConsent("calculation");
+  const hasCalculationConsent = hasAgreedToLatestTerms;
 
   // Handle records loaded from RecordsLoader
   const handleRecordsLoaded = useCallback((summary: RecordsSummary) => {
@@ -96,7 +102,7 @@ export default function CITCalculator() {
       try {
         setRuleLoading(true);
         setRuleError(null);
-        
+
         const { data, error } = await supabase
           .from("tax_rules")
           .select("*")
@@ -138,51 +144,81 @@ export default function CITCalculator() {
     return parseNgnToKobo(ngnValue);
   }, [expensesInput]);
 
-  const taxableProfitKobo = useMemo(() => {
+  const assessableProfitKobo = useMemo(() => {
     const profit = revenueKobo - allowableExpensesKobo;
     return profit > 0n ? profit : 0n;
   }, [revenueKobo, allowableExpensesKobo]);
 
-  const { taxPayableKobo, effectiveRate, appliedRate, minimumETRApplied, topUpTaxKobo } = useMemo(() => {
-    if (!taxRule || taxableProfitKobo === 0n) {
-      return { taxPayableKobo: 0n, effectiveRate: 0, appliedRate: 0, minimumETRApplied: false, topUpTaxKobo: 0n };
+  const capitalAllowancesKobo = useMemo(() => {
+    const ngnValue = capitalAllowancesInput.replace(/,/g, "");
+    return parseNgnToKobo(ngnValue);
+  }, [capitalAllowancesInput]);
+
+  const lossCarryForwardKobo = useMemo(() => {
+    const ngnValue = lossCarryForwardInput.replace(/,/g, "");
+    return parseNgnToKobo(ngnValue);
+  }, [lossCarryForwardInput]);
+
+  const chargeableIncomeKobo = useMemo(() => {
+    let afterLoss = assessableProfitKobo - lossCarryForwardKobo;
+    if (afterLoss < 0n) afterLoss = 0n;
+
+    let afterCA = afterLoss - capitalAllowancesKobo;
+    if (afterCA < 0n) afterCA = 0n;
+
+    return afterCA;
+  }, [assessableProfitKobo, lossCarryForwardKobo, capitalAllowancesKobo]);
+
+  const { taxPayableKobo, effectiveRate, appliedRate, minimumETRApplied, topUpTaxKobo, baseTaxKobo, devLevyKobo } = useMemo(() => {
+    if (!taxRule || chargeableIncomeKobo === 0n) {
+      return { taxPayableKobo: 0n, effectiveRate: 0, appliedRate: 0, minimumETRApplied: false, topUpTaxKobo: 0n, baseTaxKobo: 0n, devLevyKobo: 0n };
     }
 
     const { rates } = taxRule.rules_json;
     const thresholdKobo = BigInt(rates.small_company_threshold_kobo);
-    
-    const useSmallRate = isSmallCompany || taxableProfitKobo <= thresholdKobo;
+
+    // NTA 2025: Professional services cannot be classified as a small company
+    // Evaluate Small Company status based on Total Revenue, NOT Chargeable Income
+    const useSmallRate = (isSmallCompany || revenueKobo <= thresholdKobo) && !isProfessionalServices;
     const baseRate = useSmallRate ? rates.small_company_rate : rates.standard_rate;
-    
-    let baseTax = mulKoboByRate(taxableProfitKobo, baseRate);
+
+    let baseTax = mulKoboByRate(chargeableIncomeKobo, baseRate);
+    let devLevy = 0n;
+
+    if (!useSmallRate && rates.development_levy_rate) {
+      devLevy = mulKoboByRate(assessableProfitKobo, rates.development_levy_rate); // Dev Levy is strictly on assessable profit
+    }
+
     let topUp = 0n;
-    let finalTax = baseTax;
+    let finalTax = baseTax + devLevy;
     let minETRUsed = false;
-    
+
     if (isLargeMNE && !useSmallRate) {
       const minETR = rates.minimum_etr ?? MINIMUM_ETR;
-      const currentETR = calculateEffectiveRate(baseTax, taxableProfitKobo) / 100;
-      
+      const currentETR = calculateEffectiveRate(baseTax, chargeableIncomeKobo) / 100;
+
       if (currentETR < minETR) {
-        const minimumTax = mulKoboByRate(taxableProfitKobo, minETR);
+        const minimumTax = mulKoboByRate(chargeableIncomeKobo, minETR);
         topUp = minimumTax - baseTax;
         finalTax = minimumTax;
         minETRUsed = true;
       }
     }
-    
-    const effRate = calculateEffectiveRate(finalTax, taxableProfitKobo);
 
-    return { 
-      taxPayableKobo: finalTax, 
-      effectiveRate: effRate, 
+    const effRate = calculateEffectiveRate(finalTax, assessableProfitKobo); // UI shows effective rate based on Assessable Profit for total visibility
+
+    return {
+      taxPayableKobo: finalTax,
+      effectiveRate: effRate,
       appliedRate: baseRate,
       minimumETRApplied: minETRUsed,
-      topUpTaxKobo: topUp
+      topUpTaxKobo: topUp,
+      baseTaxKobo: baseTax,
+      devLevyKobo: devLevy
     };
-  }, [taxableProfitKobo, taxRule, isSmallCompany, isLargeMNE]);
+  }, [assessableProfitKobo, chargeableIncomeKobo, revenueKobo, taxRule, isSmallCompany, isProfessionalServices, isLargeMNE]);
 
-  const netProfitKobo = subKobo(taxableProfitKobo, taxPayableKobo);
+  const netProfitKobo = subKobo(assessableProfitKobo, taxPayableKobo);
 
   const handleRevenueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
@@ -204,9 +240,30 @@ export default function CITCalculator() {
     setExpensesInput(formatted);
   };
 
+  const handleCapitalAllowancesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, "");
+    if (value === "") {
+      setCapitalAllowancesInput("");
+      return;
+    }
+    const formatted = new Intl.NumberFormat("en-NG").format(parseInt(value));
+    setCapitalAllowancesInput(formatted);
+  };
+
+  const handleLossCarryForwardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, "");
+    if (value === "") {
+      setLossCarryForwardInput("");
+      return;
+    }
+    const formatted = new Intl.NumberFormat("en-NG").format(parseInt(value));
+    setLossCarryForwardInput(formatted);
+    setLossCarryForwardInput(formatted);
+  };
+
   const handleSaveCalculation = async () => {
     if (!user || !taxRule) return;
-    
+
     if (!hasCalculationConsent) {
       setShowConsentModal(true);
       return;
@@ -223,9 +280,12 @@ export default function CITCalculator() {
           revenueNgn: formatKoboToNgn(revenueKobo),
           allowableExpensesKobo: koboToString(allowableExpensesKobo),
           allowableExpensesNgn: formatKoboToNgn(allowableExpensesKobo),
-          taxableProfitKobo: koboToString(taxableProfitKobo),
-          taxableProfitNgn: formatKoboToNgn(taxableProfitKobo),
+          capitalAllowancesKobo: koboToString(capitalAllowancesKobo),
+          lossCarryForwardKobo: koboToString(lossCarryForwardKobo),
+          taxableProfitKobo: koboToString(chargeableIncomeKobo),
+          taxableProfitNgn: formatKoboToNgn(chargeableIncomeKobo),
           isSmallCompany,
+          isProfessionalServices,
           isLargeMNE,
           usedRecords: !!recordsSummary,
         },
@@ -238,6 +298,8 @@ export default function CITCalculator() {
           appliedRate,
           minimumETRApplied,
           topUpTaxKobo: koboToString(topUpTaxKobo),
+          baseTaxKobo: koboToString(baseTaxKobo),
+          devLevyKobo: koboToString(devLevyKobo),
         },
         finalized: false,
         status: 'draft',
@@ -327,7 +389,25 @@ export default function CITCalculator() {
                       </span>
                     </div>
                   </div>
-                  
+
+                  <div className="flex items-center justify-between mt-2">
+                    <Label className="text-sm font-normal text-muted-foreground flex items-center gap-2">
+                      Professional or Consultancy Services?
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Info className="h-4 w-4 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Under NTA 2025, professional service firms are excluded from the 0% small company CIT exemption.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </Label>
+                    <Switch
+                      checked={isProfessionalServices}
+                      onCheckedChange={setIsProfessionalServices}
+                    />
+                  </div>
+
                   <div className="space-y-3">
                     <div>
                       <Label htmlFor="revenue" className="text-sm">
@@ -369,22 +449,68 @@ export default function CITCalculator() {
                       </div>
                     </div>
 
-                    {/* Taxable Profit (calculated) */}
-                    <div className="bg-muted/50 rounded-lg p-3 border">
+                    <div>
+                      <Label htmlFor="loss_relief" className="text-sm">
+                        Loss Carry-Forward (Brought Forward Losses)
+                      </Label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-mono font-semibold">
+                          ₦
+                        </span>
+                        <Input
+                          id="loss_relief"
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="0"
+                          value={lossCarryForwardInput}
+                          onChange={handleLossCarryForwardChange}
+                          className="pl-10 h-12 text-lg font-mono font-semibold border-2"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="capital_allowances" className="text-sm">
+                        Capital Allowances (Initial & Annual)
+                      </Label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-mono font-semibold">
+                          ₦
+                        </span>
+                        <Input
+                          id="capital_allowances"
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="0"
+                          value={capitalAllowancesInput}
+                          onChange={handleCapitalAllowancesChange}
+                          className="pl-10 h-12 text-lg font-mono font-semibold border-2"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Assessable & Chargeable Profit (calculated) */}
+                    <div className="bg-muted/50 rounded-lg p-3 border space-y-2 mt-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Taxable Profit</span>
-                        <span className="font-mono font-bold text-lg text-primary">
-                          {formatKoboToNgn(taxableProfitKobo)}
+                        <span className="text-sm font-medium">Assessable Profit</span>
+                        <span className="font-mono font-bold text-lg">
+                          {formatKoboToNgn(assessableProfitKobo)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                        <span className="text-sm font-medium">Chargeable Income</span>
+                        <span className="font-mono font-bold text-xl text-primary">
+                          {formatKoboToNgn(chargeableIncomeKobo)}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Revenue minus Allowable Expenses
+                        Total profit liable to be taxed under NTA rates.
                       </p>
                     </div>
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    Small company threshold: ₦25,000,000 turnover
+                    Small company threshold: ≤₦100,000,000 turnover AND ≤₦250M total assets. (Excludes professional services).
                   </p>
                 </div>
 
@@ -413,7 +539,7 @@ export default function CITCalculator() {
                   </div>
                 )}
 
-                {taxableProfitKobo > 0n && (
+                {chargeableIncomeKobo > 0n && (
                   <div className="space-y-4 animate-fade-in">
                     <div className="bg-muted/50 rounded-xl p-4">
                       <div className="flex items-center justify-between mb-2">
@@ -423,9 +549,32 @@ export default function CITCalculator() {
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {isSmallCompany ? "Small company rate" : "Standard rate"} applied
+                        {isProfessionalServices
+                          ? "Standard rate (Professional services excluded from small company status)"
+                          : appliedRate === 0
+                            ? "Small company exemption (0%)"
+                            : "Standard rate"}
                       </p>
                     </div>
+
+                    {devLevyKobo > 0n && (
+                      <div className="flex items-center justify-between bg-primary/5 rounded-lg p-4 border border-primary/10">
+                        <span className="text-sm font-medium flex items-center gap-2">
+                          Development Levy
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>4% Development Levy on assessable profits for non-small companies (NTA 2025).</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </span>
+                        <span className="text-lg font-mono font-bold text-primary">
+                          {formatKoboToNgn(devLevyKobo)}
+                        </span>
+                      </div>
+                    )}
 
                     {minimumETRApplied && (
                       <div className="flex items-start gap-3 p-4 bg-amber-500/10 rounded-lg border border-amber-500/20">
@@ -450,7 +599,7 @@ export default function CITCalculator() {
                               <Info className="h-3.5 w-3.5" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Companies Income Tax {minimumETRApplied ? "(incl. top-up)" : `at ${(appliedRate * 100).toFixed(0)}%`}</p>
+                              <p>Total Burden: {formatKoboToNgn(baseTaxKobo)} CIT + {formatKoboToNgn(devLevyKobo)} Dev Levy {minimumETRApplied && `+ Top-up`}</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -477,7 +626,18 @@ export default function CITCalculator() {
                       </span>
                     </div>
 
-                    <div className="bg-muted/30 rounded-lg p-4 border">
+                    <div className="pt-4 border-t border-border mt-4">
+                      <Button
+                        variant="secondary"
+                        className="w-full gap-2 transition-colors border-primary/20 hover:bg-primary/10 hover:text-primary"
+                        onClick={() => setIsAIDrawerOpen(true)}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        ✨ Explain this Calculation
+                      </Button>
+                    </div>
+
+                    <div className="bg-muted/30 rounded-lg p-4 border mt-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Scale className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm font-medium">Legal Basis</span>
@@ -544,8 +704,33 @@ export default function CITCalculator() {
                 onConsentGiven={() => setShowConsentModal(false)}
                 context="calculation"
               />
+
+              <AITaxDrawer
+                open={isAIDrawerOpen}
+                onOpenChange={setIsAIDrawerOpen}
+                title="CIT Calculation Explained"
+                contextParams={{
+                  taxType: "Companies Income Tax (CIT)",
+                  calculationType: "Corporate Assessment",
+                  values: {
+                    revenue_ngn: formatKoboToNgn(revenueKobo),
+                    allowable_expenses_ngn: formatKoboToNgn(allowableExpensesKobo),
+                    capital_allowances_ngn: formatKoboToNgn(capitalAllowancesKobo),
+                    loss_carry_forward_ngn: formatKoboToNgn(lossCarryForwardKobo),
+                    assessable_profit_ngn: formatKoboToNgn(assessableProfitKobo),
+                    chargeable_income_ngn: formatKoboToNgn(chargeableIncomeKobo),
+                    cit_standard_rate_applied: standardRate.toFixed(2) + "%",
+                    development_levy_applied: formatKoboToNgn(devLevyKobo),
+                    final_tax_payable_ngn: formatKoboToNgn(taxPayableKobo)
+                  },
+                  ruleVersion: "NTA_2025"
+                }}
+              />
             </Card>
           )}
+          <div className="mt-6">
+            <NTATransitionGuide taxType="CIT" />
+          </div>
         </div>
       </main>
       <Footer />

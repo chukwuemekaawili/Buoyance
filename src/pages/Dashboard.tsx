@@ -12,6 +12,8 @@ import { TaxHealthIndicator } from "@/components/TaxHealthIndicator";
 import { ComplianceAlerts } from "@/components/ComplianceAlerts";
 import { MonthlyPerformanceChart } from "@/components/dashboard/MonthlyPerformanceChart";
 import { DeadlineWatchdog } from "@/components/dashboard/DeadlineWatchdog";
+import { AIInsightsCard } from "@/components/dashboard/AIInsightsCard";
+import { WHTRecoveryAlert } from "@/components/dashboard/WHTRecoveryAlert";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import {
   Loader2,
@@ -303,6 +305,12 @@ function DashboardContent() {
                 />
               </div>
 
+              {/* AI Intelligence Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+                <AIInsightsCard />
+                <WHTRecoveryAlert />
+              </div>
+
               {/* Stats Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" data-tour="dashboard-overview">
                 <Card>
@@ -400,6 +408,18 @@ function DashboardContent() {
                     <Link to="/invoicing">
                       <FileSpreadsheet className="h-4 w-4 mr-2" />
                       Create Invoice
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/tcc">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Request TCC
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/digitax">
+                      <Receipt className="h-4 w-4 mr-2" />
+                      Sync DigiTax
                     </Link>
                   </Button>
                 </div>

@@ -74,8 +74,8 @@ serve(async (req) => {
     })) || [];
 
     // Check for direct category match first
-    const directMatch = classificationRules?.find(r => 
-      r.category_key === category.toLowerCase() || 
+    const directMatch = classificationRules?.find(r =>
+      r.category_key === category.toLowerCase() ||
       r.category_key === category.toLowerCase().replace(/\s+/g, '_')
     );
 
@@ -92,8 +92,8 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
       // Fallback to rule-based classification if AI not available
       return new Response(
         JSON.stringify(getFallbackClassification(type, category, classificationRules || [])),
@@ -110,7 +110,7 @@ NIGERIAN TAX RULES CONTEXT:
 ${JSON.stringify(rulesContext, null, 2)}
 
 DEDUCTIBLE EXPENSES (for PIT/CIT):
-Under Nigerian tax law (PITA Section 24, CITA Section 24), deductible expenses must be:
+Under Nigerian tax law (NTA 2025), deductible expenses must be:
 - Wholly, exclusively, and necessarily incurred for business purposes
 - Not capital in nature (unless qualifying capital allowance)
 - Properly documented with receipts/invoices
@@ -153,7 +153,7 @@ You MUST respond with valid JSON only, no markdown or explanation outside the JS
   "${type === 'expense' ? 'deductible' : 'tax_exempt'}": boolean,
   "confidence": "high" | "medium" | "low",
   "reasoning": "Brief explanation (max 50 words)",
-  "legal_reference": "Relevant section if applicable (e.g., 'PITA Section 24')"
+  "legal_reference": "Relevant section if applicable (e.g., 'NTA 2025')"
 }`;
 
     const userPrompt = `Classify this ${type}:
@@ -163,24 +163,26 @@ ${amount_kobo ? `Amount: ₦${(parseInt(amount_kobo) / 100).toLocaleString()}` :
 
 Is this ${type === 'expense' ? 'tax deductible' : 'tax exempt'}?`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-3-flash-preview',
+        model: 'claude-sonnet-4-20250514',
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.1, // Low temperature for consistent classification
+        max_tokens: 512,
       }),
     });
 
     if (!response.ok) {
-      console.error('AI Gateway error:', response.status);
+      console.error('Anthropic API error:', response.status);
       return new Response(
         JSON.stringify(getFallbackClassification(type, category, classificationRules || [])),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -188,14 +190,14 @@ Is this ${type === 'expense' ? 'tax deductible' : 'tax exempt'}?`;
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    
+    const content = data.content?.[0]?.text || '';
+
     // Parse the JSON response
     try {
       // Remove any markdown code blocks if present
       const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const classification = JSON.parse(jsonStr) as ClassifyResponse;
-      
+
       return new Response(
         JSON.stringify(classification),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -227,14 +229,14 @@ interface ClassificationRule {
 
 // Fallback rule-based classification using DB rules
 function getFallbackClassification(
-  type: 'expense' | 'income', 
+  type: 'expense' | 'income',
   category: string,
   rules: ClassificationRule[]
 ): ClassifyResponse {
   // Try to find a matching rule from DB
   const normalizedCategory = category.toLowerCase().replace(/\s+/g, '_');
-  const matchingRule = rules.find(r => 
-    r.category_key === normalizedCategory || 
+  const matchingRule = rules.find(r =>
+    r.category_key === normalizedCategory ||
     r.category_key === category.toLowerCase() ||
     r.category_label.toLowerCase().includes(category.toLowerCase())
   );
@@ -244,11 +246,11 @@ function getFallbackClassification(
       return {
         deductible: matchingRule.default_value,
         confidence: 'high',
-        reasoning: matchingRule.reasoning || 
-          (matchingRule.default_value 
+        reasoning: matchingRule.reasoning ||
+          (matchingRule.default_value
             ? 'Business expense typically qualifies as tax deductible.'
             : 'This expense is typically not tax deductible.'),
-        legal_reference: matchingRule.legal_reference || 'PITA Section 24 / CITA Section 24'
+        legal_reference: matchingRule.legal_reference || 'NTA 2025'
       };
     } else {
       return {
@@ -258,7 +260,7 @@ function getFallbackClassification(
           (matchingRule.default_value
             ? 'This income type is generally exempt from tax.'
             : 'This income is subject to Personal Income Tax.'),
-        legal_reference: matchingRule.legal_reference || 'PITA Section 3'
+        legal_reference: matchingRule.legal_reference || 'NTA 2025'
       };
     }
   }
@@ -271,26 +273,26 @@ function getFallbackClassification(
       'maintenance', 'software', 'training'
     ];
     const isDeductible = deductibleCategories.some(c => normalizedCategory.includes(c));
-    
+
     return {
       deductible: isDeductible,
       confidence: 'low',
-      reasoning: isDeductible 
-        ? 'Business expense typically qualifies as tax deductible under PITA/CITA Section 24.'
+      reasoning: isDeductible
+        ? 'Business expense typically qualifies as tax deductible under NTA 2025.'
         : 'Personal or non-business expense - typically not deductible.',
-      legal_reference: 'PITA Section 24 / CITA Section 24'
+      legal_reference: 'NTA 2025'
     };
   } else {
     const exemptCategories = ['loan', 'gift', 'grant', 'refund'];
     const isExempt = exemptCategories.some(c => normalizedCategory.includes(c));
-    
+
     return {
       tax_exempt: isExempt,
       confidence: 'low',
       reasoning: isExempt
         ? 'This income type is generally exempt from tax under Nigerian law.'
-        : 'This income is subject to Personal Income Tax under PITA.',
-      legal_reference: 'PITA Section 3'
+        : 'This income is subject to Personal Income Tax under NTA 2025.',
+      legal_reference: 'NTA 2025'
     };
   }
 }

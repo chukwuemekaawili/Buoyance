@@ -11,18 +11,20 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Shield, Calculator, FileText, UserPlus } from "lucide-react";
-import { useConsent, ConsentContext as ConsentContextType } from "@/hooks/useConsent";
+import { useConsent, CURRENT_CONSENT_VERSION } from "@/hooks/useConsent";
 import { useToast } from "@/hooks/use-toast";
 import { writeAuditLog, AuditActions } from "@/lib/auditLog";
+
+type ConsentScope = "account_creation" | "calculation" | "filing";
 
 interface ConsentModalProps {
   open: boolean;
   onConsentGiven?: () => void;
-  context?: ConsentContextType;
+  context?: ConsentScope;
 }
 
-const CONTEXT_CONFIG: Record<ConsentContextType, { 
-  title: string; 
+const CONTEXT_CONFIG: Record<ConsentScope, {
+  title: string;
   description: string;
   icon: typeof Shield;
   buttonText: string;
@@ -47,26 +49,26 @@ const CONTEXT_CONFIG: Record<ConsentContextType, {
   },
 };
 
-export function ConsentModal({ 
-  open, 
+export function ConsentModal({
+  open,
   onConsentGiven,
-  context = "account_creation" 
+  context = "account_creation"
 }: ConsentModalProps) {
   const [agreed, setAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { acceptConsent, getConsentVersion, getConsentText } = useConsent();
+  const { recordConsent } = useConsent();
   const { toast } = useToast();
 
-  const config = CONTEXT_CONFIG[context];
+  const config = CONTEXT_CONFIG[context as ConsentScope] || CONTEXT_CONFIG["account_creation"];
   const Icon = config.icon;
-  const consentText = getConsentText(context);
-  const consentVersion = getConsentVersion(context);
+  const consentText = "By proceeding, you explicitly consent to the processing of your financial data in accordance with the Nigeria Data Protection Act (NDPA) 2023. Buoyance acts solely as a data processor for the purpose of tax computation and statutory compliance.";
+  const consentVersion = CURRENT_CONSENT_VERSION;
 
   const handleAccept = async () => {
     if (!agreed) return;
 
     setIsSubmitting(true);
-    const success = await acceptConsent(context);
+    const success = await recordConsent();
 
     if (success) {
       // Log consent acceptance with context
@@ -74,7 +76,7 @@ export function ConsentModal({
         action: AuditActions.CONSENT_ACCEPTED,
         entity_type: "consent",
         entity_id: context,
-        after_json: { 
+        after_json: {
           version: consentVersion,
           context: context,
           user_agent: navigator.userAgent,
@@ -101,8 +103,8 @@ export function ConsentModal({
 
   return (
     <Dialog open={open}>
-      <DialogContent 
-        className="sm:max-w-lg" 
+      <DialogContent
+        className="sm:max-w-lg"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >

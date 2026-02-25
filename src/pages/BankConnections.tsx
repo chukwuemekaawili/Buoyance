@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useIntegrationStatus } from "@/hooks/useIntegrationStatus";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -43,6 +44,7 @@ export default function BankConnections() {
   const [selectedProvider, setSelectedProvider] = useState<BankProvider>("mono");
   const [accountName, setAccountName] = useState("");
   const { user, loading: authLoading } = useAuth();
+  const { activeWorkspace } = useWorkspace();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { banking, loading: statusLoading, error: statusError } = useIntegrationStatus();
@@ -56,18 +58,20 @@ export default function BankConnections() {
       navigate("/signin");
       return;
     }
-    fetchConnections();
-  }, [user, authLoading, navigate]);
+    if (activeWorkspace) {
+      fetchConnections();
+    }
+  }, [user, authLoading, navigate, activeWorkspace]);
 
   const fetchConnections = async () => {
-    if (!user) return;
-    
+    if (!user || !activeWorkspace) return;
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from("bank_connections")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("workspace_id", activeWorkspace.id)
         .order("connected_at", { ascending: false });
 
       if (error) throw error;
@@ -84,12 +88,14 @@ export default function BankConnections() {
   };
 
   const handleConnect = async () => {
-    if (!user || !accountName.trim()) return;
+    if (!user || !activeWorkspace || !accountName.trim()) return;
 
     setIsConnecting(true);
     try {
-      const result = await connectBank(selectedProvider);
-      
+      // NOTE: Here we would typically initialize the Mono connect widget and await the code.
+      // For the mock edge function, we just simulate passing undefined code.
+      const result = await connectBank(selectedProvider, activeWorkspace.id);
+
       if (!result.success) {
         throw new Error(result.error);
       }
@@ -97,6 +103,7 @@ export default function BankConnections() {
       // Save connection to database (demo mode generates a random account_id)
       const { error } = await supabase.from("bank_connections").insert({
         user_id: user.id,
+        workspace_id: activeWorkspace.id,
         provider: selectedProvider,
         account_id: result.connectionId || crypto.randomUUID(),
         account_name: accountName.trim(),
@@ -108,8 +115,8 @@ export default function BankConnections() {
 
       toast({
         title: "Bank connected!",
-        description: result.isStubbed 
-          ? "Connected in demo mode (no API keys configured)" 
+        description: result.isStubbed
+          ? "Connected in demo mode (no API keys configured)"
           : "Your bank account has been connected successfully.",
       });
 
@@ -132,7 +139,7 @@ export default function BankConnections() {
 
     try {
       const success = await disconnectBank(connectionId);
-      
+
       if (!success) {
         throw new Error("Failed to disconnect bank account");
       }
@@ -234,66 +241,74 @@ export default function BankConnections() {
               <h1 className="text-2xl font-bold">Bank Connections</h1>
               <p className="text-muted-foreground">Connect your bank accounts to import transactions</p>
             </div>
-            <Dialog open={showConnectDialog} onOpenChange={setShowConnectDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Connect Bank
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Connect Bank Account</DialogTitle>
-                  <DialogDescription>
-                    Choose your bank provider and enter a name for this account.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Provider</Label>
-                    <Select value={selectedProvider} onValueChange={(v) => setSelectedProvider(v as BankProvider)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {supportedBanks.map(bank => (
-                          <SelectItem key={bank.id} value={bank.id}>
-                            {bank.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Account Name</Label>
-                    <Input
-                      placeholder="e.g., GTBank Savings"
-                      value={accountName}
-                      onChange={(e) => setAccountName(e.target.value)}
-                    />
-                  </div>
-                  <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground">
-                    <AlertCircle className="h-4 w-4 inline mr-2" />
-                    Note: This feature is currently in demo mode. No actual bank connection will be made.
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowConnectDialog(false)}>
-                    Cancel
+            <div className="flex items-center gap-3">
+              <Button variant="secondary" asChild>
+                <Link to="/bank-import">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Reconcile Bank Feed
+                </Link>
+              </Button>
+              <Dialog open={showConnectDialog} onOpenChange={setShowConnectDialog}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Connect Bank
                   </Button>
-                  <Button onClick={handleConnect} disabled={isConnecting || !accountName.trim()}>
-                    {isConnecting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Connecting...
-                      </>
-                    ) : (
-                      "Connect"
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Connect Bank Account</DialogTitle>
+                    <DialogDescription>
+                      Choose your bank provider and enter a name for this account.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label>Provider</Label>
+                      <Select value={selectedProvider} onValueChange={(v) => setSelectedProvider(v as BankProvider)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {supportedBanks.map(bank => (
+                            <SelectItem key={bank.id} value={bank.id}>
+                              {bank.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Account Name</Label>
+                      <Input
+                        placeholder="e.g., GTBank Savings"
+                        value={accountName}
+                        onChange={(e) => setAccountName(e.target.value)}
+                      />
+                    </div>
+                    <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground">
+                      <AlertCircle className="h-4 w-4 inline mr-2" />
+                      Note: This feature is currently in demo mode. No actual bank connection will be made.
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowConnectDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleConnect} disabled={isConnecting || !accountName.trim()}>
+                      {isConnecting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Connecting...
+                        </>
+                      ) : (
+                        "Connect"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {statusLoading || isLoading ? (
@@ -425,11 +440,11 @@ export default function BankConnections() {
             <h4 className="font-semibold mb-2">About Bank Integration</h4>
             <p className="text-sm text-muted-foreground">
               Buoyance supports integration with Nigerian banks through Mono, Okra, and other providers.
-              Once connected, your transactions will be automatically categorized and available for 
+              Once connected, your transactions will be automatically categorized and available for
               income/expense tracking and tax calculations.
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              <strong>Demo Mode:</strong> This feature is currently operating in demo mode. 
+              <strong>Demo Mode:</strong> This feature is currently operating in demo mode.
               Contact support to enable live bank connections for your account.
             </p>
           </Card>

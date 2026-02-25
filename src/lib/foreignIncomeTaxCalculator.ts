@@ -67,7 +67,30 @@ export interface ForeignIncomeResult {
   effectiveRate: number;
 }
 
-const FOREIGN_INCOME_TAX_RATE = 0.24; // Top PIT marginal rate
+// NTA 2025: Foreign income is taxed at progressive PIT rates (same bands as domestic income)
+// WARNING: This applies the bands to foreign income in isolation.
+// A full assessment aggregates all worldwide income into a single PIT computation.
+const NTA2025_PIT_BANDS_FI = [
+  { threshold_kobo: 80000000, rate: 0.00 },  // 0% ≤₦800k
+  { threshold_kobo: 220000000, rate: 0.15 },  // 15%
+  { threshold_kobo: 300000000, rate: 0.19 },  // 19%
+  { threshold_kobo: 700000000, rate: 0.21 },  // 21%
+  { threshold_kobo: 1200000000, rate: 0.24 },  // 24%
+  { threshold_kobo: null, rate: 0.25 },  // 25%
+] as const;
+
+function applyProgressivePITFI(incomeKobo: bigint): bigint {
+  let remaining = incomeKobo;
+  let tax = 0n;
+  for (const band of NTA2025_PIT_BANDS_FI) {
+    if (remaining <= 0n) break;
+    const cap = band.threshold_kobo !== null ? BigInt(band.threshold_kobo) : remaining;
+    const taxable = remaining < cap ? remaining : cap;
+    tax += (taxable * BigInt(Math.round(band.rate * 10000))) / 1000000n;
+    remaining -= taxable;
+  }
+  return tax;
+}
 
 /**
  * Get exchange rate for a currency
@@ -118,22 +141,22 @@ export function getAvailableCurrencies(): string[] {
 export function calculateForeignIncomeTax(input: ForeignIncomeInput): ForeignIncomeResult {
   // Get exchange rate
   const { rate: exchangeRate } = getExchangeRate(input.currency_code);
-  
+
   // Convert to NGN
   const amountNgn = input.amount_foreign_currency * exchangeRate;
   const amountNgnKobo = parseNgnToKobo(amountNgn.toFixed(2));
-  
+
   // Convert foreign tax paid to NGN
   const taxPaidForeignNgn = (input.tax_paid_foreign || 0) * exchangeRate;
   const taxPaidForeignKobo = parseNgnToKobo(taxPaidForeignNgn.toFixed(2));
-  
-  // Calculate gross Nigerian tax liability
-  const grossTaxLiabilityKobo = mulKoboByRate(amountNgnKobo, FOREIGN_INCOME_TAX_RATE);
-  
+
+  // Calculate gross Nigerian tax liability using progressive PIT bands (NTA 2025)
+  const grossTaxLiabilityKobo = applyProgressivePITFI(amountNgnKobo);
+
   // Check treaty applicability
   const treatyApplied = input.treaty_applicable ?? hasTreatyWithNigeria(input.source_country);
   const treatyInfo = getTreatyInfo(input.source_country);
-  
+
   // Calculate foreign tax credit
   // Credit is limited to the Nigerian tax on the foreign income
   let foreignTaxCreditKobo = 0n;
@@ -144,15 +167,15 @@ export function calculateForeignIncomeTax(input: ForeignIncomeInput): ForeignInc
       foreignTaxCreditKobo = grossTaxLiabilityKobo;
     }
   }
-  
+
   // Calculate net tax payable
   const netTaxPayableKobo = maxKobo(0n, subKobo(grossTaxLiabilityKobo, foreignTaxCreditKobo));
-  
+
   // Calculate effective rate
-  const effectiveRate = !isZeroKobo(amountNgnKobo) 
+  const effectiveRate = !isZeroKobo(amountNgnKobo)
     ? Number(netTaxPayableKobo * 10000n / amountNgnKobo) / 100
     : 0;
-  
+
   return {
     amountNgnKobo,
     taxPaidForeignKobo,

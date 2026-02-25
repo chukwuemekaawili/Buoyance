@@ -65,7 +65,7 @@ export async function isBankingAvailable(): Promise<{ available: boolean; provid
 /**
  * Exchange Mono Connect widget code for an account ID via the Edge Function
  */
-export async function connectBank(provider: BankProvider, code?: string): Promise<ConnectBankResult> {
+export async function connectBank(provider: BankProvider, workspaceId: string, code?: string): Promise<ConnectBankResult> {
   if (provider !== "mono") {
     return {
       success: false,
@@ -85,7 +85,7 @@ export async function connectBank(provider: BankProvider, code?: string): Promis
 
   try {
     const { data, error } = await supabase.functions.invoke("bank-connect", {
-      body: { action: "exchange", code },
+      body: { action: "exchange", code, workspace_id: workspaceId },
     });
 
     if (error) {
@@ -138,10 +138,11 @@ export async function disconnectBank(connectionId: string): Promise<boolean> {
 /**
  * Get user's bank connections
  */
-export async function getBankConnections(): Promise<BankConnection[]> {
+export async function getBankConnections(workspaceId: string): Promise<BankConnection[]> {
   const { data, error } = await supabase
     .from("bank_connections")
-    .select("*")
+    .select<any, any>("*")
+    .eq("workspace_id", workspaceId)
     .order("connected_at", { ascending: false });
 
   if (error) {
@@ -149,7 +150,7 @@ export async function getBankConnections(): Promise<BankConnection[]> {
     return [];
   }
 
-  return data as BankConnection[];
+  return (data || []) as unknown as BankConnection[];
 }
 
 /**

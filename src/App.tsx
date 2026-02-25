@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { RBACProvider } from "@/hooks/useRBAC";
 import { ConsentProvider } from "@/hooks/useConsent";
+import { WorkspaceProvider } from "@/hooks/useWorkspace";
 import ScrollToTop from "./components/ScrollToTop";
 import ScrollToHash from "./components/ScrollToHash";
 import { AIChatWidget } from "./components/AIChatWidget";
@@ -69,6 +70,10 @@ import BankImport from "./pages/BankImport";
 import Academy from "./pages/Academy";
 import CourseViewer from "./pages/CourseViewer";
 import TaxLibrary from "./pages/TaxLibrary";
+import AcceptInvite from "./pages/AcceptInvite";
+import AccountantDashboard from "./pages/AccountantDashboard";
+import TaxClearance from "./pages/TaxClearance";
+import DigiTax from "./pages/DigiTax";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -97,110 +102,115 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <RBACProvider>
-            <ConsentProvider>
-              <ScrollToTop />
-              <ScrollToHash />
-              <SpaRedirectHandler />
-              <OfflineBanner />
-              <AIChatWidget />
-              <Routes>
-                <Route path="/" element={<Index />} />
+          <WorkspaceProvider>
+            <RBACProvider>
+              <ConsentProvider>
+                <ScrollToTop />
+                <ScrollToHash />
+                <SpaRedirectHandler />
+                <OfflineBanner />
+                <AIChatWidget />
+                <Routes>
+                  <Route path="/" element={<Index />} />
 
-                {/* Auth */}
-                <Route path="/signin" element={<SignIn />} />
-                <Route path="/signup" element={<SignUp />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/onboarding" element={<Onboarding />} />
-                <Route path="/my-calculations" element={<MyCalculations />} />
+                  {/* Auth */}
+                  <Route path="/signin" element={<SignIn />} />
+                  <Route path="/signup" element={<SignUp />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/onboarding" element={<Onboarding />} />
+                  <Route path="/my-calculations" element={<MyCalculations />} />
+                  <Route path="/accept-invite" element={<AcceptInvite />} />
+                  <Route path="/accountant/dashboard" element={<AccountantDashboard />} />
 
-                {/* Dashboard */}
-                <Route path="/dashboard" element={<Dashboard />} />
+                  {/* Dashboard */}
+                  <Route path="/dashboard" element={<Dashboard />} />
 
-                {/* Filings */}
-                <Route path="/filings" element={<Filings />} />
-                <Route path="/filings/new" element={<NewFiling />} />
-                <Route path="/filings/:id" element={<FilingDetail />} />
+                  {/* Filings */}
+                  <Route path="/filings" element={<Filings />} />
+                  <Route path="/filings/new" element={<NewFiling />} />
+                  <Route path="/filings/:id" element={<FilingDetail />} />
 
-                {/* Payments */}
-                <Route path="/payments" element={<Payments />} />
+                  {/* Payments */}
+                  <Route path="/payments" element={<Payments />} />
 
-                {/* Calculators */}
-                <Route path="/calculators" element={<Calculators />} />
-                <Route path="/calculators/pit" element={<PITCalculator />} />
-                <Route path="/calculators/cit" element={<CITCalculator />} />
-                <Route path="/calculators/vat" element={<VATCalculator />} />
-                <Route path="/calculators/wht" element={<WHTCalculator />} />
-                <Route path="/calculators/cgt" element={<CGTCalculator />} />
-                <Route path="/calculators/crypto" element={<CryptoCalculator />} />
-                <Route path="/calculators/foreign-income" element={<ForeignIncomeCalculator />} />
+                  {/* Calculators */}
+                  <Route path="/calculators" element={<Calculators />} />
+                  <Route path="/calculators/pit" element={<PITCalculator />} />
+                  <Route path="/calculators/cit" element={<CITCalculator />} />
+                  <Route path="/calculators/vat" element={<VATCalculator />} />
+                  <Route path="/calculators/wht" element={<WHTCalculator />} />
+                  <Route path="/calculators/cgt" element={<CGTCalculator />} />
+                  <Route path="/calculators/crypto" element={<CryptoCalculator />} />
+                  <Route path="/calculators/foreign-income" element={<ForeignIncomeCalculator />} />
 
-                {/* Income & Expenses */}
-                <Route path="/incomes" element={<Incomes />} />
-                <Route path="/expenses" element={<Expenses />} />
-                <Route path="/bank-connections" element={<BankConnections />} />
+                  {/* Income & Expenses */}
+                  <Route path="/incomes" element={<Incomes />} />
+                  <Route path="/expenses" element={<Expenses />} />
+                  <Route path="/bank-connections" element={<BankConnections />} />
 
-                {/* Core Feature Pages */}
-                <Route path="/wht-credits" element={<WHTCredits />} />
-                <Route path="/compliance-calendar" element={<ComplianceCalendar />} />
-                <Route path="/invoicing" element={<Invoicing />} />
-                <Route path="/payroll" element={<Payroll />} />
-                <Route path="/knowledge" element={<KnowledgeBase />} />
-                <Route path="/tcc" element={<TCCReadiness />} />
-                <Route path="/audit-workspace" element={<AuditWorkspace />} />
-                <Route path="/bank-import" element={<BankImport />} />
+                  {/* Core Feature Pages */}
+                  <Route path="/wht-credits" element={<WHTCredits />} />
+                  <Route path="/compliance-calendar" element={<ComplianceCalendar />} />
+                  <Route path="/invoicing" element={<Invoicing />} />
+                  <Route path="/payroll" element={<Payroll />} />
+                  <Route path="/knowledge" element={<KnowledgeBase />} />
+                  <Route path="/tcc" element={<TaxClearance />} />
+                  <Route path="/digitax" element={<DigiTax />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/bank-import" element={<BankImport />} />
 
-                {/* Academy */}
-                <Route path="/academy" element={<Academy />} />
-                <Route path="/academy/course/:courseId" element={<CourseViewer />} />
-                <Route path="/academy/library" element={<TaxLibrary />} />
+                  {/* Academy */}
+                  <Route path="/academy" element={<Academy />} />
+                  <Route path="/academy/course/:courseId" element={<CourseViewer />} />
+                  <Route path="/academy/library" element={<TaxLibrary />} />
 
-                {/* Archived Items */}
-                <Route path="/archived" element={<ArchivedItems />} />
+                  {/* Archived Items */}
+                  <Route path="/archived" element={<ArchivedItems />} />
 
-                {/* Settings */}
-                <Route path="/settings" element={<Settings />} />
+                  {/* Settings */}
+                  <Route path="/settings" element={<Settings />} />
 
-                {/* Notifications */}
-                <Route path="/notifications" element={<Notifications />} />
-                {/* Admin */}
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                <Route path="/admin/audit" element={<AuditLogs />} />
-                <Route path="/admin/audit-logs" element={<AuditLogs />} />
-                <Route path="/admin/tax-rules" element={<TaxRules />} />
-                <Route path="/admin/classification-rules" element={<ClassificationRules />} />
-                <Route path="/admin/classification-test" element={<ClassificationTest />} />
-                <Route path="/admin/users" element={<AdminUsers />} />
-                <Route path="/admin/payment-verification" element={<PaymentVerification />} />
-                <Route path="/admin/api-settings" element={<APISettings />} />
-                <Route path="/admin/system-settings" element={<SystemSettings />} />
+                  {/* Notifications */}
+                  <Route path="/notifications" element={<Notifications />} />
+                  {/* Admin */}
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                  <Route path="/admin/audit" element={<AuditLogs />} />
+                  <Route path="/admin/audit-logs" element={<AuditLogs />} />
+                  <Route path="/admin/tax-rules" element={<TaxRules />} />
+                  <Route path="/admin/classification-rules" element={<ClassificationRules />} />
+                  <Route path="/admin/classification-test" element={<ClassificationTest />} />
+                  <Route path="/admin/users" element={<AdminUsers />} />
+                  <Route path="/admin/payment-verification" element={<PaymentVerification />} />
+                  <Route path="/admin/api-settings" element={<APISettings />} />
+                  <Route path="/admin/system-settings" element={<SystemSettings />} />
 
 
-                {/* Company */}
-                <Route path="/about" element={<About />} />
-                <Route path="/careers" element={<Careers />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:slug" element={<BlogPost />} />
+                  {/* Company */}
+                  <Route path="/about" element={<About />} />
+                  <Route path="/careers" element={<Careers />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:slug" element={<BlogPost />} />
 
-                {/* Legal */}
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/cookies" element={<Cookies />} />
-                <Route path="/compliance" element={<Compliance />} />
+                  {/* Legal */}
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/cookies" element={<Cookies />} />
+                  <Route path="/compliance" element={<Compliance />} />
 
-                {/* Support */}
-                <Route path="/support" element={<Support />} />
-                <Route path="/documentation" element={<Documentation />} />
-                <Route path="/docs" element={<Documentation />} />
-                <Route path="/tax-guides/:slug" element={<TaxGuide />} />
+                  {/* Support */}
+                  <Route path="/support" element={<Support />} />
+                  <Route path="/documentation" element={<Documentation />} />
+                  <Route path="/docs" element={<Documentation />} />
+                  <Route path="/tax-guides/:slug" element={<TaxGuide />} />
 
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </ConsentProvider>
-          </RBACProvider>
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </ConsentProvider>
+            </RBACProvider>
+          </WorkspaceProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

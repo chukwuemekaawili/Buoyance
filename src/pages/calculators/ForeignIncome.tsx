@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,12 +11,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ConsentModal } from "@/components/ConsentModal";
+import { ProGateModal } from "@/components/ProGateModal";
+import { useFeatureGate } from "@/hooks/useFeatureGate";
 import { Header } from "@/components/Header";
+import { NTATransitionGuide } from "@/components/calculator/NTATransitionGuide";
 import { Footer } from "@/components/Footer";
-import { 
-  calculateForeignIncomeTax, 
+import {
+  calculateForeignIncomeTax,
   formatForeignIncomeResult,
   getAvailableCurrencies,
   getDTACountries,
@@ -73,6 +76,17 @@ export default function ForeignIncomeCalculator() {
   const { toast } = useToast();
   const hasCalculationConsent = hasConsent("calculation");
 
+  const navigate = useNavigate();
+  const { isPro, isLoading: isBillingLoading } = useFeatureGate();
+  const [showProGate, setShowProGate] = useState(false);
+
+  // Lock feature for free users
+  useEffect(() => {
+    if (!isBillingLoading && !isPro) {
+      setShowProGate(true);
+    }
+  }, [isPro, isBillingLoading]);
+
   const currencies = getAvailableCurrencies();
   const dtaCountries = getDTACountries();
   const hasTreaty = hasTreatyWithNigeria(sourceCountry);
@@ -86,7 +100,7 @@ export default function ForeignIncomeCalculator() {
   const taxResult = useMemo(() => {
     const amountNum = parseFloat(amount) || 0;
     const taxPaidNum = parseFloat(taxPaidForeign) || 0;
-    
+
     if (amountNum <= 0) return null;
 
     return calculateForeignIncomeTax({
@@ -103,7 +117,7 @@ export default function ForeignIncomeCalculator() {
 
   const handleSaveCalculation = async () => {
     if (!user || !taxResult) return;
-    
+
     if (!hasCalculationConsent) {
       setShowConsentModal(true);
       return;
@@ -399,7 +413,20 @@ export default function ForeignIncomeCalculator() {
               onConsentGiven={() => setShowConsentModal(false)}
               context="calculation"
             />
+
+            <ProGateModal
+              isOpen={showProGate}
+              onClose={() => {
+                setShowProGate(false);
+                navigate("/calculators");
+              }}
+              featureName="Foreign Income Tax"
+              description="Calculating tax on foreign income streams and optimizing double taxation relief is a premium workspace feature."
+            />
           </Card>
+          <div className="mt-6">
+            <NTATransitionGuide taxType="FOREIGN_INCOME" />
+          </div>
         </div>
       </main>
       <Footer />

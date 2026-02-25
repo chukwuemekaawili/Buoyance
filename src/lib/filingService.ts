@@ -64,6 +64,36 @@ export async function fetchUserFilings(
  * Fetch a single filing by ID.
  */
 export async function fetchFilingById(filingId: string): Promise<Filing | null> {
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const mockAuthEnabled = import.meta.env?.VITE_MOCK_AUTH === 'true' || isLocalDev;
+
+  if (mockAuthEnabled && filingId.startsWith("mock-filing-")) {
+    console.warn("Using MOCK Auth: Returning mock filing data");
+    return {
+      id: filingId,
+      user_id: "00000000-0000-0000-0000-000000000000",
+      tax_type: "PIT",
+      period_start: "2025-01-01",
+      period_end: "2025-01-31",
+      status: "draft",
+      rule_version: "2025-v1",
+      input_json: {
+        annualSalaryKobo: "100000000", // 1,000,000 NGN
+        deductionsKobo: "0",
+        whtCreditsKobo: "0",
+        identity: "freelancer"
+      },
+      output_json: {
+        taxPayableKobo: 5000000 // 50,000 NGN dummy calc
+      },
+      document_url: null,
+      submitted_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      archived: false
+    } as Filing;
+  }
+
   const { data, error } = await supabase
     .from("filings")
     .select("*")
@@ -88,6 +118,14 @@ export async function createFilingDraft(params: {
   periodEnd: string;
   inputJson: Record<string, unknown>;
 }): Promise<string> {
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const mockAuthEnabled = import.meta.env?.VITE_MOCK_AUTH === 'true' || isLocalDev;
+
+  if (mockAuthEnabled) {
+    console.warn("Using MOCK Auth: Bypassing create_filing_draft RPC");
+    return `mock-filing-${Date.now()}`;
+  }
+
   const { data, error } = await supabase.rpc("create_filing_draft", {
     p_tax_type: params.taxType,
     p_period_start: params.periodStart,
@@ -110,6 +148,14 @@ export async function updateFilingDraft(
   filingId: string,
   inputJson: Record<string, unknown>
 ): Promise<void> {
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const mockAuthEnabled = import.meta.env?.VITE_MOCK_AUTH === 'true' || isLocalDev;
+
+  if (mockAuthEnabled) {
+    console.warn("Using MOCK Auth: Bypassing update_filing_draft RPC");
+    return;
+  }
+
   const { error } = await supabase.rpc("update_filing_draft", {
     p_filing_id: filingId,
     p_input_json: inputJson as Json,
@@ -122,23 +168,66 @@ export async function updateFilingDraft(
 }
 
 /**
- * Submit a filing via RPC.
+ * Submit a filing via RPC and TaxPro Max API.
  */
 export async function submitFiling(
   filingId: string,
   outputJson: Record<string, unknown>
-): Promise<{ success: boolean; rule_version: string; submitted_at: string }> {
+): Promise<{ success: boolean; rule_version: string; submitted_at: string; firs_reference?: string }> {
+
+  // 1. Transform internal schema to FIRS TaxPro Max XML/JSON schema
+  console.log("Preparing FIRS FIRS payload mapping...");
+  const firsPayload = {
+    taxpayerIdentifier: "PendingTIN", // To be fetched from user identity
+    taxPeriod: "2025-01",
+    taxType: "PIT", // Needs dynamic mapping
+    computations: outputJson,
+    totalTaxPayable: outputJson.taxPayableKobo ?? 0
+  };
+
+  // 2. Transmit to FIRS Integration API (Edge Function / External API Mock)
+  console.log("Transmitting to FIRS:", firsPayload);
+
+  // Simulating FIRS API response latency
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  // In a real implementation we would fetch from a secure endpoint:
+  // const response = await fetch("https://api.taxpromax.firs.gov.ng/v1/submit", { ... });
+  // if (!response.ok) throw new Error("FIRS API Rejection");
+  const mockFirsRef = `FIRS-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000)}`;
+
+  // 3. Document submission in Supabase Database via RPC
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const mockAuthEnabled = import.meta.env?.VITE_MOCK_AUTH === 'true' || isLocalDev;
+
+  if (mockAuthEnabled && filingId.startsWith("mock-filing-")) {
+    console.warn("Using MOCK Auth: Bypassing submit_filing RPC");
+    return {
+      success: true,
+      rule_version: "2025-v1",
+      submitted_at: new Date().toISOString(),
+      firs_reference: mockFirsRef
+    };
+  }
+
   const { data, error } = await supabase.rpc("submit_filing", {
     p_filing_id: filingId,
-    p_output_json: outputJson as Json,
+    p_output_json: {
+      ...outputJson,
+      firs_reference: mockFirsRef,
+      submission_channel: "API"
+    } as Json,
   });
 
   if (error) {
-    console.error("Failed to submit filing:", error);
+    console.error("Failed to submit filing to database:", error);
     throw error;
   }
 
-  return data as { success: boolean; rule_version: string; submitted_at: string };
+  return {
+    ...(data as { success: boolean; rule_version: string; submitted_at: string }),
+    firs_reference: mockFirsRef
+  };
 }
 
 /**

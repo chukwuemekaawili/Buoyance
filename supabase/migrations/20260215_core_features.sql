@@ -242,18 +242,42 @@ ALTER TABLE document_hashes ENABLE ROW LEVEL SECURITY;
 -- ============================================
 -- RLS POLICIES (Users can only access their own data)
 -- ============================================
+DROP POLICY IF EXISTS "Users can manage own WHT certificates" ON wht_certificates;
 CREATE POLICY "Users can manage own WHT certificates" ON wht_certificates FOR ALL USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can manage own WHT credits" ON wht_credit_ledger;
 CREATE POLICY "Users can manage own WHT credits" ON wht_credit_ledger FOR ALL USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Anyone can read TCC requirements" ON tcc_requirements;
 CREATE POLICY "Anyone can read TCC requirements" ON tcc_requirements FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Users can manage own TCC checklist" ON tcc_checklist_items;
 CREATE POLICY "Users can manage own TCC checklist" ON tcc_checklist_items FOR ALL USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can manage own compliance tasks" ON compliance_tasks;
 CREATE POLICY "Users can manage own compliance tasks" ON compliance_tasks FOR ALL USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can manage own reminders" ON task_reminders;
 CREATE POLICY "Users can manage own reminders" ON task_reminders FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can manage own anomalies" ON anomalies;
 CREATE POLICY "Users can manage own anomalies" ON anomalies FOR ALL USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can manage own imported transactions" ON imported_transactions;
 CREATE POLICY "Users can manage own imported transactions" ON imported_transactions FOR ALL USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can manage own invoices" ON invoices;
 CREATE POLICY "Users can manage own invoices" ON invoices FOR ALL USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can manage own payroll" ON payroll_calculations;
 CREATE POLICY "Users can manage own payroll" ON payroll_calculations FOR ALL USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can view own event log" ON event_log;
 CREATE POLICY "Users can view own event log" ON event_log FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert event log" ON event_log;
 CREATE POLICY "Users can insert event log" ON event_log FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can manage own doc hashes" ON document_hashes;
 CREATE POLICY "Users can manage own doc hashes" ON document_hashes FOR ALL USING (true);
 
 -- ============================================

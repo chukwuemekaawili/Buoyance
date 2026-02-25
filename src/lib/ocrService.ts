@@ -188,3 +188,67 @@ export async function extractGenericText(
 
     return { text: data.text, confidence: data.confidence / 100 };
 }
+
+import { supabase } from "@/integrations/supabase/client";
+
+export interface OCRExtractionResult {
+    merchant: string;
+    date: string;
+    amount_ngn: number | string;
+    amount_kobo: string;
+    tax_category: string;
+    confidence_score: number;
+}
+
+export interface OCRProcessResult extends OCRExtractionResult {
+    receiptUrl: string;
+}
+
+export async function extractReceiptWithAI(file: File, workspaceId: string): Promise<OCRProcessResult> {
+    // 1. Upload to Supabase Storage ('receipts' bucket)
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${workspaceId}/${crypto.randomUUID()}.${fileExt}`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('receipts')
+        .upload(fileName, file);
+
+    if (uploadError) {
+        throw new Error('Failed to upload receipt image: ' + uploadError.message);
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+        .from('receipts')
+        .getPublicUrl(fileName);
+
+    // 2. Convert File to Base64 for the Edge Function payload
+    const base64Image = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            const result = reader.result as string;
+            const base64PrefixSplit = result.split(',');
+            resolve(base64PrefixSplit.length > 1 ? base64PrefixSplit[1] : result);
+        };
+        reader.onerror = error => reject(error);
+    });
+
+    // 3. Send Base64 directly to the OCR Edge Function
+    const { data: extractionData, error: functionError } = await supabase.functions.invoke('ocr-extract', {
+        body: { imageBase64: base64Image }
+    });
+
+    if (functionError) {
+        throw new Error('Failed to extract data via OCR: ' + functionError.message);
+    }
+
+    // Handle Edge Function 200 OK errors
+    if (extractionData && extractionData.error) {
+        throw new Error('OCR Engine Error: ' + extractionData.error);
+    }
+
+    return {
+        ...extractionData as OCRExtractionResult,
+        receiptUrl: publicUrl
+    };
+}

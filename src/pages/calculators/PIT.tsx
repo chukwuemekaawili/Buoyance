@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { ConsentModal } from "@/components/ConsentModal";
 import { Header } from "@/components/Header";
+import { NTATransitionGuide } from "@/components/calculator/NTATransitionGuide";
 import { Footer } from "@/components/Footer";
 import {
   parseNgnToKobo,
@@ -115,7 +116,12 @@ export default function PITCalculator() {
   const [ruleLoading, setRuleLoading] = useState(true);
   const [ruleError, setRuleError] = useState<string | null>(null);
   const [recordsSummary, setRecordsSummary] = useState<RecordsSummary | null>(null);
-  const [deductionsInput, setDeductionsInput] = useState<string>("");
+  const [deductionsInput, setDeductionsInput] = useState<string>(""); // Keep for backwards compatibility with records loader if needed momentarily
+  const [includePension, setIncludePension] = useState(false);
+  const [includeNhf, setIncludeNhf] = useState(false);
+  const [rentInput, setRentInput] = useState<string>("");
+  const [nhiaInput, setNhiaInput] = useState<string>("");
+  const [lifeInsuranceInput, setLifeInsuranceInput] = useState<string>("");
   const { user } = useAuth();
   const { hasConsent } = useConsent();
   const { toast } = useToast();
@@ -128,15 +134,15 @@ export default function PITCalculator() {
     const incomeNgn = Number(summary.totalIncomeKobo) / 100;
     setSalaryInput(new Intl.NumberFormat("en-NG").format(incomeNgn));
     setIsMonthly(false); // Switch to yearly since records are period totals
-    
-    // Auto-fill deductions from deductible expenses
-    const deductionsNgn = Number(summary.totalDeductibleExpensesKobo) / 100;
-    setDeductionsInput(new Intl.NumberFormat("en-NG").format(deductionsNgn));
   }, []);
 
   const handleRecordsCleared = useCallback(() => {
     setRecordsSummary(null);
-    setDeductionsInput("");
+    setIncludePension(false);
+    setIncludeNhf(false);
+    setRentInput("");
+    setNhiaInput("");
+    setLifeInsuranceInput("");
   }, []);
 
   useEffect(() => {
@@ -144,7 +150,7 @@ export default function PITCalculator() {
       try {
         setRuleLoading(true);
         setRuleError(null);
-        
+
         const { data, error } = await supabase
           .from("tax_rules")
           .select("*")
@@ -176,18 +182,38 @@ export default function PITCalculator() {
     fetchTaxRule();
   }, []);
 
-  const deductionsKobo = useMemo(() => {
-    const ngnValue = deductionsInput.replace(/,/g, "");
-    return parseNgnToKobo(ngnValue);
-  }, [deductionsInput]);
-
-  const annualSalaryKobo = useMemo(() => {
+  const grossIncomeKobo = useMemo(() => {
     const ngnValue = salaryInput.replace(/,/g, "");
     const kobo = parseNgnToKobo(ngnValue);
-    const grossKobo = isMonthly ? kobo * 12n : kobo;
-    // Apply deductions to reduce taxable income
-    return grossKobo > deductionsKobo ? grossKobo - deductionsKobo : 0n;
-  }, [salaryInput, isMonthly, deductionsKobo]);
+    return isMonthly ? kobo * 12n : kobo;
+  }, [salaryInput, isMonthly]);
+
+  const deductionsKobo = useMemo(() => {
+    let total = 0n;
+
+    if (includePension) {
+      total = addKobo(total, mulKoboByRate(grossIncomeKobo, 0.08));
+    }
+    if (includeNhf) {
+      total = addKobo(total, mulKoboByRate(grossIncomeKobo, 0.025));
+    }
+
+    const rentKobo = parseNgnToKobo(rentInput.replace(/,/g, ""));
+    const rentCap = 500_000_00n; // N500k cap NTA 2025
+    total = addKobo(total, minKobo(rentKobo, rentCap));
+
+    const nhiaKobo = parseNgnToKobo(nhiaInput.replace(/,/g, ""));
+    const lifeInsKobo = parseNgnToKobo(lifeInsuranceInput.replace(/,/g, ""));
+
+    total = addKobo(total, nhiaKobo);
+    total = addKobo(total, lifeInsKobo);
+
+    return total;
+  }, [grossIncomeKobo, includePension, includeNhf, rentInput, nhiaInput, lifeInsuranceInput]);
+
+  const annualSalaryKobo = useMemo(() => {
+    return grossIncomeKobo > deductionsKobo ? grossIncomeKobo - deductionsKobo : 0n;
+  }, [grossIncomeKobo, deductionsKobo]);
 
   const { totalTaxKobo, breakdown, effectiveRate } = useMemo(() => {
     if (!taxRule || annualSalaryKobo === 0n) {
@@ -200,14 +226,10 @@ export default function PITCalculator() {
   const netMonthlyIncomeKobo = divKobo(netAnnualIncomeKobo, 12);
   const monthlyTaxKobo = divKobo(totalTaxKobo, 12);
 
-  const handleDeductionsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9]/g, "");
-    if (value === "") {
-      setDeductionsInput("");
-      return;
-    }
-    const formatted = new Intl.NumberFormat("en-NG").format(parseInt(value));
-    setDeductionsInput(formatted);
+  const formatInput = (value: string) => {
+    const numeric = value.replace(/[^0-9]/g, "");
+    if (numeric === "") return "";
+    return new Intl.NumberFormat("en-NG").format(parseInt(numeric));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -222,7 +244,7 @@ export default function PITCalculator() {
 
   const handleSaveCalculation = async () => {
     if (!user || !taxRule) return;
-    
+
     if (!hasCalculationConsent) {
       setShowConsentModal(true);
       return;
@@ -361,36 +383,101 @@ export default function PITCalculator() {
                 </div>
 
                 {/* Deductions Input */}
-                <div className="space-y-3">
-                  <Label htmlFor="deductions" className="text-base font-semibold flex items-center gap-2">
-                    Deductions / Reliefs
+                <div className="space-y-4 pt-4 border-t border-border/50">
+                  <Label className="text-base font-semibold flex items-center gap-2">
+                    Deductions & Statutory Reliefs (NTA 2025)
                     <Tooltip>
                       <TooltipTrigger>
                         <Info className="h-4 w-4 text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
-                        <p>Enter tax-deductible expenses and reliefs (pension, NHF, NHIS, life insurance, etc.)</p>
+                        <p>Under NTA 2025, CRA is abolished. The following structured reliefs are allowed.</p>
                       </TooltipContent>
                     </Tooltip>
                   </Label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-mono font-semibold">
-                      ₦
-                    </span>
-                    <Input
-                      id="deductions"
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="0"
-                      value={deductionsInput}
-                      onChange={handleDeductionsChange}
-                      className="pl-10 h-12 font-mono border-2"
-                    />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between bg-muted/30 p-3 rounded-lg border">
+                        <div>
+                          <p className="font-medium text-sm">Pension Contribution (8%)</p>
+                          <p className="text-xs text-muted-foreground">Auto-calculated from gross</p>
+                        </div>
+                        <Switch
+                          checked={includePension}
+                          onCheckedChange={setIncludePension}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between bg-muted/30 p-3 rounded-lg border">
+                        <div>
+                          <p className="font-medium text-sm">NHF Contribution (2.5%)</p>
+                          <p className="text-xs text-muted-foreground">Auto-calculated from gross</p>
+                        </div>
+                        <Switch
+                          checked={includeNhf}
+                          onCheckedChange={setIncludeNhf}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="rent" className="text-xs font-medium">Rent Relief (Max ₦500k)</Label>
+                        <div className="relative mt-1">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">₦</span>
+                          <Input
+                            id="rent"
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="0"
+                            value={rentInput}
+                            onChange={(e) => setRentInput(formatInput(e.target.value))}
+                            className="pl-8 h-10 font-mono text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor="nhia" className="text-xs font-medium">NHIA Premium</Label>
+                          <div className="relative mt-1">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">₦</span>
+                            <Input
+                              id="nhia"
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="0"
+                              value={nhiaInput}
+                              onChange={(e) => setNhiaInput(formatInput(e.target.value))}
+                              className="pl-8 h-10 font-mono text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="life" className="text-xs font-medium">Life Insurance</Label>
+                          <div className="relative mt-1">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-mono text-sm">₦</span>
+                            <Input
+                              id="life"
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="0"
+                              value={lifeInsuranceInput}
+                              onChange={(e) => setLifeInsuranceInput(formatInput(e.target.value))}
+                              className="pl-8 h-10 font-mono text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+
                   {deductionsKobo > 0n && (
-                    <p className="text-xs text-secondary">
-                      Taxable income reduced by {formatKoboToNgn(deductionsKobo)}
-                    </p>
+                    <div className="flex justify-between items-center text-sm p-3 bg-secondary/10 text-secondary-foreground rounded-md border border-secondary/20 font-medium">
+                      <span>Total Allowed Deductions:</span>
+                      <span className="font-mono">₦{formatKoboToNgn(deductionsKobo)}</span>
+                    </div>
                   )}
                 </div>
 
@@ -521,6 +608,9 @@ export default function PITCalculator() {
               />
             </Card>
           )}
+          <div className="mt-6">
+            <NTATransitionGuide taxType="PIT" />
+          </div>
         </div>
       </main>
       <Footer />

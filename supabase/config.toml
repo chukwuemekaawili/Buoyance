@@ -1,5 +1,27 @@
 project_id = "bajwsjrqrsglsndgtfpp"
 
+[api]
+port = 54021
+
+[db]
+port = 54022
+
+[studio]
+port = 54023
+
+[edge_runtime]
+
+[auth]
+
+[storage]
+
+[inbucket]
+port = 54025
+
+[realtime]
+
+[analytics]
+port = 54026
 [functions.integration-health]
 verify_jwt = false
 
@@ -8,3 +30,25 @@ verify_jwt = false
 
 [functions.ai-chat]
 verify_jwt = false
+
+[functions.ocr-extract]
+enabled = true
+verify_jwt = true
+import_map = "./functions/ocr-extract/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/ocr-extract/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/ocr-extract/*.html" ]
+
+[functions.deadline-reminders]
+enabled = true
+verify_jwt = true
+import_map = "./functions/deadline-reminders/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/deadline-reminders/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/deadline-reminders/*.html" ]

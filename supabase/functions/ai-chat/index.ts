@@ -40,7 +40,7 @@ serve(async (req) => {
 
   try {
     const { messages, stream = false } = await req.json();
-    
+
     if (!messages || !Array.isArray(messages)) {
       return new Response(
         JSON.stringify({ error: 'Messages array is required' }),
@@ -48,51 +48,57 @@ serve(async (req) => {
       );
     }
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      console.error('OPENAI_API_KEY is not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      console.error('ANTHROPIC_API_KEY is not configured');
       return new Response(
-        JSON.stringify({ error: 'Configuration Error: OPENAI_API_KEY is missing in Supabase Secrets.' }),
+        JSON.stringify({ error: 'Configuration Error: ANTHROPIC_API_KEY is missing in Supabase Secrets.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Convert OpenAI-style messages to Anthropic format
+    // Anthropic separates system prompt from messages and uses a different role format
+    const anthropicMessages = messages.map((msg: { role: string; content: string }) => ({
+      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      content: msg.content,
+    }));
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages,
-        ],
-        stream,
-        temperature: 0.7,
+        model: 'claude-sonnet-4-20250514',
+        system: systemPrompt,
+        messages: anthropicMessages,
         max_tokens: 1024,
+        temperature: 0.7,
+        ...(stream ? { stream: true } : {}),
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
-      
+      console.error('Anthropic API error:', response.status, errorText);
+
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      
+
       if (response.status === 401) {
         return new Response(
-          JSON.stringify({ error: 'Configuration Error: Invalid OPENAI_API_KEY.' }),
+          JSON.stringify({ error: 'Configuration Error: Invalid ANTHROPIC_API_KEY.' }),
           { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      
+
       return new Response(
         JSON.stringify({ error: 'AI service temporarily unavailable' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -106,12 +112,13 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || 'I apologize, but I could not generate a response.';
+    // Anthropic returns content as an array of content blocks
+    const content = data.content?.[0]?.text || 'I apologize, but I could not generate a response.';
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         content,
-        model: 'gpt-4o-mini',
+        model: 'claude-sonnet-4-20250514',
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

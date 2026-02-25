@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { ConsentModal } from "@/components/ConsentModal";
 import { Header } from "@/components/Header";
+import { NTATransitionGuide } from "@/components/calculator/NTATransitionGuide";
 import { Footer } from "@/components/Footer";
 import {
   parseNgnToKobo,
@@ -67,7 +68,7 @@ export default function CGTCalculator() {
       try {
         setRuleLoading(true);
         setRuleError(null);
-        
+
         const { data, error } = await supabase
           .from("tax_rules")
           .select("*")
@@ -115,12 +116,12 @@ export default function CGTCalculator() {
     }
 
     const rate = taxRule.rules_json.cgt_rate;
-    
+
     // Calculate gain (proceeds - cost basis)
     // If negative, no CGT applies
     const rawGain = subKobo(proceedsKobo, costBasisKobo);
     const gain = rawGain > 0n ? rawGain : 0n;
-    
+
     // CGT only applies to positive gains
     const cgt = gain > 0n ? mulKoboByRate(gain, rate) : 0n;
     const net = subKobo(proceedsKobo, cgt);
@@ -152,7 +153,7 @@ export default function CGTCalculator() {
 
   const handleSaveCalculation = async () => {
     if (!user || !taxRule) return;
-    
+
     if (!hasCalculationConsent) {
       setShowConsentModal(true);
       return;
@@ -390,6 +391,9 @@ export default function CGTCalculator() {
               />
             </Card>
           )}
+          <div className="mt-6">
+            <NTATransitionGuide taxType="CGT" />
+          </div>
         </div>
       </main>
       <Footer />

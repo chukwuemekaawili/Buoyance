@@ -1,0 +1,1 @@
+import { supabase } from '@/integrations/supabase/client'; supabase.auth.signUp({ email: 'test.local@example.com', password: 'Password123!', options: { data: { full_name: 'Test Local' } } }).then(console.log).catch(console.error);

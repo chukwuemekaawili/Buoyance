@@ -74,6 +74,8 @@ import { formatKoboToNgn, stringToKobo, parseNgnToKobo, koboToString, addKobo } 
 import { writeAuditLog, AuditActions } from "@/lib/auditLog";
 import { PreFlightChecklist, hasBlockingErrors } from "@/components/filings/PreFlightChecklist";
 import { SideBySideInstructions } from "@/components/filings/SideBySideInstructions";
+import { PortalFieldMap } from "@/components/filings/PortalFieldMap";
+import { AIPreSubmitCheck } from "@/components/filings/AIPreSubmitCheck";
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -122,23 +124,52 @@ function getFilingTaxKobo(filing: Filing): bigint {
   return 0n;
 }
 
+// NTA 2025 PIT progressive bands (Kobo thresholds, 0% for ≤₦800k)
+const NTA2025_PIT_BANDS = [
+  { label: "0% (≤₦800,000)", threshold_kobo: 80000000, rate: 0.00 },
+  { label: "15% (next ₦2.2M)", threshold_kobo: 220000000, rate: 0.15 },
+  { label: "19% (next ₦3M)", threshold_kobo: 300000000, rate: 0.19 },
+  { label: "21% (next ₦7M)", threshold_kobo: 700000000, rate: 0.21 },
+  { label: "24% (next ₦12M)", threshold_kobo: 1200000000, rate: 0.24 },
+  { label: "25% (above ₦25M)", threshold_kobo: null, rate: 0.25 },
+] as const;
+
+function applyProgressivePITBands(incomeKobo: bigint): bigint {
+  let remaining = incomeKobo;
+  let tax = 0n;
+  for (const band of NTA2025_PIT_BANDS) {
+    if (remaining <= 0n) break;
+    const cap = band.threshold_kobo !== null ? BigInt(band.threshold_kobo) : remaining;
+    const taxable = remaining < cap ? remaining : cap;
+    const bandTax = (taxable * BigInt(Math.round(band.rate * 10000))) / 1000000n;
+    tax += bandTax;
+    remaining -= taxable;
+  }
+  return tax;
+}
+
 function computeOutput(filing: Filing): Record<string, unknown> {
   const input = filing.input_json;
   switch (filing.tax_type) {
     case "PIT": {
       const incomeKobo = stringToKobo(input.annualSalaryKobo as string || "0");
-      const taxKobo = (incomeKobo * 24n) / 100n;
+      // NTA 2025: Progressive bands, not a flat 24%
+      const taxKobo = applyProgressivePITBands(incomeKobo);
       const netKobo = incomeKobo - taxKobo;
       return { totalTaxKobo: koboToString(taxKobo), netAnnualIncomeKobo: koboToString(netKobo), effectiveRate: incomeKobo > 0n ? Number((taxKobo * 10000n) / incomeKobo) / 100 : 0 };
     }
     case "CIT": {
       const profitKobo = stringToKobo(input.taxableProfitKobo as string || "0");
-      const size = input.companySize as string || "medium";
-      let rate = 30n;
-      if (size === "small") rate = 0n;
-      else if (size === "medium") rate = 20n;
+      const isSmall = input.isSmallCompany as boolean || false;
+      const isProfessional = input.isProfessionalServices as boolean || false;
+      // NTA 2025: Small company (non-professional, ≤₦100M) = 0%; others = 30% CIT + 4% Dev Levy
+      const useSmallRate = isSmall && !isProfessional;
+      const rate = useSmallRate ? 0n : 30n;
+      const devLevyRate = useSmallRate ? 0n : 4n;
       const taxKobo = (profitKobo * rate) / 100n;
-      return { taxPayableKobo: koboToString(taxKobo), netProfitKobo: koboToString(profitKobo - taxKobo), effectiveRate: Number(rate) };
+      const devLevyKobo = (profitKobo * devLevyRate) / 100n;
+      const totalKobo = taxKobo + devLevyKobo;
+      return { taxPayableKobo: koboToString(totalKobo), netProfitKobo: koboToString(profitKobo - totalKobo), effectiveRate: Number(rate + devLevyRate) };
     }
     case "VAT": {
       const salesKobo = stringToKobo(input.taxableSalesKobo as string || "0");
@@ -147,7 +178,7 @@ function computeOutput(filing: Filing): Record<string, unknown> {
     }
     case "WHT": {
       const amountKobo = stringToKobo(input.paymentAmountKobo as string || "0");
-      const rate = BigInt(Math.round((input.whtRate as number || 10) * 100));
+      const rate = BigInt(Math.round((input.whtRate as number || 5) * 100));
       const whtKobo = (amountKobo * rate) / 10000n;
       return { whtPayableKobo: koboToString(whtKobo), netPaymentKobo: koboToString(amountKobo - whtKobo), whtRate: Number(rate) / 100 };
     }
@@ -155,8 +186,12 @@ function computeOutput(filing: Filing): Record<string, unknown> {
       const proceedsKobo = stringToKobo(input.proceedsKobo as string || "0");
       const costKobo = stringToKobo(input.costKobo as string || "0");
       const gainKobo = proceedsKobo > costKobo ? proceedsKobo - costKobo : 0n;
-      const cgtKobo = (gainKobo * 10n) / 100n;
-      return { capitalGainKobo: koboToString(gainKobo), cgtPayableKobo: koboToString(cgtKobo), netProceedsKobo: koboToString(proceedsKobo - cgtKobo), effectiveRate: 10 };
+      // NTA 2025: CGT for companies = 30% (individuals use progressive PIT bands)
+      const isCompany = input.isCompany as boolean || false;
+      const cgtKobo = isCompany
+        ? (gainKobo * 30n) / 100n
+        : applyProgressivePITBands(gainKobo); // Individuals: gains taxed at progressive PIT rates
+      return { capitalGainKobo: koboToString(gainKobo), cgtPayableKobo: koboToString(cgtKobo), netProceedsKobo: koboToString(proceedsKobo - cgtKobo), effectiveRate: isCompany ? 30 : undefined };
     }
     default: return {};
   }
@@ -228,17 +263,27 @@ export default function FilingDetail() {
     setSubmitting(true);
     try {
       const output = computeOutput(filing);
-      await submitFiling(filing.id, output);
+      const isMockFiling = filing.id.startsWith("mock-filing-");
+
+      const submitResult = await submitFiling(filing.id, output);
       const updatedFiling = { ...filing, output_json: output, status: "submitted" as const };
-      const pdfBlob = generateFilingPDF(updatedFiling);
-      const documentUrl = await uploadFilingPDF(user.id, filing.id, pdfBlob);
-      await updateFilingDocument(filing.id, documentUrl);
-      await writeAuditLog({ action: AuditActions.FILING_DOCUMENT_GENERATED, entity_type: "filing", entity_id: filing.id, metadata: { tax_type: filing.tax_type } });
+
+      if (!isMockFiling) {
+        const pdfBlob = generateFilingPDF(updatedFiling);
+        const documentUrl = await uploadFilingPDF(user.id, filing.id, pdfBlob);
+        await updateFilingDocument(filing.id, documentUrl);
+        await writeAuditLog({ action: AuditActions.FILING_DOCUMENT_GENERATED, entity_type: "filing", entity_id: filing.id, metadata: { tax_type: filing.tax_type } });
+      } else {
+        console.warn("Using MOCK Auth: Skipping PDF upload and Audit log");
+      }
 
       // Trigger notification for filing submission
       await NotificationTriggers.filingSubmitted(filing.id, filing.tax_type);
 
-      toast({ title: "Filing submitted", description: "Your tax filing has been submitted." });
+      toast({
+        title: "Filing submitted",
+        description: `Your tax filing has been submitted. Reference: ${submitResult.firs_reference || "N/A"}`
+      });
       loadFiling();
     } catch (err: any) { toast({ title: "Submission failed", description: err.message, variant: "destructive" }); }
     finally { setSubmitting(false); }
@@ -439,9 +484,23 @@ export default function FilingDetail() {
             </CardContent>
           </Card>
 
-          {/* 4-Tab Launchpad - TASK 3: Default tab based on payment status */}
+          {/* AI Pre-Submit Check — only for draft filings */}
+          {isDraft && (
+            <div className="mb-6">
+              <AIPreSubmitCheck
+                filingTaxType={filing.tax_type}
+                filingPeriodStart={filing.period_start}
+                filingPeriodEnd={filing.period_end}
+                declaredIncomeKobo={stringToKobo(String(computedOutput.incomeKobo || computedOutput.revenueKobo || "0"))}
+                declaredDeductionsKobo={stringToKobo(String(computedOutput.deductionsKobo || "0"))}
+                declaredTaxKobo={getFilingTaxKobo(filing)}
+              />
+            </div>
+          )}
+
+          {/* 5-Tab Launchpad - TASK 3: Default tab based on payment status */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4" id="filing-tabs">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="checklist" className="flex items-center gap-2"><ClipboardList className="h-4 w-4" /><span className="hidden sm:inline">Checklist</span></TabsTrigger>
               <TabsTrigger value="files" className="flex items-center gap-2"><FileText className="h-4 w-4" /><span className="hidden sm:inline">Files</span></TabsTrigger>
               <TabsTrigger value="instructions" className="flex items-center gap-2 relative">
@@ -450,10 +509,14 @@ export default function FilingDetail() {
                 {isSubmittedButUnpaid && <span className="absolute -top-1 -right-1 h-2 w-2 bg-destructive rounded-full" />}
               </TabsTrigger>
               <TabsTrigger value="verify" className="flex items-center gap-2"><CreditCard className="h-4 w-4" /><span className="hidden sm:inline">Verify & Archive</span></TabsTrigger>
+              <TabsTrigger value="portal-map" className="flex items-center gap-2"><Columns className="h-4 w-4" /><span className="hidden sm:inline">Portal Map</span></TabsTrigger>
             </TabsList>
 
             {/* Checklist Tab */}
             <TabsContent value="checklist"><PreFlightChecklist filing={filing} hasConsent={hasValidConsent} /></TabsContent>
+
+            {/* Portal Map Tab */}
+            <TabsContent value="portal-map"><PortalFieldMap filingId={filing.id} taxType={filing.tax_type} /></TabsContent>
 
             {/* Files Tab with Portal Routing */}
             <TabsContent value="files">

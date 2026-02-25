@@ -58,7 +58,7 @@ type PeriodType = "month" | "quarter" | "year" | "custom";
 type FilingPathway = "self_file" | "auto_file";
 
 // Canonical Tax Identity types matching Settings.tsx
-type TaxIdentity = 
+type TaxIdentity =
   | "freelancer"   // Freelancer / Sole Proprietor
   | "enterprise"   // Small Business Enterprise / Business Name
   | "ltd"          // Limited Company (LTD)
@@ -164,7 +164,7 @@ function getSuggestionsForContext(taxType: string, identity: TaxIdentity): Sugge
 // Map legacy user_type values to new TaxIdentity
 function mapLegacyIdentity(userType: string | null): TaxIdentity {
   if (!userType) return 'freelancer';
-  
+
   const mapping: Record<string, TaxIdentity> = {
     'individual': 'salary',
     'sme': 'enterprise',
@@ -180,7 +180,7 @@ function mapLegacyIdentity(userType: string | null): TaxIdentity {
     'admin': 'freelancer',
     'auditor': 'freelancer',
   };
-  
+
   return mapping[userType] || 'freelancer';
 }
 
@@ -237,7 +237,7 @@ export default function NewFiling() {
   const [identity, setIdentity] = useState<TaxIdentity>("freelancer");
   const [identityLoading, setIdentityLoading] = useState(true);
   const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([]);
-  
+
   // Custom amount dialog state
   const [customAmountDialogOpen, setCustomAmountDialogOpen] = useState(false);
   const [customAmountSuggestion, setCustomAmountSuggestion] = useState<Suggestion | null>(null);
@@ -254,7 +254,7 @@ export default function NewFiling() {
   useEffect(() => {
     async function loadDraft() {
       if (!editFilingId || !user) return;
-      
+
       setEditLoading(true);
       try {
         const filing = await fetchFilingById(editFilingId);
@@ -272,7 +272,7 @@ export default function NewFiling() {
 
         // Populate input fields from input_json
         const input = filing.input_json;
-        
+
         // Load identity if saved
         if (input.identity) {
           setIdentity(input.identity as TaxIdentity);
@@ -351,7 +351,7 @@ export default function NewFiling() {
 
         // Skip to step 2 since we have the tax type
         setStep(2);
-        
+
         toast({ title: "Draft loaded", description: "You can now edit your draft filing." });
       } catch (err: any) {
         console.error("Failed to load draft:", err);
@@ -361,7 +361,7 @@ export default function NewFiling() {
         setEditLoading(false);
       }
     }
-    
+
     loadDraft();
   }, [editFilingId, user]);
 
@@ -376,7 +376,7 @@ export default function NewFiling() {
           .select("tax_identity")
           .eq("id", user.id)
           .single();
-        
+
         if (error) throw error;
         // Use tax_identity directly if set, otherwise use mapping for legacy
         if (data?.tax_identity) {
@@ -409,7 +409,7 @@ export default function NewFiling() {
   }, [runningTotal, deductionEntries.length]);
 
   // Helper to get entry for a suggestion
-  const getEntryForSuggestion = (suggestionId: string) => 
+  const getEntryForSuggestion = (suggestionId: string) =>
     deductionEntries.find(e => e.id === suggestionId);
 
   const handleToggleSuggestion = (suggestionId: string) => {
@@ -417,14 +417,14 @@ export default function NewFiling() {
     if (!suggestion) return;
 
     const existingEntry = getEntryForSuggestion(suggestionId);
-    
+
     if (existingEntry) {
       // Remove the entry
       setDeductionEntries(prev => prev.filter(e => e.id !== suggestionId));
       setSelectedSuggestions(prev => prev.filter(id => id !== suggestionId));
       return;
     }
-    
+
     // For all items, open the dialog to enter amount and note
     setCustomAmountSuggestion(suggestion);
     setCustomAmountValue(suggestion.default > 0 ? suggestion.default.toString() : "");
@@ -434,11 +434,11 @@ export default function NewFiling() {
 
   const handleCustomAmountSubmit = () => {
     if (!customAmountSuggestion) return;
-    
+
     // Parse the custom amount (remove commas, convert to number)
     const cleanedValue = customAmountValue.replace(/,/g, "");
     const amount = parseFloat(cleanedValue);
-    
+
     // Validation: prevent negative and zero amounts
     if (isNaN(amount) || amount < 0) {
       toast({
@@ -483,7 +483,7 @@ export default function NewFiling() {
         description: `₦${amount.toLocaleString()} added for ${customAmountSuggestion.label}`,
       });
     }
-    
+
     // Close dialog and reset
     setCustomAmountDialogOpen(false);
     setCustomAmountSuggestion(null);
@@ -521,7 +521,7 @@ export default function NewFiling() {
     setDeductionEntries([]);
     setDeductionsAmount("");
     setShowIndustrySelector(false);
-    
+
     // Optionally save to profile
     if (user) {
       try {
@@ -679,7 +679,7 @@ export default function NewFiling() {
     setSaving(true);
     try {
       let filingId: string;
-      
+
       if (isEditMode && editFilingId) {
         // Update existing draft
         await updateFilingDraft(editFilingId, buildInputJson());
@@ -771,13 +771,12 @@ export default function NewFiling() {
                   <CardDescription>Choose how you want to file your taxes</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div 
+                  <div
                     onClick={() => setFilingPathway("self_file")}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      filingPathway === "self_file" 
-                        ? "border-primary bg-primary/5" 
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${filingPathway === "self_file"
+                        ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/50"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start gap-3">
                       <div className={`p-2 rounded-full ${filingPathway === "self_file" ? "bg-primary/10" : "bg-muted"}`}>
@@ -789,7 +788,7 @@ export default function NewFiling() {
                           <Badge variant="default" className="bg-green-600">Available Now</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Generate your tax schedule and file manually on the government portal. 
+                          Generate your tax schedule and file manually on the government portal.
                           You'll download a PDF/Excel pack and submit it yourself.
                         </p>
                         <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
@@ -810,38 +809,27 @@ export default function NewFiling() {
                     </div>
                   </div>
 
-                  <div 
-                    onClick={() => autofileConfigured && setFilingPathway("auto_file")}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      !autofileConfigured 
-                        ? "border-border bg-muted/30 cursor-not-allowed opacity-60" 
-                        : filingPathway === "auto_file"
-                          ? "border-primary bg-primary/5 cursor-pointer"
-                          : "border-border hover:border-primary/50 cursor-pointer"
-                    }`}
+                  <div
+                    onClick={() => setFilingPathway("auto_file")}
+                    className={`p-4 rounded-lg border-2 transition-all ${filingPathway === "auto_file"
+                        ? "border-primary bg-primary/5 cursor-pointer"
+                        : "border-border hover:border-primary/50 cursor-pointer"
+                      }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-full ${filingPathway === "auto_file" && autofileConfigured ? "bg-primary/10" : "bg-muted"}`}>
+                      <div className={`p-2 rounded-full ${filingPathway === "auto_file" ? "bg-primary/10" : "bg-muted"}`}>
                         <Lock className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold">Auto-File Service</h3>
-                          <Badge variant="outline" className="text-muted-foreground">
-                            {autofileConfigured ? "Available" : "Coming Soon"}
+                          <Badge variant="default" className="bg-blue-600">
+                            Available Now
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Direct submission to tax authorities via licensed partner integration.
+                          Direct submission to TaxPro Max API.
                         </p>
-                        {!autofileConfigured && (
-                          <Alert className="mt-2 bg-muted/50 border-muted">
-                            <Info className="h-4 w-4" />
-                            <AlertDescription className="text-xs">
-                              Requires licensed partner and API keys. Contact support for setup.
-                            </AlertDescription>
-                          </Alert>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -863,11 +851,10 @@ export default function NewFiling() {
                           key={type.value}
                           type="button"
                           onClick={() => setTaxType(type.value)}
-                          className={`p-4 rounded-lg border text-left transition-all ${
-                            taxType === type.value
+                          className={`p-4 rounded-lg border text-left transition-all ${taxType === type.value
                               ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                               : "border-border hover:border-primary/50"
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center gap-3">
                             <Icon className={`h-5 w-5 ${taxType === type.value ? "text-primary" : "text-muted-foreground"}`} />
@@ -973,8 +960,8 @@ export default function NewFiling() {
                           Auto-fill from your income and expense records for this period
                         </p>
                       </div>
-                      <Button 
-                        variant={useRecords ? "default" : "outline"} 
+                      <Button
+                        variant={useRecords ? "default" : "outline"}
                         size="sm"
                         onClick={() => setUseRecords(!useRecords)}
                         disabled={recordsLoading}
@@ -1074,7 +1061,7 @@ export default function NewFiling() {
                       readOnly={deductionEntries.length > 0}
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      {taxType === "VAT" 
+                      {taxType === "VAT"
                         ? "Input VAT from valid VAT invoices reduces your Net VAT payable"
                         : deductionEntries.length > 0
                           ? "Total is calculated from your added deductions below"
@@ -1105,7 +1092,7 @@ export default function NewFiling() {
                           </Button>
                         )}
                       </div>
-                      
+
                       {showIndustrySelector && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
                           {INDUSTRY_OPTIONS.map((option) => (
@@ -1113,11 +1100,10 @@ export default function NewFiling() {
                               key={option.value}
                               type="button"
                               onClick={() => handleIndustryChange(option.value)}
-                              className={`p-3 rounded-lg border text-left transition-all ${
-                                identity === option.value
+                              className={`p-3 rounded-lg border text-left transition-all ${identity === option.value
                                   ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                                   : "border-border hover:border-primary/50"
-                              }`}
+                                }`}
                             >
                               <p className="font-medium text-sm">{option.label}</p>
                               <p className="text-xs text-muted-foreground">{option.description}</p>
@@ -1133,8 +1119,8 @@ export default function NewFiling() {
                         <div className="flex items-center gap-2 mb-3">
                           <TrendingUp className="h-4 w-4 text-secondary" />
                           <h4 className="font-medium text-sm">
-                            {taxType === "VAT" 
-                              ? "Common Input VAT Claims" 
+                            {taxType === "VAT"
+                              ? "Common Input VAT Claims"
                               : `Suggested Deductions for ${INDUSTRY_OPTIONS.find(o => o.value === identity)?.label || identity}`
                             }
                           </h4>
@@ -1186,8 +1172,8 @@ export default function NewFiling() {
                         </div>
                         <div className="space-y-2">
                           {deductionEntries.map((entry) => (
-                            <div 
-                              key={entry.id} 
+                            <div
+                              key={entry.id}
                               className="flex items-start justify-between p-2 bg-background rounded-md border hover:border-primary/50 cursor-pointer transition-colors group"
                               onClick={() => handleEditEntry(entry)}
                             >
@@ -1319,7 +1305,7 @@ export default function NewFiling() {
         </div>
       </main>
       <Footer />
-      
+
       {/* Custom Amount Dialog for deduction entry */}
       <Dialog open={customAmountDialogOpen} onOpenChange={setCustomAmountDialogOpen}>
         <DialogContent className="sm:max-w-md bg-background">

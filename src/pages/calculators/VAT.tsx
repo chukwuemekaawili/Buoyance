@@ -19,7 +19,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { ConsentModal } from "@/components/ConsentModal";
 import { Header } from "@/components/Header";
+import { NTATransitionGuide } from "@/components/calculator/NTATransitionGuide";
 import { Footer } from "@/components/Footer";
+import { AITaxDrawer } from "@/components/calculators/AITaxDrawer";
 import {
   parseNgnToKobo,
   formatKoboToNgn,
@@ -55,6 +57,7 @@ export default function VATCalculator() {
   const [inputVatInput, setInputVatInput] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
+  const [isAIDrawerOpen, setIsAIDrawerOpen] = useState(false);
   const [taxRule, setTaxRule] = useState<TaxRule | null>(null);
   const [ruleLoading, setRuleLoading] = useState(true);
   const [ruleError, setRuleError] = useState<string | null>(null);
@@ -84,7 +87,7 @@ export default function VATCalculator() {
       try {
         setRuleLoading(true);
         setRuleError(null);
-        
+
         const { data, error } = await supabase
           .from("tax_rules")
           .select("*")
@@ -132,11 +135,11 @@ export default function VATCalculator() {
     }
 
     const rate = taxRule.rules_json.vat_rate;
-    const netVat = outputVatKobo > inputVatKobo 
-      ? outputVatKobo - inputVatKobo 
+    const netVat = outputVatKobo > inputVatKobo
+      ? outputVatKobo - inputVatKobo
       : 0n;
-    const credit = inputVatKobo > outputVatKobo 
-      ? inputVatKobo - outputVatKobo 
+    const credit = inputVatKobo > outputVatKobo
+      ? inputVatKobo - outputVatKobo
       : 0n;
 
     return { netVatPayableKobo: netVat, vatCredit: credit, vatRate: rate };
@@ -164,7 +167,7 @@ export default function VATCalculator() {
 
   const handleSaveCalculation = async () => {
     if (!user || !taxRule) return;
-    
+
     if (!hasCalculationConsent) {
       setShowConsentModal(true);
       return;
@@ -323,10 +326,29 @@ export default function VATCalculator() {
                   <p className="text-xs text-muted-foreground">
                     VAT Rate: {(vatRate * 100).toFixed(1)}% • Net VAT = Output VAT − Input VAT
                   </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                    ⚠ VAT registration is mandatory if your annual turnover exceeds <strong>₦25,000,000</strong> (Section 10, Value Added Tax Act as amended by NTA 2025).
+                  </p>
                 </div>
 
                 {hasResults && (
                   <div className="space-y-4 animate-fade-in">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <Receipt className="h-5 w-5 text-primary" />
+                        Tax Breakdown
+                      </h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 text-primary border-primary/20 hover:bg-primary/10 transition-colors"
+                        onClick={() => setIsAIDrawerOpen(true)}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Explain Calculation
+                      </Button>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-destructive/10 rounded-xl p-4 border border-destructive/20">
                         <div className="flex items-center gap-2 text-sm text-destructive font-medium mb-1">
@@ -421,8 +443,29 @@ export default function VATCalculator() {
                 onConsentGiven={() => setShowConsentModal(false)}
                 context="calculation"
               />
+
+              <AITaxDrawer
+                open={isAIDrawerOpen}
+                onOpenChange={setIsAIDrawerOpen}
+                title="VAT Calculation Explained"
+                contextParams={{
+                  taxType: "Value Added Tax (VAT)",
+                  calculationType: "Corporate Assessment",
+                  values: {
+                    output_vat_ngn: formatKoboToNgn(outputVatKobo),
+                    input_vat_ngn: formatKoboToNgn(inputVatKobo),
+                    net_vat_payable_ngn: formatKoboToNgn(netVatPayableKobo),
+                    vat_credit_carried_forward_ngn: formatKoboToNgn(vatCredit),
+                    vat_standard_rate_applied: (vatRate * 100).toFixed(1) + "%"
+                  },
+                  ruleVersion: "NTA_2025"
+                }}
+              />
             </Card>
           )}
+          <div className="mt-6">
+            <NTATransitionGuide taxType="VAT" />
+          </div>
         </div>
       </main>
       <Footer />
