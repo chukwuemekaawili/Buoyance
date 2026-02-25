@@ -159,14 +159,14 @@ export default function PITCalculator() {
           .eq("archived", false)
           .order("effective_date", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (error) {
-          if (error.code === "PGRST116") {
-            setRuleError("No published PIT rules found. Please contact support.");
-          } else {
-            throw error;
-          }
+          throw error;
+        }
+
+        if (!data) {
+          setRuleError("No published PIT rules found. Please contact support.");
           return;
         }
 

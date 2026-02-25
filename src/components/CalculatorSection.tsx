@@ -1,6 +1,5 @@
 import { TaxCalculator } from "./TaxCalculator";
 import { CheckCircle } from "lucide-react";
-import { RequireConsent } from "./RequireConsent";
 
 const highlights = [
   "Progressive tax bands per NTA 2025",
@@ -29,8 +28,8 @@ export function CalculatorSection() {
               2026 Personal Income Tax Estimator
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Calculate your tax liability under the new Nigeria Tax Act 2025. 
-              Our engine uses deterministic logic—no approximations, no AI guesses, 
+              Calculate your tax liability under the new Nigeria Tax Act 2025.
+              Our engine uses deterministic logic—no approximations, no AI guesses,
               just legally accurate calculations.
             </p>
 
@@ -78,22 +77,13 @@ export function CalculatorSection() {
             </div>
           </div>
 
-          {/* Right: Calculator - Requires consent to use */}
+          {/* Right: Calculator */}
           <div>
-            <RequireConsent
-              fallback={
-                <div className="p-8 bg-card rounded-xl border border-border text-center">
-                  <p className="text-muted-foreground">
-                    Please accept our terms to use the calculator.
-                  </p>
-                </div>
-              }
-            >
-              <TaxCalculator />
-            </RequireConsent>
+            <TaxCalculator />
           </div>
         </div>
       </div>
     </section>
   );
 }
+
