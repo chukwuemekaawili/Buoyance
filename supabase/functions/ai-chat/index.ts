@@ -152,6 +152,21 @@ async function getTaxRulesContext(): Promise<Record<string, TaxRuleRow> | null> 
 function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null): string | null {
   const q = question.toLowerCase();
 
+  // Buoyance product/app questions: respond with curated, non-sensitive product overview.
+  if (q.includes('buoyance') || q.includes('this app') || q.includes('your app')) {
+    return [
+      "Buoyance is a Nigerian tax compliance app. It helps you track your numbers and stay on top of NTA 2025 reporting.",
+      "",
+      "What you can do in Buoyance:",
+      "- Track income and expenses (including receipt scanning and CSV import).",
+      "- Run tax calculators (PIT/PAYE, CIT, VAT, WHT, CGT, crypto, foreign income).",
+      "- Prepare filings and export filing packs (PDF/Excel where available).",
+      "- Manage workspaces, usage quotas, and compliance reminders.",
+      "",
+      "If you tell me what you're trying to do (e.g., 'add an expense', 'calculate VAT', 'prepare a filing'), I'll point you to the right place in the app.",
+    ].join("\n");
+  }
+
   // CRA / legacy prompt guardrail (fast, deterministic)
   if (q.includes('consolidated relief allowance') || /\bcra\b/.test(q)) {
     return [
