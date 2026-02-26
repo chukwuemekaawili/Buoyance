@@ -105,7 +105,14 @@ export default function Expenses() {
 
   const handleScanComplete = (result: OCRProcessResult) => {
     setMerchantName(result.merchant !== "null" ? result.merchant : "");
-    setDescription(result.merchant !== "null" ? `Expense: ${result.merchant}` : "Scanned Receipt");
+
+    // Use the AI-generated description if available, otherwise fall back to merchant name
+    const aiDescription = (result as any).description;
+    if (aiDescription && aiDescription !== "null") {
+      setDescription(aiDescription);
+    } else {
+      setDescription(result.merchant !== "null" ? `Expense: ${result.merchant}` : "Scanned Receipt");
+    }
 
     if (result.amount_ngn !== "null") {
       setAmount(new Intl.NumberFormat("en-NG").format(Number(result.amount_ngn)));
