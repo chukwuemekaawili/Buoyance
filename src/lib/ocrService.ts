@@ -221,24 +221,13 @@ export async function extractReceiptWithAI(file: File, workspaceId: string): Pro
         .from('receipts')
         .getPublicUrl(fileName);
 
-    // 2. Convert File to Base64 for the Edge Function payload
-    const base64Image = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => {
-            const result = reader.result as string;
-            const base64PrefixSplit = result.split(',');
-            resolve(base64PrefixSplit.length > 1 ? base64PrefixSplit[1] : result);
-        };
-        reader.onerror = error => reject(error);
-    });
-
-    // 3. Send Base64 directly to the OCR Edge Function
-    console.log('[OCR] Invoking Edge Function `ocr-extract` with base64 data...', { base64Length: base64Image.length });
+    // 2. We skip base64 conversion on the client to avoid Supabase Edge Function payload limits (500KB).
+    // Instead, we pass the public URL of the receipt we just uploaded. The Edge Function will download it locally.
+    console.log('[OCR] Invoking Edge Function `ocr-extract` with image URL...', { imageUrl: publicUrl });
 
     try {
         const invokeResult = await supabase.functions.invoke('ocr-extract', {
-            body: { imageBase64: base64Image }
+            body: { imageUrl: publicUrl }
         });
 
         console.log('[OCR] Edge Function raw response:', invokeResult);
