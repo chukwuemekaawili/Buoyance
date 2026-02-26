@@ -72,8 +72,8 @@ serve(async (req) => {
                 type: 'image',
                 source: {
                   type: 'base64',
-                  media_type: 'image/jpeg', // Providing a default, base64 data should ideally just be the raw base64 string without the data uri prefix
-                  data: imageBase64,
+                  media_type: 'image/jpeg', // Anthropic accepts jpeg, png, gif, webp
+                  data: imageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, ""), // Strictly strip any prefix
                 }
               },
               {
@@ -90,7 +90,10 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error('Anthropic API Error:', data);
-      throw new Error(data.error?.message || 'Failed to communicate with Anthropic');
+      return new Response(
+        JSON.stringify({ error: `Anthropic API Error: ${data.error?.message || JSON.stringify(data)}` }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const content = data.content[0].text;
