@@ -396,7 +396,7 @@ export function AIChatWidget() {
             <h3 className="font-semibold text-sm">AI Tax Assistant</h3>
             {!isMinimized && (
               <p className="text-xs text-primary-foreground/70">
-                Ask about Nigerian tax laws
+                Ask about Nigerian taxes (NTA 2025)
               </p>
             )}
           </div>
@@ -431,7 +431,7 @@ export function AIChatWidget() {
                   <Bot className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                   <h4 className="font-medium mb-1">Welcome!</h4>
                   <p className="text-sm text-muted-foreground">
-                    I can help explain Nigerian tax laws and calculations.
+                    Ask me anything about Nigerian taxes. I'll keep it practical and based on NTA 2025.
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -572,7 +572,7 @@ export function AIChatWidget() {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about taxes..."
+                placeholder="Ask me about taxes..."
                 disabled={isLoading}
                 className="flex-1"
               />

@@ -13,14 +13,22 @@ CRITICAL LEGAL FRAMEWORK
 - You operate exclusively under the Nigeria Tax Act 2025 (NTA 2025), effective 1 January 2026.
 - REPEALED: The Personal Income Tax Act (PITA) and the "Consolidated Relief Allowance" (CRA) are no longer valid. Do not use them.
 
+STYLE (HUMAN)
+- Sound like a helpful human tax analyst (friendly, calm, direct).
+- Use plain English, short sentences, and contractions where natural.
+- Lead with the answer, then details. Ask 1 clarifying question if needed.
+- Use bullet lists only when it makes the answer easier to scan.
+- Do not start with filler like "Great question".
+- Do not mention CRA/PITA unless the user asked about them.
+
 BEHAVIOR (STRICT)
 - Use ONLY the tax rules provided in TAX RULES CONTEXT. If the context does not support an answer, say so and ask a clarifying question.
 - Do NOT invent lists (exemptions, thresholds, rates) or legal references.
-- Keep answers concise and practical.
+- If a specific item/service/allowance is not explicitly covered by the context, do not guess. Say you cannot confirm from the published rules you have.
 - Do not provide legal advice.
 
 TAX RULES CONTEXT
-(Unavailable — the rules database is not configured for this environment.)`;
+(Unavailable - the rules database is not configured for this environment.)`;
 
 interface TaxRuleRow {
   tax_type: string;
@@ -64,7 +72,16 @@ BEHAVIOR (STRICT)
 - If the context does not support an answer, say you do not have enough information and ask a clarifying question.
 - Do NOT invent lists (exemptions, thresholds, rates) or legal references.
 - Keep answers concise and practical.
+- If a specific item/service/allowance is not explicitly covered by the context, do not guess. Say you cannot confirm from the published rules you have.
 - Do not provide legal advice.
+
+STYLE (HUMAN)
+- Sound like a helpful human tax analyst (friendly, calm, direct).
+- Use plain English, short sentences, and contractions where natural.
+- Lead with the answer, then details. Ask 1 clarifying question if needed.
+- Use bullet lists only when it makes the answer easier to scan.
+- Do not start with filler like "Great question".
+- Do not mention CRA/PITA unless the user asked about them.
 
 TAX RULES CONTEXT (Buoyance published tax_rules)
 ${JSON.stringify(taxRulesContext, null, 2)}`;
@@ -138,11 +155,25 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
   // CRA / legacy prompt guardrail (fast, deterministic)
   if (q.includes('consolidated relief allowance') || /\bcra\b/.test(q)) {
     return [
-      "Under the Nigeria Tax Act 2025 (effective 1 January 2026), Consolidated Relief Allowance (CRA) is repealed.",
+      "Yep - CRA (Consolidated Relief Allowance) is gone under NTA 2025 (effective 1 January 2026).",
       "",
-      "You can only apply specific statutory reliefs that are explicitly allowed (e.g., pension, NHF), plus any new reliefs defined under NTA 2025 (e.g., Rent Relief where applicable).",
+      "In Buoyance, I can only apply reliefs/deductions that are explicitly allowed in the published rules for the relevant tax type.",
       "",
-      "If you tell me the taxpayer type (employee/self-employed) and the relief you’re considering, I’ll walk through how it applies under NTA 2025.",
+      "Are you asking about an employee PAYE calculation or self-employed PIT?",
+    ].join("\n");
+  }
+
+  // Allowances/benefits: avoid hallucinating treatment not covered by structured rules
+  if (
+    (q.includes('allowance') || q.includes('benefit')) &&
+    (q.includes('taxable') || q.includes('exempt') || q.includes('tax'))
+  ) {
+    return [
+      "I don't see that specific allowance/benefit explicitly covered in Buoyance's published rules context.",
+      "",
+      "If you tell me two things, I'll help you classify it safely:",
+      "- Is it a cash allowance paid through payroll (PAYE), or a reimbursed expense?",
+      "- Is this for an employee (PIT/PAYE) or for a business (CIT)?",
     ].join("\n");
   }
 
@@ -163,13 +194,13 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
             : null;
 
         return [
-          `VAT-exempt categories (from Buoyance published VAT rule ${vatRule.version}, effective ${vatRule.effective_date}):`,
+          `Here are the VAT-exempt categories Buoyance is using right now (rule ${vatRule.version}, effective ${vatRule.effective_date}):`,
           "",
           ...lines,
           "",
           rateLine,
           "",
-          "If you tell me the exact item/service, I can help confirm whether it falls under one of these categories.",
+          "What exact item/service is on the invoice? I can help confirm if it fits one of these categories.",
         ]
           .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
           .join("\n");
@@ -202,12 +233,17 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
       }
 
       if (lines.length > 0) {
+        const maxLines = 12;
+        const shown = lines.slice(0, maxLines);
+        const hiddenCount = Math.max(0, lines.length - shown.length);
+
         return [
-          `Withholding Tax (WHT) rates (from Buoyance published WHT rule ${whtRule.version}, effective ${whtRule.effective_date}):`,
+          `Here are the WHT rates Buoyance is using (rule ${whtRule.version}, effective ${whtRule.effective_date}):`,
           "",
-          ...lines,
+          ...shown,
+          ...(hiddenCount > 0 ? ["", `...and ${hiddenCount} more. Tell me if you want the full list.`] : []),
           "",
-          "Tell me the transaction type and whether the recipient is corporate or individual, and I’ll confirm the applicable rate.",
+          "If you tell me the transaction type and whether the recipient is a company or an individual, I'll confirm the exact rate.",
         ].join("\n");
       }
     }
@@ -233,11 +269,11 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
 
       if (lines.length > 0) {
         return [
-          `Personal Income Tax (PIT/PAYE) bands (from Buoyance published PIT rule ${pitRule.version}, effective ${pitRule.effective_date}):`,
+          `These are the PIT/PAYE bands Buoyance is using (rule ${pitRule.version}, effective ${pitRule.effective_date}):`,
           "",
           ...lines,
           "",
-          "If you share the annual taxable income and statutory deductions (e.g., pension, NHF, rent relief), I can estimate the PIT payable.",
+          "If you share the annual taxable income (or monthly salary), I can estimate the PIT payable.",
         ].join("\n");
       }
     }
@@ -265,11 +301,11 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
 
       if (lines.length > 0) {
         return [
-          `Company Income Tax (CIT) — small company summary (from Buoyance published CIT rule ${citRule.version}, effective ${citRule.effective_date}):`,
+          `Quick CIT small-company summary from Buoyance (rule ${citRule.version}, effective ${citRule.effective_date}):`,
           "",
           ...lines,
           "",
-          "If you share turnover, total assets, and whether it’s a professional services company, I can confirm whether the small-company rate applies.",
+          "If you share turnover, total assets, and whether it's a professional services company, I can confirm if the small-company rate applies.",
         ].join("\n");
       }
     }
@@ -321,7 +357,7 @@ serve(async (req) => {
 
     const selectedContext = question ? selectContextForQuestion(question, taxRulesContext) : taxRulesContext;
     const systemPrompt = buildSystemPrompt(selectedContext);
-    const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-sonnet-4-20250514';
+    const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-3-haiku-20240307';
     const maxTokensEnv = Number(Deno.env.get('ANTHROPIC_MAX_TOKENS') || '512');
     const maxTokens = Number.isFinite(maxTokensEnv) ? Math.max(64, Math.min(4096, maxTokensEnv)) : 512;
     const temperatureEnv = Number(Deno.env.get('ANTHROPIC_TEMPERATURE') || '0.2');
@@ -389,7 +425,7 @@ serve(async (req) => {
 
     const data = await response.json();
     // Anthropic returns content as an array of content blocks
-    const content = data.content?.[0]?.text || 'I apologize, but I could not generate a response.';
+    const content = data.content?.[0]?.text || "Sorry - I couldn't generate a response.";
 
     return new Response(
       JSON.stringify({
