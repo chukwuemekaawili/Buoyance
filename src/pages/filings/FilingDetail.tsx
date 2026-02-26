@@ -42,6 +42,7 @@ import {
   ClipboardList,
   BookOpen,
   Archive,
+  Columns,
   ExternalLink,
   Copy,
   CheckCheck,

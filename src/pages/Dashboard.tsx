@@ -126,11 +126,14 @@ function DashboardContent() {
       const startOfMonth = getStartOfMonthLagos();
 
       // Fetch profile for health indicator
-      const { data: profileRow } = await supabase
+      const { data: profileRows, error: profileError } = await supabase
         .from("profiles")
         .select("user_type, display_name")
         .eq("id", user!.id)
-        .maybeSingle();
+        .limit(1);
+
+      if (profileError) throw profileError;
+      const profileRow = profileRows?.[0];
 
       // Get TIN from settings if stored there (or profile if we add it)
       // For now, we'll simulate - in production this would be from profile.tin

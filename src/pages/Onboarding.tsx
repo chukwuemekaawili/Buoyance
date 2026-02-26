@@ -82,9 +82,10 @@ function OnboardingContent() {
         .from("profiles")
         .select("onboarding_completed")
         .eq("id", user.id)
-        .maybeSingle();
+        .limit(1);
 
-      if (profile?.onboarding_completed) {
+      const profileRow = profile?.[0];
+      if (profileRow?.onboarding_completed) {
         navigate("/");
       }
     }

@@ -27,7 +27,7 @@ export function AITaxDrawer({
     const [explanationText, setExplanationText] = useState<string | null>(null);
 
     const { toast } = useToast();
-    const { checkQuota } = useFeatureGate();
+    const { checkQuota, recordUsage } = useFeatureGate();
 
     // Reset state when sheet is opened to trigger new fetch
     const handleOpenChange = (newOpen: boolean) => {

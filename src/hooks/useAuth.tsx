@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Check if we are in local dev and should use mock auth
     const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const mockAuthEnabled = import.meta.env.VITE_MOCK_AUTH === 'true' || isLocalDev;
+    const mockAuthEnabled = import.meta.env.VITE_MOCK_AUTH === 'true';
 
     if (mockAuthEnabled) {
       console.warn("Using MOCK Auth to bypass Supabase rate limits.");
@@ -68,8 +68,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocalDev) {
+    const mockAuthEnabled = import.meta.env.VITE_MOCK_AUTH === 'true';
+    if (mockAuthEnabled) {
       // Mock successful signup
       const mockUser = { id: "00000000-0000-0000-0000-000000000000", email, user_metadata: { full_name: fullName } } as User;
       setUser(mockUser);
@@ -89,8 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocalDev) {
+    const mockAuthEnabled = import.meta.env.VITE_MOCK_AUTH === 'true';
+    if (mockAuthEnabled) {
       // Mock successful login
       const mockUser = { id: "00000000-0000-0000-0000-000000000000", email, user_metadata: {} } as User;
       setUser(mockUser);
@@ -105,8 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocalDev) {
+    const mockAuthEnabled = import.meta.env.VITE_MOCK_AUTH === 'true';
+    if (mockAuthEnabled) {
       setUser(null);
       setSession(null);
       return;

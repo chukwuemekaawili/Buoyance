@@ -47,7 +47,7 @@ function WHTCreditsContent() {
                     .eq('user_id', user.id)
                     .order('created_at', { ascending: false });
                 if (error) throw error;
-                setCredits((data || []) as CreditRecord[]);
+                setCredits((data || []) as unknown as CreditRecord[]);
             } catch {
                 setCredits([]);
             } finally {

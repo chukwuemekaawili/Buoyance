@@ -45,7 +45,7 @@ export default function TaxClearance() {
         setIsLoading(true);
         try {
             const { data, error } = await supabase
-                .from("tcc_requests")
+                .from("tcc_requests" as any)
                 .select("*")
                 .eq("workspace_id", activeWorkspace?.id)
                 .order("tax_year", { ascending: false });
@@ -72,7 +72,7 @@ export default function TaxClearance() {
             }
 
             const { data, error } = await supabase
-                .from("tcc_requests")
+                .from("tcc_requests" as any)
                 .insert({
                     workspace_id: activeWorkspace.id,
                     user_id: user.id,
@@ -103,7 +103,7 @@ export default function TaxClearance() {
             toast({ title: "Uploading receipt...", description: "Securely transmitting to storage." });
 
             const { error } = await supabase
-                .from('tcc_requests')
+                .from('tcc_requests' as any)
                 .update({ status: 'processing', remita_rrr: `RMR-${Math.random().toString().slice(2, 10)}` })
                 .eq('id', tccId);
 

@@ -50,7 +50,7 @@ export function PortalFieldMap({ filingId, taxType }: PortalFieldMapProps) {
         try {
             // 1. Fetch the relevant portal form configuration
             const { data: form, error: formErr } = await supabase
-                .from('portal_forms')
+                .from('portal_forms' as any)
                 .select(`
           id, agency, form_name, version,
           portal_fields ( id, schedule_name, field_name, field_type, is_calculated_by_portal, mapping_path, display_order )
@@ -138,7 +138,7 @@ export function PortalFieldMap({ filingId, taxType }: PortalFieldMapProps) {
             const { data: currentUser } = await supabase.auth.getUser();
 
             const { error } = await supabase
-                .from('portal_submissions')
+                .from('portal_submissions' as any)
                 .insert({
                     filing_id: filingId,
                     form_id: formConfig.id,
@@ -152,7 +152,7 @@ export function PortalFieldMap({ filingId, taxType }: PortalFieldMapProps) {
             if (error) {
                 // If unique constraint hits, do an update instead
                 if (error.code === '23505') {
-                    await supabase.from('portal_submissions').update({
+                    await supabase.from('portal_submissions' as any).update({
                         portal_reference_number: portalRefNo,
                         status: 'submitted',
                         submitted_at: new Date().toISOString()

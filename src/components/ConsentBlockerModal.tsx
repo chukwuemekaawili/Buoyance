@@ -50,7 +50,6 @@ export function ConsentBlockerModal() {
                 className="max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden"
                 onInteractOutside={(e) => e.preventDefault()}
                 onEscapeKeyDown={(e) => e.preventDefault()}
-                showCloseButton={false}
             >
                 <div className="p-6 pb-4 border-b bg-muted/30">
                     <DialogHeader>

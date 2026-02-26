@@ -122,8 +122,8 @@ function FilingsContent() {
   const [archiveTarget, setArchiveTarget] = useState<Filing | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
 
-  // Check if auto-file is available (requires payment integration)
-  const autoFileAvailable = paymentIntegration?.configured ?? false;
+  // Auto-file is not available yet (coming soon)
+  const autoFileAvailable = false;
 
   useEffect(() => {
     if (user) {
@@ -310,15 +310,13 @@ function FilingsContent() {
                   <Building2 className="h-4 w-4" />
                   Auto-File Service
                   <Badge variant="outline" className="ml-auto">
-                    {autoFileAvailable ? "Available" : "Coming Soon"}
+                    Coming Soon
                   </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  {autoFileAvailable
-                    ? "Submit directly through licensed partner integration with FIRS."
-                    : "Direct submission via licensed partner/API. Requires payment integration."}
+                  Direct submission via licensed partner/API.
                 </p>
               </CardContent>
             </Card>

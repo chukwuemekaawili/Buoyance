@@ -100,11 +100,11 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ErrorBoundary label="App">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+    <BrowserRouter>
+      <ErrorBoundary label="App">
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
           <AuthProvider>
             <WorkspaceProvider>
               <FeatureGateProvider>
@@ -220,9 +220,9 @@ const App = () => (
               </FeatureGateProvider>
             </WorkspaceProvider>
           </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ErrorBoundary>
+        </TooltipProvider>
+      </ErrorBoundary>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

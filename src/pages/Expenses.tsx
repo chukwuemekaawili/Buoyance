@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Receipt, Plus, Archive, Loader2, ArrowLeft, Search, Filter, CheckCircle2, Sparkles, AlertCircle, Edit, History } from "lucide-react";
+import { Receipt, Plus, Archive, Loader2, ArrowLeft, Search, Filter, CheckCircle2, Sparkles, AlertCircle, Edit, History, Camera } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -396,6 +396,7 @@ export default function Expenses() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none bg-transparent shadow-none">
+                  <DialogDescription className="sr-only">Scan your receipt</DialogDescription>
                   <ReceiptScanner
                     onScanComplete={handleScanComplete}
                     onCancel={() => setShowScannerDialog(false)}

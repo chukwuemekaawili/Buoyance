@@ -242,15 +242,15 @@ export default function BankConnections() {
               <p className="text-muted-foreground">Connect your bank accounts to import transactions</p>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="secondary" disabled title="Mono API integration coming soon">
+              <Button variant="secondary" onClick={() => fetchConnections()}>
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Reconcile Bank Feed (Coming Soon)
+                Refresh Bank Feed
               </Button>
               <Dialog open={false} onOpenChange={() => { }}>
                 <DialogTrigger asChild>
-                  <Button disabled title="Mono API integration coming soon">
+                  <Button>
                     <Plus className="h-4 w-4 mr-2" />
-                    Connect Bank (Coming Soon)
+                    Connect Bank
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -316,16 +316,16 @@ export default function BankConnections() {
             </Card>
           ) : !bankingConfigured ? (
             <div className="space-y-6">
-              {/* Coming Soon Panel */}
+              {/* Not Configured Panel */}
               <Card className="p-8 text-center border-dashed">
                 <Landmark className="h-12 w-12 mx-auto mb-4 opacity-30" />
                 <Badge variant="outline" className="mb-4">
                   <Clock className="h-3 w-3 mr-1" />
-                  Coming Soon
+                  Not Configured
                 </Badge>
-                <h3 className="text-lg font-semibold mb-2">Bank Import (Coming Soon)</h3>
+                <h3 className="text-lg font-semibold mb-2">Bank Import (Not Configured)</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  Auto-import transactions will be available once banking integration is enabled.
+                  Auto-import transactions will be available once the admin configures the banking integration keys.
                 </p>
               </Card>
 

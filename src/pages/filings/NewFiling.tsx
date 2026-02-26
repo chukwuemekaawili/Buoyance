@@ -375,12 +375,13 @@ export default function NewFiling() {
           .from("profiles")
           .select("tax_identity")
           .eq("id", user.id)
-          .single();
+          .limit(1);
 
         if (error) throw error;
+        const profileRow = data?.[0];
         // Use tax_identity directly if set, otherwise use mapping for legacy
-        if (data?.tax_identity) {
-          setIdentity(data.tax_identity as TaxIdentity);
+        if (profileRow?.tax_identity) {
+          setIdentity(profileRow.tax_identity as TaxIdentity);
         } else {
           // Default to freelancer if not set
           setIdentity("freelancer");
@@ -527,8 +528,7 @@ export default function NewFiling() {
       try {
         await supabase
           .from("profiles")
-          .update({ tax_identity: newIdentity })
-          .eq("id", user.id);
+          .upsert({ id: user.id, tax_identity: newIdentity }, { onConflict: "id" });
       } catch (err) {
         console.error("Failed to save industry preference:", err);
       }
@@ -810,25 +810,28 @@ export default function NewFiling() {
                   </div>
 
                   <div
-                    onClick={() => setFilingPathway("auto_file")}
-                    className={`p-4 rounded-lg border-2 transition-all ${filingPathway === "auto_file"
-                        ? "border-primary bg-primary/5 cursor-pointer"
-                        : "border-border hover:border-primary/50 cursor-pointer"
-                      }`}
+                    onClick={() => {
+                      toast({
+                        title: "Coming soon",
+                        description: "Auto-File Service is not available yet. Please use the Self-File Pack for now.",
+                      });
+                    }}
+                    className="p-4 rounded-lg border-2 transition-all border-border bg-muted/30 opacity-70 cursor-not-allowed"
+                    aria-disabled="true"
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-full ${filingPathway === "auto_file" ? "bg-primary/10" : "bg-muted"}`}>
+                      <div className="p-2 rounded-full bg-muted">
                         <Lock className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold">Auto-File Service</h3>
-                          <Badge variant="default" className="bg-blue-600">
-                            Available Now
+                          <Badge variant="secondary" className="bg-amber-500 text-white hover:bg-amber-500/90">
+                            Coming Soon
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Direct submission to TaxPro Max API.
+                          Direct submission via licensed partner/API.
                         </p>
                       </div>
                     </div>
