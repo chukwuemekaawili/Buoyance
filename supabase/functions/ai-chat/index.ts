@@ -152,6 +152,35 @@ async function getTaxRulesContext(): Promise<Record<string, TaxRuleRow> | null> 
 function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null): string | null {
   const q = question.toLowerCase();
 
+  // Pricing/subscription questions (static product knowledge, not tax-law dependent)
+  if (
+    q.includes('pricing') ||
+    q.includes('price') ||
+    q.includes('cost') ||
+    q.includes('subscription') ||
+    q.includes('plan') ||
+    q.includes('free') ||
+    q.includes('paid')
+  ) {
+    return [
+      "Yes - Buoyance has a Free plan, and paid plans (Pro/Enterprise).",
+      "",
+      "Free plan (monthly limits):",
+      "- AI explanations: 3",
+      "- Receipt OCR scans: 5",
+      "- API requests: 100",
+      "- Bank syncs: not included",
+      "",
+      "Pro plan (monthly limits):",
+      "- AI explanations: 100",
+      "- Receipt OCR scans: 500",
+      "- API requests: 5,000",
+      "- Bank syncs: 10",
+      "",
+      "For the exact pricing amounts, check the Pricing page: /pricing",
+    ].join("\n");
+  }
+
   // Buoyance product/app questions: respond with curated, non-sensitive product overview.
   if (q.includes('buoyance') || q.includes('this app') || q.includes('your app')) {
     return [
