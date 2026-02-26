@@ -234,21 +234,36 @@ export async function extractReceiptWithAI(file: File, workspaceId: string): Pro
     });
 
     // 3. Send Base64 directly to the OCR Edge Function
-    const { data: extractionData, error: functionError } = await supabase.functions.invoke('ocr-extract', {
-        body: { imageBase64: base64Image }
-    });
+    console.log('[OCR] Invoking Edge Function `ocr-extract` with base64 data...', { base64Length: base64Image.length });
 
-    if (functionError) {
-        throw new Error('Failed to extract data via OCR: ' + functionError.message);
+    try {
+        const invokeResult = await supabase.functions.invoke('ocr-extract', {
+            body: { imageBase64: base64Image }
+        });
+
+        console.log('[OCR] Edge Function raw response:', invokeResult);
+
+        const { data: extractionData, error: functionError } = invokeResult;
+
+        if (functionError) {
+            console.error('[OCR] Edge Function returned an error object:', functionError);
+            throw new Error(`Edge Function Error: ${functionError.message}\nDetails: ${JSON.stringify(functionError)}`);
+        }
+
+        if (extractionData && extractionData.error) {
+            console.error('[OCR] Edge Function returned 200 OK, but payload contains error:', extractionData.error);
+            throw new Error('OCR Engine Error: ' + extractionData.error);
+        }
+
+        console.log('[OCR] Extraction Successful:', extractionData);
+
+        return {
+            ...extractionData as OCRExtractionResult,
+            receiptUrl: publicUrl
+        };
+
+    } catch (e: any) {
+        console.error('[OCR] CATCH BLOCK HIT during invoke. Root error:', e);
+        throw new Error(`Network/Invoke Crash: ${e.message}`);
     }
-
-    // Handle Edge Function 200 OK errors
-    if (extractionData && extractionData.error) {
-        throw new Error('OCR Engine Error: ' + extractionData.error);
-    }
-
-    return {
-        ...extractionData as OCRExtractionResult,
-        receiptUrl: publicUrl
-    };
 }
