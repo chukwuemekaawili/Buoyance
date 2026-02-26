@@ -44,59 +44,63 @@ serve(async (req) => {
       );
     }
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      console.error('OPENAI_API_KEY is not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      console.error('ANTHROPIC_API_KEY is not configured');
       return new Response(
-        JSON.stringify({ error: 'Configuration Error: OPENAI_API_KEY is missing in Supabase Secrets.' }),
+        JSON.stringify({ error: 'Configuration Error: ANTHROPIC_API_KEY is missing in Supabase Secrets.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 1024,
+        system: systemPrompt,
         messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
           {
             role: 'user',
             content: [
-              { type: 'text', text: 'Extract the details from this receipt.' },
               {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/jpeg;base64,${imageBase64}`
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: 'image/jpeg', // Providing a default, base64 data should ideally just be the raw base64 string without the data uri prefix
+                  data: imageBase64,
                 }
+              },
+              {
+                type: 'text',
+                text: 'Extract the details from this receipt and output only JSON.'
               }
             ]
           }
         ],
-        response_format: { type: "json_object" },
-        max_tokens: 500,
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('OpenAI API Error:', data);
-      throw new Error(data.error?.message || 'Failed to communicate with OpenAI');
+      console.error('Anthropic API Error:', data);
+      throw new Error(data.error?.message || 'Failed to communicate with Anthropic');
     }
 
-    const content = data.choices[0].message.content;
+    const content = data.content[0].text;
 
     // Attempt to parse the JSON locally to ensure it's valid before sending it back
     let parsedContent;
     try {
-      parsedContent = JSON.parse(content);
+      // Claude sometimes wraps JSON in markdown blocks even when told not to.
+      const cleanedContent = content.replace(/```json\n?|\n?```/g, '').trim();
+      parsedContent = JSON.parse(cleanedContent);
 
       // Convert amount to kobo for the frontend
       if (parsedContent.amount_ngn && parsedContent.amount_ngn !== "null") {
@@ -106,9 +110,9 @@ serve(async (req) => {
       }
 
     } catch (e) {
-      console.error('Failed to parse OpenAI response as JSON:', content);
+      console.error('Failed to parse Anthropic response as JSON:', content);
       return new Response(
-        JSON.stringify({ error: 'OpenAI returned invalid JSON format.' }),
+        JSON.stringify({ error: 'Claude returned invalid JSON format.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
