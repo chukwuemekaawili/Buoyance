@@ -123,7 +123,7 @@ export function ContactSection() {
             
             {isSubmitted ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
+                <CheckCircle className="w-16 h-16 text-success mb-4" />
                 <h4 className="text-xl font-semibold text-foreground mb-2">
                   Message Sent!
                 </h4>
@@ -206,7 +206,6 @@ export function ContactSection() {
                 </div>
                 <Button
                   type="submit"
-                  variant="accent"
                   className="w-full"
                   disabled={isSubmitting}
                 >

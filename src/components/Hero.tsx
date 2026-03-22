@@ -38,34 +38,32 @@ export function Hero() {
       </div>
 
       {/* Glow Effects */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/15 rounded-full blur-3xl" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
 
       <div className="container relative z-10 py-12 md:py-20">
         <div className="max-w-4xl mx-auto text-center">
           {/* Trust Badge */}
-          <div className="inline-flex items-center gap-2 bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 rounded-full px-4 py-2 mb-8 animate-fade-in">
-            <Shield className="h-4 w-4 text-secondary" />
-            <span className="text-primary-foreground/90 text-sm font-medium">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-8 animate-fade-in">
+            <Shield className="h-4 w-4 text-white" />
+            <span className="text-white/90 text-sm font-medium">
               NRS Compliant • AES-256 Encrypted
             </span>
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight mb-6 animate-slide-up">
-            Nigeria's Most Trusted Platform for{" "}
-            <span className="text-accent">Tax Compliance</span> and{" "}
-            <span className="text-secondary">Financial Intelligence</span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6 animate-slide-up">
+            Nigeria's Most Trusted Platform for Tax Compliance and Financial Intelligence
           </h1>
 
           {/* Sub-headline */}
           <p
-            className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-8 animate-slide-up"
+            className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8 animate-slide-up"
             style={{ animationDelay: "0.1s" }}
           >
             Deterministic tax calculations and intelligent optimization for individuals, 
             freelancers, and SMEs under the{" "}
-            <span className="text-primary-foreground font-semibold">Nigeria Tax Act 2025</span>
+            <span className="text-white font-semibold">Nigeria Tax Act 2025</span>
           </p>
 
           {/* CTA Buttons */}
@@ -97,16 +95,18 @@ export function Hero() {
             className="flex flex-wrap items-center justify-center gap-4 md:gap-6 animate-fade-in"
             style={{ animationDelay: "0.3s" }}
           >
-            <div className="flex items-center gap-2 text-primary-foreground/80">
-              <CheckCircle className="h-5 w-5 text-secondary" />
+            <div className="flex items-center gap-2 text-white/80">
+              <CheckCircle className="h-4 w-4 text-white/60" />
               <span className="text-sm font-medium">Legally Grounded</span>
             </div>
-            <div className="flex items-center gap-2 text-primary-foreground/80">
-              <CheckCircle className="h-5 w-5 text-secondary" />
+            <span className="text-white/20 hidden sm:block">|</span>
+            <div className="flex items-center gap-2 text-white/80">
+              <CheckCircle className="h-4 w-4 text-white/60" />
               <span className="text-sm font-medium">Explainable Results</span>
             </div>
-            <div className="flex items-center gap-2 text-primary-foreground/80">
-              <Zap className="h-5 w-5 text-accent" />
+            <span className="text-white/20 hidden sm:block">|</span>
+            <div className="flex items-center gap-2 text-white/80">
+              <Zap className="h-4 w-4 text-white/60" />
               <span className="text-sm font-medium">Instant Calculations</span>
             </div>
           </div>

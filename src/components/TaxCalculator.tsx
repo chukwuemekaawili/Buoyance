@@ -301,17 +301,17 @@ export function TaxCalculator() {
   return (
     <Card className="w-full max-w-2xl mx-auto overflow-hidden border-2 border-border/50 shadow-xl">
       {/* Header */}
-      <div className="bg-primary p-6 text-primary-foreground">
+      <div className="bg-white p-6 border-b border-border">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-accent rounded-lg">
-            <Calculator className="h-5 w-5 text-accent-foreground" />
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Calculator className="h-5 w-5 text-primary" />
           </div>
-          <h3 className="text-xl font-bold">2026 Tax Estimator</h3>
+          <h3 className="text-xl font-bold text-foreground">2026 Tax Estimator</h3>
         </div>
-        <p className="text-primary-foreground/80 text-sm">
+        <p className="text-muted-foreground text-sm">
           {taxRule.law_reference_json.act} • {taxRule.law_reference_json.section}
         </p>
-        <div className="flex items-center gap-4 mt-2 text-xs text-primary-foreground/60">
+        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
           <span>Version: {taxRule.version}</span>
           <span>•</span>
           <span>Effective: {new Date(taxRule.effective_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
@@ -402,7 +402,7 @@ export function TaxCalculator() {
             : `Monthly: ${formatKoboToNgn(divKobo(annualDeductionsKobo, 12))}`}
         </p>
         {annualDeductionsKobo > 0n && (
-          <p className="text-xs text-secondary font-medium">
+          <p className="text-xs text-muted-foreground font-medium">
             Taxable income after deductions: {formatKoboToNgn(taxableIncomeKobo)}
           </p>
         )}
@@ -414,7 +414,7 @@ export function TaxCalculator() {
             {/* Tax Breakdown */}
             <div className="bg-muted/50 rounded-xl p-4 space-y-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <FileText className="h-4 w-4 text-secondary" />
+                <FileText className="h-4 w-4 text-primary" />
                 Tax Breakdown by Band
               </div>
               <div className="space-y-2">
@@ -439,8 +439,8 @@ export function TaxCalculator() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-destructive/10 rounded-xl p-4 border border-destructive/20">
-                <div className="flex items-center gap-2 text-sm text-destructive font-medium mb-1">
+              <div className="bg-muted/50 rounded-xl p-4 border border-border">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium mb-1">
                   Total Tax Payable
                   <Tooltip>
                     <TooltipTrigger>
@@ -451,7 +451,7 @@ export function TaxCalculator() {
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <p className="text-2xl font-mono font-bold text-destructive">
+                <p className="text-2xl font-mono font-bold text-foreground">
                   {formatKoboToNgn(totalTaxKobo)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1 font-mono">
@@ -459,12 +459,12 @@ export function TaxCalculator() {
                 </p>
               </div>
 
-              <div className="bg-secondary/10 rounded-xl p-4 border border-secondary/20">
-                <div className="flex items-center gap-2 text-sm text-secondary font-medium mb-1">
+              <div className="bg-muted/50 rounded-xl p-4 border border-border">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium mb-1">
                   <TrendingUp className="h-4 w-4" />
                   Net Income
                 </div>
-                <p className="text-2xl font-mono font-bold text-secondary">
+                <p className="text-2xl font-mono font-bold text-foreground">
                   {formatKoboToNgn(netAnnualIncomeKobo)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1 font-mono">
@@ -474,9 +474,9 @@ export function TaxCalculator() {
             </div>
 
             {/* Effective Rate */}
-            <div className="flex items-center justify-between bg-primary/5 rounded-lg p-4 border border-primary/10">
-              <span className="text-sm font-medium">Effective Tax Rate</span>
-              <span className="text-xl font-mono font-bold text-primary">
+            <div className="flex items-center justify-between bg-muted/40 rounded-lg p-4 border border-border">
+              <span className="text-sm font-medium text-muted-foreground">Effective Tax Rate</span>
+              <span className="text-xl font-mono font-bold text-foreground">
                 {effectiveRate.toFixed(2)}%
               </span>
             </div>

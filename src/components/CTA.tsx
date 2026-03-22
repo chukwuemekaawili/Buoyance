@@ -13,11 +13,8 @@ export function CTA() {
     <section className="py-20 md:py-28 bg-background">
       <div className="container">
         <div className="relative max-w-4xl mx-auto">
-          {/* Background Card */}
-          <div className="absolute inset-0 bg-gradient-to-br from-secondary/10 via-accent/5 to-secondary/10 rounded-3xl" />
-
           {/* Content */}
-          <div className="relative bg-card border-2 border-border rounded-3xl p-8 md:p-12 text-center shadow-xl">
+          <div className="relative bg-card border border-primary/20 rounded-3xl p-8 md:p-12 text-center shadow-xl">
             {/* User Type Pills */}
             <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
               {userTypes.map((type, index) => (
@@ -25,7 +22,7 @@ export function CTA() {
                   key={index}
                   className="flex items-center gap-2 bg-muted px-4 py-2 rounded-full"
                 >
-                  <type.icon className="h-4 w-4 text-secondary" />
+                  <type.icon className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground">
                     {type.label}
                   </span>
@@ -43,7 +40,7 @@ export function CTA() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button variant="accent" size="xl">
+              <Button size="xl">
                 Get Started Free
                 <ArrowRight className="h-5 w-5" />
               </Button>

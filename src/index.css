@@ -6,35 +6,35 @@
 
 @layer base {
   :root {
-    /* Primary: Deep Blue - Navigation, headers, structural UI */
-    --primary: 210 76% 15%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary */
+    --primary: 273 100% 48%;
+    --primary-foreground: 0 0% 100%;
 
     /* Background & Surfaces */
-    --background: 210 20% 98%;
-    --foreground: 210 76% 15%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
 
     /* Card surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 210 76% 15%;
+    --card-foreground: 0 0% 0%;
 
     /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 210 76% 15%;
+    --popover-foreground: 0 0% 0%;
 
-    /* Secondary: Emerald Green - Success states, confirmations, trust cues */
-    --secondary: 148 66% 37%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary: Neutral surface replacing old emerald green */
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 0%;
 
-    /* Accent: Amber - CTAs, emphasis, highlights */
-    --accent: 38 91% 55%;
-    --accent-foreground: 210 76% 15%;
+    /* Accent (Already updated but formatted here for completeness) */
+    --accent: 72 100% 50%;
+    --accent-foreground: 0 0% 0%;
 
     /* Muted surfaces */
-    --muted: 210 20% 94%;
-    --muted-foreground: 210 20% 40%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    /* Success (Emerald) */
+    /* Success */
     --success: 148 66% 37%;
     --success-foreground: 0 0% 100%;
 
@@ -43,36 +43,36 @@
     --destructive-foreground: 0 0% 100%;
 
     /* Border & Input */
-    --border: 210 20% 88%;
-    --input: 210 20% 88%;
-    --ring: 148 66% 37%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 273 100% 48%; /* Violet focus rings */
 
     --radius: 0.625rem;
 
-    /* Custom gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(210 76% 15%) 0%, hsl(210 60% 25%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(38 91% 55%) 0%, hsl(38 91% 65%) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(148 66% 37%) 0%, hsl(148 50% 45%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(210 76% 15%) 0%, hsl(210 60% 20%) 50%, hsl(210 50% 25%) 100%);
-    --gradient-surface: linear-gradient(180deg, hsl(210 20% 98%) 0%, hsl(210 20% 96%) 100%);
+    /* Custom gradients (Violet primary, Neon accent, Violet Hero) */
+    --gradient-primary: linear-gradient(135deg, hsl(273 100% 48%) 0%, hsl(273 100% 35%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(72 100% 50%) 0%, hsl(72 100% 40%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(148 66% 37%) 0%, hsl(148 50% 30%) 100%);
+    --gradient-hero: linear-gradient(160deg, #8600F4 0%, #4a0088 100%);
+    --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 96%) 100%);
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(210 76% 15% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(210 76% 15% / 0.08), 0 2px 4px -2px hsl(210 76% 15% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(210 76% 15% / 0.1), 0 4px 6px -4px hsl(210 76% 15% / 0.1);
-    --shadow-xl: 0 20px 25px -5px hsl(210 76% 15% / 0.12), 0 8px 10px -6px hsl(210 76% 15% / 0.1);
-    --shadow-accent: 0 4px 14px 0 hsl(38 91% 55% / 0.35);
+    /* Shadows (Removing legacy dark blue hue, switching to pure black/neon casts) */
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.08), 0 2px 4px -2px hsl(0 0% 0% / 0.05);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.12), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
+    --shadow-accent: 0 4px 14px 0 hsl(72 100% 50% / 0.35); /* Neon accent glow */
     --shadow-success: 0 4px 14px 0 hsl(148 66% 37% / 0.25);
 
-    /* Sidebar - keeping for compatibility */
-    --sidebar-background: 210 76% 15%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 38 91% 55%;
-    --sidebar-primary-foreground: 210 76% 15%;
-    --sidebar-accent: 210 60% 20%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 210 50% 25%;
-    --sidebar-ring: 148 66% 37%;
+    /* Sidebar - aligning with the stark light brand system */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 273 100% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 0%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 273 100% 48%;
   }
 
   .dark {
@@ -131,7 +131,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
 
   /* Financial figures typography */
@@ -159,7 +159,7 @@
 
   /* Background utilities */
   .bg-gradient-hero {
-    background: var(--gradient-hero);
+    background: linear-gradient(160deg, #8600F4 0%, #4a0088 100%);
   }
 
   .bg-gradient-surface {
