@@ -24,7 +24,7 @@ import {
 import { NotificationBell } from "@/components/NotificationBell";
 import { Separator } from "@/components/ui/separator";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
-import logoDark from "@/assets/buoyance_logo_dark.png";
+import logoDark from "@/assets/combination_black.svg";
 import { cn } from "@/lib/utils";
 
 // Helper to check if a path is active
@@ -40,6 +40,15 @@ function isPathActive(currentPath: string, targetPath: string): boolean {
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [taxIdentity, setTaxIdentity] = useState<string | null>(null);
   const [tin, setTin] = useState<string | null>(null);
@@ -147,8 +156,8 @@ export function Header() {
   };
 
   // Active link styles
-  const activeLinkClass = "text-primary-foreground bg-primary-foreground/15";
-  const inactiveLinkClass = "text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10";
+  const activeLinkClass = "text-primary bg-background/10 font-medium";
+  const inactiveLinkClass = "text-muted-foreground hover:text-primary hover:bg-muted";
 
   // Marketing links for unauthenticated users
   const marketingLinks = [
@@ -176,7 +185,12 @@ export function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 backdrop-blur-md border-b border-primary-foreground/10 transition-colors duration-300">
+      <header className={cn(
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-300 backdrop-blur-md",
+          isScrolled 
+            ? "bg-background/95 border-b border-border shadow-sm text-foreground" 
+            : "bg-transparent border-transparent text-foreground"
+        )}>
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex items-center h-14 md:h-16">
             {/* Logo - fixed width, never shrinks */}
@@ -271,46 +285,46 @@ export function Header() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="bg-popover">
                       <DropdownMenuItem asChild>
-                        <Link to="/filings" className={cn("flex items-center gap-2", currentPath.startsWith("/filings") && "bg-accent")}>
+                        <Link to="/filings" className={cn("flex items-center gap-2", currentPath.startsWith("/filings") && "bg-muted")}>
                           <FileText className="h-4 w-4" />
                           Tax Filings
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/payments" className={cn("flex items-center gap-2", currentPath.startsWith("/payments") && "bg-accent")}>
+                        <Link to="/payments" className={cn("flex items-center gap-2", currentPath.startsWith("/payments") && "bg-muted")}>
                           <CreditCard className="h-4 w-4" />
                           Payments
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link to="/incomes" className={cn("flex items-center gap-2", currentPath.startsWith("/incomes") && "bg-accent")}>
+                        <Link to="/incomes" className={cn("flex items-center gap-2", currentPath.startsWith("/incomes") && "bg-muted")}>
                           <DollarSign className="h-4 w-4" />
                           Income
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/expenses" className={cn("flex items-center gap-2", currentPath.startsWith("/expenses") && "bg-accent")}>
+                        <Link to="/expenses" className={cn("flex items-center gap-2", currentPath.startsWith("/expenses") && "bg-muted")}>
                           <Wallet className="h-4 w-4" />
                           Expenses
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link to="/bank-connections" className={cn("flex items-center gap-2", currentPath.startsWith("/bank-connections") && "bg-accent")}>
+                        <Link to="/bank-connections" className={cn("flex items-center gap-2", currentPath.startsWith("/bank-connections") && "bg-muted")}>
                           <Landmark className="h-4 w-4" />
                           Bank Connections
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link to="/bank-import" className={cn("flex items-center gap-2", currentPath === "/bank-import" && "bg-accent")}>
+                        <Link to="/bank-import" className={cn("flex items-center gap-2", currentPath === "/bank-import" && "bg-muted")}>
                           <Upload className="h-4 w-4" />
                           Bank Import
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/invoicing" className={cn("flex items-center gap-2", currentPath === "/invoicing" && "bg-accent")}>
+                        <Link to="/invoicing" className={cn("flex items-center gap-2", currentPath === "/invoicing" && "bg-muted")}>
                           <FileSpreadsheet className="h-4 w-4" />
                           Invoices
                         </Link>
@@ -332,25 +346,25 @@ export function Header() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="bg-popover">
                       <DropdownMenuItem asChild>
-                        <Link to="/compliance-calendar" className={cn("flex items-center gap-2", currentPath === "/compliance-calendar" && "bg-accent")}>
+                        <Link to="/compliance-calendar" className={cn("flex items-center gap-2", currentPath === "/compliance-calendar" && "bg-muted")}>
                           <Calendar className="h-4 w-4 text-primary" />
                           Compliance Calendar
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/tcc" className={cn("flex items-center gap-2", currentPath === "/tcc" && "bg-accent")}>
+                        <Link to="/tcc" className={cn("flex items-center gap-2", currentPath === "/tcc" && "bg-muted")}>
                           <Shield className="h-4 w-4 text-primary" />
                           TCC Readiness
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/audit-workspace" className={cn("flex items-center gap-2", currentPath === "/audit-workspace" && "bg-accent")}>
+                        <Link to="/audit-workspace" className={cn("flex items-center gap-2", currentPath === "/audit-workspace" && "bg-muted")}>
                           <Scale className="h-4 w-4 text-primary" />
                           Audit Workspace
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/wht-credits" className={cn("flex items-center gap-2", currentPath === "/wht-credits" && "bg-accent")}>
+                        <Link to="/wht-credits" className={cn("flex items-center gap-2", currentPath === "/wht-credits" && "bg-muted")}>
                           <Banknote className="h-4 w-4 text-primary" />
                           WHT Credits
                         </Link>
@@ -372,30 +386,30 @@ export function Header() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="bg-popover">
                       <DropdownMenuItem asChild>
-                        <Link to="/calculators/pit" className={cn(currentPath === "/calculators/pit" && "bg-accent")}>PIT Calculator</Link>
+                        <Link to="/calculators/pit" className={cn(currentPath === "/calculators/pit" && "bg-muted")}>PIT Calculator</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/calculators/cit" className={cn(currentPath === "/calculators/cit" && "bg-accent")}>CIT Calculator</Link>
+                        <Link to="/calculators/cit" className={cn(currentPath === "/calculators/cit" && "bg-muted")}>CIT Calculator</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/calculators/vat" className={cn(currentPath === "/calculators/vat" && "bg-accent")}>VAT Calculator</Link>
+                        <Link to="/calculators/vat" className={cn(currentPath === "/calculators/vat" && "bg-muted")}>VAT Calculator</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/calculators/wht" className={cn(currentPath === "/calculators/wht" && "bg-accent")}>WHT Calculator</Link>
+                        <Link to="/calculators/wht" className={cn(currentPath === "/calculators/wht" && "bg-muted")}>WHT Calculator</Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/calculators/cgt" className={cn(currentPath === "/calculators/cgt" && "bg-accent")}>CGT Calculator</Link>
+                        <Link to="/calculators/cgt" className={cn(currentPath === "/calculators/cgt" && "bg-muted")}>CGT Calculator</Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link to="/payroll" className={cn("flex items-center gap-2", currentPath === "/payroll" && "bg-accent")}>
+                        <Link to="/payroll" className={cn("flex items-center gap-2", currentPath === "/payroll" && "bg-muted")}>
                           <Users className="h-4 w-4" />
                           Payroll Calculator
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link to="/my-calculations" className={cn("flex items-center gap-2", currentPath === "/my-calculations" && "bg-accent")}>
+                        <Link to="/my-calculations" className={cn("flex items-center gap-2", currentPath === "/my-calculations" && "bg-muted")}>
                           <PiggyBank className="h-4 w-4" />
                           My Calculations
                         </Link>
@@ -442,32 +456,32 @@ export function Header() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="bg-popover">
                         <DropdownMenuItem asChild>
-                          <Link to="/admin/dashboard" className={cn(currentPath === "/admin/dashboard" || currentPath === "/admin" && "bg-accent")}>Admin Dashboard</Link>
+                          <Link to="/admin/dashboard" className={cn(currentPath === "/admin/dashboard" || currentPath === "/admin" && "bg-muted")}>Admin Dashboard</Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                          <Link to="/admin/tax-rules" className={cn(currentPath === "/admin/tax-rules" && "bg-accent")}>Tax Rules</Link>
+                          <Link to="/admin/tax-rules" className={cn(currentPath === "/admin/tax-rules" && "bg-muted")}>Tax Rules</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to="/admin/classification-rules" className={cn(currentPath === "/admin/classification-rules" && "bg-accent")}>AI Classification Rules</Link>
+                          <Link to="/admin/classification-rules" className={cn(currentPath === "/admin/classification-rules" && "bg-muted")}>AI Classification Rules</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to="/admin/classification-test" className={cn(currentPath === "/admin/classification-test" && "bg-accent")}>AI Classification Tester</Link>
+                          <Link to="/admin/classification-test" className={cn(currentPath === "/admin/classification-test" && "bg-muted")}>AI Classification Tester</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to="/admin/audit-logs" className={cn((currentPath === "/admin/audit-logs" || currentPath === "/admin/audit") && "bg-accent")}>Audit Logs</Link>
+                          <Link to="/admin/audit-logs" className={cn((currentPath === "/admin/audit-logs" || currentPath === "/admin/audit") && "bg-muted")}>Audit Logs</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to="/admin/payment-verification" className={cn(currentPath === "/admin/payment-verification" && "bg-accent")}>Payment Verification</Link>
+                          <Link to="/admin/payment-verification" className={cn(currentPath === "/admin/payment-verification" && "bg-muted")}>Payment Verification</Link>
                         </DropdownMenuItem>
                         {isAdmin && (
                           <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
-                              <Link to="/admin/users" className={cn(currentPath === "/admin/users" && "bg-accent")}>User Management</Link>
+                              <Link to="/admin/users" className={cn(currentPath === "/admin/users" && "bg-muted")}>User Management</Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link to="/admin/api-settings" className={cn(currentPath === "/admin/api-settings" && "bg-accent")}>API Settings</Link>
+                              <Link to="/admin/api-settings" className={cn(currentPath === "/admin/api-settings" && "bg-muted")}>API Settings</Link>
                             </DropdownMenuItem>
                           </>
                         )}
@@ -516,14 +530,14 @@ export function Header() {
                       <a
                         key={link.href}
                         href={link.href}
-                        className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-colors text-sm font-medium px-3 py-2 rounded-md"
+                        className="text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-sm font-medium px-3 py-2 rounded-md"
                       >
                         {link.label}
                       </a>
                     )
                   )}
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10 transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1 outline-none">
+                    <DropdownMenuTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-sm font-medium px-3 py-2 rounded-md flex items-center gap-1 outline-none">
                       Calculators
                       <ChevronDown className="h-3 w-3 ml-0.5" />
                     </DropdownMenuTrigger>
@@ -554,7 +568,7 @@ export function Header() {
               {user && (
                 <>
                   <WorkspaceSwitcher className="mr-2" />
-                  <Button variant="accent" size="sm" asChild>
+                  <Button size="sm" variant="accent" asChild className="font-medium text-sm">
                     <Link to="/filings/new">
                       <Plus className="h-4 w-4 mr-1.5" />
                       New Filing
@@ -564,23 +578,23 @@ export function Header() {
 
                   {/* User Dropdown Menu */}
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-primary-foreground/10 transition-colors outline-none">
-                      <Avatar className="h-7 w-7 bg-primary-foreground/20 text-primary-foreground text-xs">
-                        <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-xs font-medium">
+                    <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted transition-colors outline-none">
+                      <Avatar className="h-7 w-7 bg-muted text-foreground text-xs">
+                        <AvatarFallback className="bg-muted text-foreground text-xs font-medium">
                           {getInitials()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col items-start">
-                        <span className="text-sm font-medium text-primary-foreground max-w-[100px] truncate">
+                        <span className="text-sm font-medium text-foreground max-w-[100px] truncate">
                           {displayName || user.email?.split("@")[0] || "Account"}
                         </span>
                         {getTaxIdentityLabel() && (
-                          <span className="text-[10px] text-primary-foreground/60 leading-tight">
+                          <span className="text-[10px] text-muted-foreground leading-tight">
                             {getTaxIdentityLabel()}
                           </span>
                         )}
                       </div>
-                      <ChevronDown className="h-3 w-3 text-primary-foreground/60" />
+                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
                       {/* Profile Info */}
@@ -588,7 +602,7 @@ export function Header() {
                         <p className="text-sm font-medium">{displayName || "User"}</p>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                         {getTaxIdentityLabel() ? (
-                          <span className="inline-flex mt-1.5 px-2 py-0.5 text-xs font-medium rounded-full bg-accent text-accent-foreground">
+                          <span className="inline-flex mt-1.5 px-2 py-0.5 text-xs font-medium rounded-full bg-muted text-foreground">
                             {getTaxIdentityLabel()}
                           </span>
                         ) : (
@@ -612,7 +626,7 @@ export function Header() {
                             </div>
                             <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mb-2">
                               <div
-                                className="h-full bg-primary transition-all duration-300"
+                                className="h-full bg-background transition-all duration-300"
                                 style={{ width: `${completionPercent}%` }}
                               />
                             </div>
@@ -632,7 +646,7 @@ export function Header() {
                             </ul>
                             <Link
                               to="/settings"
-                              className="inline-flex w-full justify-center items-center gap-1 mt-2 px-2 py-1.5 text-xs font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                              className="inline-flex w-full justify-center items-center gap-1 mt-2 px-2 py-1.5 text-xs font-medium rounded-md bg-background text-foreground hover:bg-background/90 transition-colors"
                             >
                               Complete Setup
                             </Link>
@@ -666,10 +680,10 @@ export function Header() {
               )}
               {!user && (
                 <>
-                  <Button variant="outline-light" size="sm" asChild>
+                  <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-primary font-medium">
                     <Link to="/signin">Sign In</Link>
                   </Button>
-                  <Button variant="accent" size="sm" asChild>
+                  <Button size="sm" variant="accent" asChild className="font-medium">
                     <Link to="/signup">Get Started</Link>
                   </Button>
                 </>
@@ -680,8 +694,8 @@ export function Header() {
             <div className="2xl:hidden flex items-center gap-2 flex-shrink-0">
               {user && (
                 <>
-                  <WorkspaceSwitcher className="hidden xl:flex max-w-[200px] mr-1 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/10 hover:text-primary-foreground" />
-                  <Button variant="accent" size="sm" asChild className="hidden sm:flex">
+                  <WorkspaceSwitcher className="hidden xl:flex max-w-[200px] mr-1 text-foreground border-primary-foreground/30 hover:bg-muted hover:text-foreground" />
+                  <Button size="sm" asChild className="hidden sm:flex" variant="accent" className="font-medium text-sm">
                     <Link to="/filings/new">
                       <Plus className="h-4 w-4 mr-1" />
                       New Filing
@@ -691,7 +705,7 @@ export function Header() {
                 </>
               )}
               <button
-                className="flex 2xl:hidden items-center justify-center w-10 h-10 text-primary-foreground"
+                className="flex 2xl:hidden items-center justify-center w-10 h-10 text-foreground"
                 onClick={() => setIsMenuOpen(true)}
                 aria-label="Open menu"
               >
@@ -704,9 +718,9 @@ export function Header() {
 
       {/* Mobile/Tablet Menu Sheet */}
       <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md bg-primary text-primary-foreground border-l-0 p-0 overflow-y-auto">
+        <SheetContent side="right" className="w-full sm:max-w-md bg-background text-foreground border-l-0 p-0 overflow-y-auto">
           <SheetHeader className="px-6 pt-6 pb-4">
-            <SheetTitle className="text-primary-foreground text-left">
+            <SheetTitle className="text-foreground text-left">
               <img
                 src={logoDark}
                 alt="BUOYANCE"
@@ -720,20 +734,20 @@ export function Header() {
               // Authenticated mobile menu
               <>
                 {/* User Profile Card */}
-                <div className="flex flex-col gap-3 p-4 rounded-lg bg-primary-foreground/10 mb-4">
+                <div className="flex flex-col gap-3 p-4 rounded-lg bg-muted mb-4">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12 bg-primary-foreground/20 text-primary-foreground">
-                      <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-lg font-medium">
+                    <Avatar className="h-12 w-12 bg-muted text-foreground">
+                      <AvatarFallback className="bg-muted text-foreground text-lg font-medium">
                         {getInitials()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-primary-foreground truncate">
+                      <p className="font-semibold text-foreground truncate">
                         {displayName || user.email?.split("@")[0] || "User"}
                       </p>
-                      <p className="text-xs text-primary-foreground/60 truncate">{user.email}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                       {getTaxIdentityLabel() ? (
-                        <span className="inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-primary-foreground/20 text-primary-foreground">
+                        <span className="inline-flex mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-muted text-foreground">
                           {getTaxIdentityLabel()}
                         </span>
                       ) : (
@@ -751,18 +765,18 @@ export function Header() {
                     </div>
                   </div>
                   <div className="mt-1">
-                    <WorkspaceSwitcher className="w-full bg-primary/40 border-primary-foreground/20 text-primary-foreground hover:bg-primary/60 hover:text-primary-foreground" />
+                    <WorkspaceSwitcher className="w-full bg-muted border-primary-foreground/20 text-foreground hover:bg-background/60 hover:text-foreground" />
                   </div>
                 </div>
 
                 {/* Profile Completion Checklist - show if incomplete */}
                 {!isProfileComplete && (
-                  <div className="p-4 rounded-lg bg-primary-foreground/5 mb-4">
+                  <div className="p-4 rounded-lg bg-muted mb-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-primary-foreground/70">Profile completion</span>
-                      <span className="text-xs font-semibold text-primary-foreground">{completionPercent}%</span>
+                      <span className="text-xs font-medium text-foreground/70">Profile completion</span>
+                      <span className="text-xs font-semibold text-foreground">{completionPercent}%</span>
                     </div>
-                    <div className="w-full h-1.5 bg-primary-foreground/20 rounded-full overflow-hidden mb-3">
+                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mb-3">
                       <div
                         className="h-full bg-amber-400 transition-all duration-300"
                         style={{ width: `${completionPercent}%` }}
@@ -774,9 +788,9 @@ export function Header() {
                           {item.completed ? (
                             <Check className="h-3.5 w-3.5 text-green-400" />
                           ) : (
-                            <Circle className="h-3.5 w-3.5 text-primary-foreground/40" />
+                            <Circle className="h-3.5 w-3.5 text-foreground/40" />
                           )}
-                          <span className={item.completed ? "text-primary-foreground/50 line-through" : "text-primary-foreground/90"}>
+                          <span className={item.completed ? "text-foreground/50 line-through" : "text-foreground/90"}>
                             {item.label}
                           </span>
                         </li>
@@ -796,8 +810,8 @@ export function Header() {
 
                 {/* Quick Actions Section */}
                 <div className="flex items-center gap-2 mb-3">
-                  <Plus className="h-4 w-4 text-primary-foreground/50" />
-                  <p className="text-xs uppercase text-primary-foreground/50 tracking-wider">Quick Actions</p>
+                  <Plus className="h-4 w-4 text-foreground/50" />
+                  <p className="text-xs uppercase text-foreground/50 tracking-wider">Quick Actions</p>
                 </div>
                 <div className="flex gap-2 mb-6">
                   <SheetClose asChild>
@@ -822,21 +836,21 @@ export function Header() {
                   </SheetClose>
                 </div>
 
-                <Separator className="my-4 bg-primary-foreground/10" />
+                <Separator className="my-4 bg-muted" />
 
                 {/* Main Menu Section */}
                 <div className="flex items-center gap-2 mb-3">
-                  <LayoutDashboard className="h-4 w-4 text-primary-foreground/50" />
-                  <p className="text-xs uppercase text-primary-foreground/50 tracking-wider">Main Menu</p>
+                  <LayoutDashboard className="h-4 w-4 text-foreground/50" />
+                  <p className="text-xs uppercase text-foreground/50 tracking-wider">Main Menu</p>
                 </div>
                 <SheetClose asChild>
                   <Link
                     to="/dashboard"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       isPathActive(currentPath, "/dashboard")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -848,10 +862,10 @@ export function Header() {
                   <Link
                     to="/filings"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath.startsWith("/filings")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -863,10 +877,10 @@ export function Header() {
                   <Link
                     to="/payments"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath.startsWith("/payments")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -875,21 +889,21 @@ export function Header() {
                   </Link>
                 </SheetClose>
 
-                <Separator className="my-4 bg-primary-foreground/10" />
+                <Separator className="my-4 bg-muted" />
 
                 {/* Records Section */}
                 <div className="flex items-center gap-2 mb-3">
-                  <FileText className="h-4 w-4 text-primary-foreground/50" />
-                  <p className="text-xs uppercase text-primary-foreground/50 tracking-wider">Records</p>
+                  <FileText className="h-4 w-4 text-foreground/50" />
+                  <p className="text-xs uppercase text-foreground/50 tracking-wider">Records</p>
                 </div>
                 <SheetClose asChild>
                   <Link
                     to="/incomes"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath.startsWith("/incomes")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -901,10 +915,10 @@ export function Header() {
                   <Link
                     to="/expenses"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath.startsWith("/expenses")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -916,10 +930,10 @@ export function Header() {
                   <Link
                     to="/bank-connections"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath.startsWith("/bank-connections")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -931,10 +945,10 @@ export function Header() {
                   <Link
                     to="/bank-import"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath === "/bank-import"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -946,10 +960,10 @@ export function Header() {
                   <Link
                     to="/invoicing"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath === "/invoicing"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -958,21 +972,21 @@ export function Header() {
                   </Link>
                 </SheetClose>
 
-                <Separator className="my-4 bg-primary-foreground/10" />
+                <Separator className="my-4 bg-muted" />
 
                 {/* Compliance Section */}
                 <div className="flex items-center gap-2 mb-3">
-                  <Shield className="h-4 w-4 text-primary-foreground/50" />
-                  <p className="text-xs uppercase text-primary-foreground/50 tracking-wider">Compliance</p>
+                  <Shield className="h-4 w-4 text-foreground/50" />
+                  <p className="text-xs uppercase text-foreground/50 tracking-wider">Compliance</p>
                 </div>
                 <SheetClose asChild>
                   <Link
                     to="/compliance-calendar"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath === "/compliance-calendar"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -984,10 +998,10 @@ export function Header() {
                   <Link
                     to="/tcc"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath === "/tcc"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -999,10 +1013,10 @@ export function Header() {
                   <Link
                     to="/audit-workspace"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath === "/audit-workspace"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -1014,10 +1028,10 @@ export function Header() {
                   <Link
                     to="/wht-credits"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath === "/wht-credits"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -1026,21 +1040,21 @@ export function Header() {
                   </Link>
                 </SheetClose>
 
-                <Separator className="my-4 bg-primary-foreground/10" />
+                <Separator className="my-4 bg-muted" />
 
                 {/* Calculators Section */}
                 <div className="flex items-center gap-2 mb-3">
-                  <Calculator className="h-4 w-4 text-primary-foreground/50" />
-                  <p className="text-xs uppercase text-primary-foreground/50 tracking-wider">Calculators</p>
+                  <Calculator className="h-4 w-4 text-foreground/50" />
+                  <p className="text-xs uppercase text-foreground/50 tracking-wider">Calculators</p>
                 </div>
                 <SheetClose asChild>
                   <Link
                     to="/calculators"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath === "/calculators"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -1052,10 +1066,10 @@ export function Header() {
                   <Link
                     to="/my-calculations"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath === "/my-calculations"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -1067,10 +1081,10 @@ export function Header() {
                   <Link
                     to="/payroll"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath === "/payroll"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -1080,19 +1094,19 @@ export function Header() {
                 </SheetClose>
 
                 {/* Help Section */}
-                <Separator className="my-4 bg-primary-foreground/10" />
+                <Separator className="my-4 bg-muted" />
                 <div className="flex items-center gap-2 mb-3">
-                  <HelpCircle className="h-4 w-4 text-primary-foreground/50" />
-                  <p className="text-xs uppercase text-primary-foreground/50 tracking-wider">Resources</p>
+                  <HelpCircle className="h-4 w-4 text-foreground/50" />
+                  <p className="text-xs uppercase text-foreground/50 tracking-wider">Resources</p>
                 </div>
                 <SheetClose asChild>
                   <Link
                     to="/documentation"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       isPathActive(currentPath, "/documentation") || isPathActive(currentPath, "/docs")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -1104,10 +1118,10 @@ export function Header() {
                   <Link
                     to="/academy"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath.startsWith("/academy")
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -1119,10 +1133,10 @@ export function Header() {
                   <Link
                     to="/support"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath === "/support"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -1134,16 +1148,16 @@ export function Header() {
                 {/* Admin Section */}
                 {(isAdmin || isAuditor) && (
                   <>
-                    <Separator className="my-4 bg-primary-foreground/10" />
-                    <p className="text-xs uppercase text-primary-foreground/50 tracking-wider mb-2">Admin</p>
+                    <Separator className="my-4 bg-muted" />
+                    <p className="text-xs uppercase text-foreground/50 tracking-wider mb-2">Admin</p>
                     <SheetClose asChild>
                       <Link
                         to="/admin/dashboard"
                         className={cn(
-                          "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                          "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                           currentPath === "/admin/dashboard" || currentPath === "/admin"
-                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                            : "text-primary-foreground/90 hover:text-primary-foreground"
+                            ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                            : "text-foreground/90 hover:text-foreground"
                         )}
                         onClick={handleNavClick}
                       >
@@ -1155,10 +1169,10 @@ export function Header() {
                       <Link
                         to="/admin/tax-rules"
                         className={cn(
-                          "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                          "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                           currentPath === "/admin/tax-rules"
-                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                            : "text-primary-foreground/90 hover:text-primary-foreground"
+                            ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                            : "text-foreground/90 hover:text-foreground"
                         )}
                         onClick={handleNavClick}
                       >
@@ -1170,10 +1184,10 @@ export function Header() {
                       <Link
                         to="/admin/classification-rules"
                         className={cn(
-                          "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                          "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                           currentPath === "/admin/classification-rules"
-                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                            : "text-primary-foreground/90 hover:text-primary-foreground"
+                            ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                            : "text-foreground/90 hover:text-foreground"
                         )}
                         onClick={handleNavClick}
                       >
@@ -1185,10 +1199,10 @@ export function Header() {
                       <Link
                         to="/admin/classification-test"
                         className={cn(
-                          "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                          "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                           currentPath === "/admin/classification-test"
-                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                            : "text-primary-foreground/90 hover:text-primary-foreground"
+                            ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                            : "text-foreground/90 hover:text-foreground"
                         )}
                         onClick={handleNavClick}
                       >
@@ -1200,10 +1214,10 @@ export function Header() {
                       <Link
                         to="/admin/audit"
                         className={cn(
-                          "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                          "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                           currentPath === "/admin/audit"
-                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                            : "text-primary-foreground/90 hover:text-primary-foreground"
+                            ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                            : "text-foreground/90 hover:text-foreground"
                         )}
                         onClick={handleNavClick}
                       >
@@ -1215,10 +1229,10 @@ export function Header() {
                       <Link
                         to="/admin/payment-verification"
                         className={cn(
-                          "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                          "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                           currentPath === "/admin/payment-verification"
-                            ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                            : "text-primary-foreground/90 hover:text-primary-foreground"
+                            ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                            : "text-foreground/90 hover:text-foreground"
                         )}
                         onClick={handleNavClick}
                       >
@@ -1232,10 +1246,10 @@ export function Header() {
                           <Link
                             to="/admin/users"
                             className={cn(
-                              "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                              "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                               currentPath === "/admin/users"
-                                ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                                : "text-primary-foreground/90 hover:text-primary-foreground"
+                                ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                                : "text-foreground/90 hover:text-foreground"
                             )}
                             onClick={handleNavClick}
                           >
@@ -1246,10 +1260,10 @@ export function Header() {
                           <Link
                             to="/admin/api-settings"
                             className={cn(
-                              "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                              "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                               currentPath === "/admin/api-settings"
-                                ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                                : "text-primary-foreground/90 hover:text-primary-foreground"
+                                ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                                : "text-foreground/90 hover:text-foreground"
                             )}
                             onClick={handleNavClick}
                           >
@@ -1261,16 +1275,16 @@ export function Header() {
                   </>
                 )}
 
-                <Separator className="my-4 bg-primary-foreground/10" />
-                <p className="text-xs uppercase text-primary-foreground/50 tracking-wider mb-2">Account</p>
+                <Separator className="my-4 bg-muted" />
+                <p className="text-xs uppercase text-foreground/50 tracking-wider mb-2">Account</p>
                 <SheetClose asChild>
                   <Link
                     to="/settings"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath === "/settings"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -1282,10 +1296,10 @@ export function Header() {
                   <Link
                     to="/notifications"
                     className={cn(
-                      "transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3",
+                      "transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3",
                       currentPath === "/notifications"
-                        ? "text-primary-foreground bg-primary-foreground/10 -mx-2 px-2 rounded-md"
-                        : "text-primary-foreground/90 hover:text-primary-foreground"
+                        ? "text-foreground bg-muted -mx-2 px-2 rounded-md"
+                        : "text-foreground/90 hover:text-foreground"
                     )}
                     onClick={handleNavClick}
                   >
@@ -1294,7 +1308,7 @@ export function Header() {
                 </SheetClose>
                 <button
                   onClick={handleSignOut}
-                  className="text-primary-foreground/90 hover:text-primary-foreground transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10 flex items-center gap-3 w-full text-left"
+                  className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border flex items-center gap-3 w-full text-left"
                 >
                   <LogOut className="h-5 w-5" />
                   Sign Out
@@ -1303,13 +1317,13 @@ export function Header() {
             ) : (
               // Unauthenticated mobile menu
               <>
-                <p className="text-xs uppercase text-primary-foreground/50 tracking-wider mb-2">Menu</p>
+                <p className="text-xs uppercase text-foreground/50 tracking-wider mb-2">Menu</p>
                 {marketingLinks.map((link) =>
                   link.type === "link" ? (
                     <SheetClose asChild key={link.href}>
                       <Link
                         to={link.href}
-                        className="text-primary-foreground/90 hover:text-primary-foreground transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10"
+                        className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border"
                         onClick={handleNavClick}
                       >
                         {link.label}
@@ -1319,7 +1333,7 @@ export function Header() {
                     <SheetClose asChild key={link.href}>
                       <a
                         href={link.href}
-                        className="text-primary-foreground/90 hover:text-primary-foreground transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10"
+                        className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border"
                         onClick={handleNavClick}
                       >
                         {link.label}
@@ -1328,12 +1342,12 @@ export function Header() {
                   )
                 )}
 
-                <Separator className="my-4 bg-primary-foreground/10" />
-                <p className="text-xs uppercase text-primary-foreground/50 tracking-wider mb-2">Calculators</p>
+                <Separator className="my-4 bg-muted" />
+                <p className="text-xs uppercase text-foreground/50 tracking-wider mb-2">Calculators</p>
                 <SheetClose asChild>
                   <a
                     href={getNavHref("#calculator")}
-                    className="text-primary-foreground/90 hover:text-primary-foreground transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10"
+                    className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border"
                     onClick={handleNavClick}
                   >
                     PIT Calculator
@@ -1342,7 +1356,7 @@ export function Header() {
                 <SheetClose asChild>
                   <Link
                     to="/calculators/cit"
-                    className="text-primary-foreground/90 hover:text-primary-foreground transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10"
+                    className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border"
                     onClick={handleNavClick}
                   >
                     CIT Calculator
@@ -1351,7 +1365,7 @@ export function Header() {
                 <SheetClose asChild>
                   <Link
                     to="/calculators/vat"
-                    className="text-primary-foreground/90 hover:text-primary-foreground transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10"
+                    className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border"
                     onClick={handleNavClick}
                   >
                     VAT Calculator
@@ -1360,7 +1374,7 @@ export function Header() {
                 <SheetClose asChild>
                   <Link
                     to="/calculators/wht"
-                    className="text-primary-foreground/90 hover:text-primary-foreground transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10"
+                    className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border"
                     onClick={handleNavClick}
                   >
                     WHT Calculator
@@ -1369,17 +1383,17 @@ export function Header() {
                 <SheetClose asChild>
                   <Link
                     to="/calculators/cgt"
-                    className="text-primary-foreground/90 hover:text-primary-foreground transition-colors font-medium text-lg py-3 border-b border-primary-foreground/10"
+                    className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border"
                     onClick={handleNavClick}
                   >
                     CGT Calculator
                   </Link>
                 </SheetClose>
 
-                <Separator className="my-4 bg-primary-foreground/10" />
+                <Separator className="my-4 bg-muted" />
                 <div className="flex flex-col gap-3 pt-2 pb-6">
                   <SheetClose asChild>
-                    <Button variant="outline-light" asChild className="w-full justify-center">
+                    <Button variant="ghost" asChild className="w-full justify-center" className="text-muted-foreground hover:text-primary font-medium">
                       <Link to="/signin" onClick={handleNavClick}>Sign In</Link>
                     </Button>
                   </SheetClose>
