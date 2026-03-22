@@ -9,8 +9,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Mail } from "lucide-react";
+import { usePostHog } from "@posthog/react";
 
-import logoDark from "@/assets/buoyance_logo_dark.png";
+import logoDark from "@/assets/combination_black.svg";
 
 export default function SignUp() {
   const [fullName, setFullName] = useState("");
@@ -25,6 +26,15 @@ export default function SignUp() {
   const { signUp, user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const posthog = usePostHog();
+  const signupStartedFired = useRef(false);
+
+  const handleStartSignup = () => {
+    if (!signupStartedFired.current) {
+      posthog.capture('signup_started');
+      signupStartedFired.current = true;
+    }
+  };
 
   const handleResendEmail = async () => {
     setIsResending(true);
@@ -102,12 +112,14 @@ export default function SignUp() {
         variant: "destructive",
       });
     } else {
+      posthog.capture('signup_completed', { method: 'email' });
       setSubmittedEmail(email);
       setShowVerificationMessage(true);
     }
   };
 
   const handleGoogleSignUp = async () => {
+    handleStartSignup();
     setIsGoogleLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -253,7 +265,7 @@ export default function SignUp() {
           </div>
         </CardContent>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} onChange={handleStartSignup}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>

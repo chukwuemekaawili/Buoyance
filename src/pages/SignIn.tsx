@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAndClearRedirectPath } from "@/components/AuthGuard";
-import logoDark from "@/assets/buoyance_logo_dark.png";
+import logoDark from "@/assets/combination_black.svg";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");

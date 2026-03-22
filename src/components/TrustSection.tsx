@@ -35,18 +35,18 @@ const trustBadges = [
 
 export function TrustSection() {
   return (
-    <section id="compliance" className="py-20 md:py-28 bg-primary">
+    <section id="compliance" className="py-20 md:py-28 bg-neutral-50">
       <div className="container">
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center mb-16">
-          <span className="inline-block text-accent font-semibold text-sm tracking-wide uppercase mb-4">
+          <span className="inline-block text-primary font-semibold text-sm tracking-wide uppercase mb-4">
             Security & Compliance
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
             Built on Trust, Secured by Design
           </h2>
-          <p className="text-lg text-primary-foreground/70">
-            Enterprise-grade security and regulatory compliance at every layer. 
+          <p className="text-lg text-muted-foreground">
+            Enterprise-grade security and regulatory compliance at every layer.
             Your financial data deserves the highest protection.
           </p>
         </div>
@@ -56,15 +56,15 @@ export function TrustSection() {
           {trustBadges.map((badge, index) => (
             <div
               key={index}
-              className="bg-primary-foreground/5 border border-primary-foreground/10 rounded-xl p-6 hover:bg-primary-foreground/10 transition-colors"
+              className="bg-white border border-border rounded-xl p-6 hover:shadow-md hover:-translate-y-1 transition-all duration-300"
             >
-              <div className="w-12 h-12 rounded-xl bg-secondary/20 flex items-center justify-center mb-4">
-                <badge.icon className="h-6 w-6 text-secondary" />
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <badge.icon className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-lg font-bold text-primary-foreground mb-2">
+              <h3 className="text-lg font-bold text-foreground mb-2">
                 {badge.title}
               </h3>
-              <p className="text-primary-foreground/70 text-sm">
+              <p className="text-muted-foreground text-sm">
                 {badge.description}
               </p>
             </div>
@@ -72,24 +72,24 @@ export function TrustSection() {
         </div>
 
         {/* Certification Logos */}
-        <div className="mt-16 pt-12 border-t border-primary-foreground/10">
-          <p className="text-center text-primary-foreground/50 text-sm mb-8">
+        <div className="mt-16 pt-12 border-t border-border">
+          <p className="text-center text-muted-foreground text-sm mb-8">
             Regulatory Framework
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
             <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-primary-foreground">NTA 2025</div>
-              <div className="text-xs text-primary-foreground/50 mt-1">Nigeria Tax Act</div>
+              <div className="text-2xl md:text-3xl font-bold font-mono text-foreground">NTA 2025</div>
+              <div className="text-xs text-muted-foreground mt-1">Nigeria Tax Act</div>
             </div>
-            <div className="w-px h-12 bg-primary-foreground/20 hidden md:block" />
+            <div className="w-px h-12 bg-border hidden md:block" />
             <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-primary-foreground">NTAA 2025</div>
-              <div className="text-xs text-primary-foreground/50 mt-1">Tax Administration Act</div>
+              <div className="text-2xl md:text-3xl font-bold text-foreground">NTAA 2025</div>
+              <div className="text-xs text-muted-foreground mt-1">Tax Administration Act</div>
             </div>
-            <div className="w-px h-12 bg-primary-foreground/20 hidden md:block" />
+            <div className="w-px h-12 bg-border hidden md:block" />
             <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-secondary">NRS</div>
-              <div className="text-xs text-primary-foreground/50 mt-1">Nigeria Revenue Service</div>
+              <div className="text-2xl md:text-3xl font-bold font-mono text-primary">NRS</div>
+              <div className="text-xs text-muted-foreground mt-1">Nigeria Revenue Service</div>
             </div>
           </div>
         </div>

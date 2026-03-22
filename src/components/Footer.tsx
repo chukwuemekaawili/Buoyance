@@ -2,7 +2,7 @@ import { Shield, Lock, MapPin } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 // Import logo asset - using dark variant (white text) for dark footer background
-import logoDark from "@/assets/buoyance_logo_dark.png";
+import logoDark from "@/assets/combination_black.svg";
 
 const footerLinks = {
   product: [
@@ -63,7 +63,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-primary text-primary-foreground">
+    <footer className="bg-neutral-900 text-primary-foreground">
       <div className="container py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-12">
           <div className="lg:col-span-2">
@@ -75,7 +75,7 @@ export function Footer() {
               <img
                 src={logoDark}
                 alt="BUOYANCE"
-                className="h-10 w-auto object-contain"
+                className="h-10 w-auto object-contain brightness-0 invert"
               />
             </Link>
             <p className="text-primary-foreground/70 text-sm mb-6 max-w-xs">

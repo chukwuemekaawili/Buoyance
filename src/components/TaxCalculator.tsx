@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ import { useConsent } from "@/hooks/useConsent";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { usePostHog } from "@posthog/react";
 import { ConsentModal } from "@/components/ConsentModal";
 import {
   parseNgnToKobo,
@@ -115,6 +116,9 @@ export function TaxCalculator() {
   const { user } = useAuth();
   const { hasValidConsent } = useConsent();
   const { toast } = useToast();
+  const posthog = usePostHog();
+  const calculatorStartedFired = useRef(false);
+  const calculatorCompletedFired = useRef(false);
 
   // Fetch the current published PIT rule
   useEffect(() => {
@@ -154,6 +158,7 @@ export function TaxCalculator() {
     fetchTaxRule();
   }, []);
 
+
   // Parse salary input to Kobo
   const annualSalaryKobo = useMemo(() => {
     const ngnValue = salaryInput.replace(/,/g, "");
@@ -182,6 +187,17 @@ export function TaxCalculator() {
     return calculateProgressiveTaxKobo(taxableIncomeKobo, taxRule.rules_json.bands);
   }, [taxableIncomeKobo, taxRule]);
 
+  // Fire calculator_completed once when a real result is first reached and visible
+  useEffect(() => {
+    if (taxableIncomeKobo > 0n && taxRule && !calculatorCompletedFired.current) {
+      posthog.capture("calculator_completed", {
+        tool: "pit_estimator",
+        effective_rate: effectiveRate,
+      });
+      calculatorCompletedFired.current = true;
+    }
+  }, [taxableIncomeKobo, taxRule, effectiveRate, posthog]);
+
   const netAnnualIncomeKobo = subKobo(annualSalaryKobo, totalTaxKobo);
   const netMonthlyIncomeKobo = divKobo(netAnnualIncomeKobo, 12);
   const monthlyTaxKobo = divKobo(totalTaxKobo, 12);
@@ -191,6 +207,10 @@ export function TaxCalculator() {
     if (value === "") {
       setSalaryInput("");
       return;
+    }
+    if (!calculatorStartedFired.current) {
+      posthog.capture('calculator_started', { tool: 'pit_estimator' });
+      calculatorStartedFired.current = true;
     }
     const formatted = new Intl.NumberFormat("en-NG").format(parseInt(value));
     setSalaryInput(formatted);

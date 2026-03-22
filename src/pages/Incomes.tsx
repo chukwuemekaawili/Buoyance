@@ -446,8 +446,8 @@ export default function Incomes() {
                       : classification
                         ? getConfidenceBgColor(classification.confidence)
                         : taxExempt
-                          ? 'bg-blue-500/10 border-blue-500/20'
-                          : 'bg-amber-500/10 border-amber-500/20'
+                          ? 'bg-primary/10 border-primary/20'
+                          : 'bg-secondary border-border'
                       }`}>
                       <div className="flex items-start gap-3">
                         {isClassifying ? (
@@ -467,14 +467,14 @@ export default function Incomes() {
                           <>
                             <div className="flex-shrink-0 mt-0.5">
                               {taxExempt ? (
-                                <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                <CheckCircle2 className="h-5 w-5 text-primary" />
                               ) : (
-                                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                                <AlertCircle className="h-5 w-5 text-secondary-foreground" />
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <p className={`font-medium ${taxExempt ? 'text-blue-700 dark:text-blue-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                                <p className={`font-medium ${taxExempt ? 'text-primary' : 'text-secondary-foreground'}`}>
                                   {taxExempt ? '🔵 Tax Exempt' : '💰 Taxable Income'}
                                 </p>
                                 <span className={`text-xs px-2 py-0.5 rounded-full border flex items-center gap-1 ${getConfidenceBgColor(classification.confidence)} ${getConfidenceColor(classification.confidence)}`}>
@@ -496,13 +496,13 @@ export default function Incomes() {
                           <>
                             <div className="flex-shrink-0 mt-0.5">
                               {taxExempt ? (
-                                <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                <CheckCircle2 className="h-5 w-5 text-primary" />
                               ) : (
-                                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                                <AlertCircle className="h-5 w-5 text-secondary-foreground" />
                               )}
                             </div>
                             <div>
-                              <p className={`font-medium ${taxExempt ? 'text-blue-700 dark:text-blue-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                              <p className={`font-medium ${taxExempt ? 'text-primary' : 'text-secondary-foreground'}`}>
                                 {taxExempt ? '🔵 Tax Exempt' : '💰 Taxable Income'}
                               </p>
                               <p className="text-sm text-muted-foreground">
@@ -624,18 +624,18 @@ export default function Incomes() {
                 {filteredIncomes.length} records
               </p>
             </Card>
-            <Card className="p-4 bg-amber-500/10 border-amber-500/20">
+            <Card className="p-4 bg-secondary border-border">
               <p className="text-sm text-muted-foreground">Taxable Income</p>
-              <p className="text-2xl font-mono font-bold text-amber-600 dark:text-amber-400">
+              <p className="text-2xl font-mono font-bold text-secondary-foreground">
                 {formatKoboToNgn(taxableIncome)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {filteredIncomes.filter(i => !i.tax_exempt).length} taxable records
               </p>
             </Card>
-            <Card className="p-4 bg-blue-500/10 border-blue-500/20">
+            <Card className="p-4 bg-primary/10 border-primary/20">
               <p className="text-sm text-muted-foreground">Tax Exempt</p>
-              <p className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400">
+              <p className="text-2xl font-mono font-bold text-primary">
                 {formatKoboToNgn(exemptIncome)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
@@ -740,11 +740,11 @@ export default function Incomes() {
                             </span>
                           )}
                           {!isSuperseded && income.tax_exempt ? (
-                            <span className="text-xs px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 rounded-full">
+                            <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full">
                               🔵 Tax Exempt
                             </span>
                           ) : !isSuperseded ? (
-                            <span className="text-xs px-2 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-full">
+                            <span className="text-xs px-2 py-0.5 bg-secondary text-secondary-foreground border border-border rounded-full">
                               💰 Taxable
                             </span>
                           ) : null}

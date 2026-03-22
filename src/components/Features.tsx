@@ -110,7 +110,7 @@ export function Features() {
       <div className="container">
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center mb-16">
-          <span className="inline-block text-secondary font-semibold text-sm tracking-wide uppercase mb-4">
+          <span className="inline-block text-primary font-semibold text-sm tracking-wide uppercase mb-4">
             Platform Capabilities
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -127,15 +127,15 @@ export function Features() {
           {features.map((feature, index) => (
             <Card
               key={index}
-              className="group p-6 md:p-8 border-2 border-border/50 hover:border-secondary/50 transition-all duration-300 hover:shadow-lg"
+              className="group p-6 md:p-8 border border-border/60 hover:border-primary/40 transition-all duration-300 hover:shadow-md hover:-translate-y-1"
             >
               {/* Icon */}
-              <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center mb-5 group-hover:bg-secondary/20 transition-colors">
-                <feature.icon className="h-6 w-6 text-secondary" />
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
+                <feature.icon className="h-6 w-6 text-primary" />
               </div>
 
               {/* Highlight Badge */}
-              <span className="inline-block text-xs font-mono font-semibold text-accent bg-accent/10 px-2 py-1 rounded mb-3">
+              <span className="inline-block text-xs font-mono font-semibold text-primary bg-primary/10 px-2 py-1 rounded mb-3">
                 {feature.highlight}
               </span>
 
@@ -153,7 +153,8 @@ export function Features() {
         </div>
 
         {/* Tools Section */}
-        <div className="max-w-3xl mx-auto text-center mt-24 mb-16">
+        <div className="mt-20 border-t border-border" />
+        <div className="max-w-3xl mx-auto text-center mt-16 mb-16">
           <span className="inline-block text-primary font-semibold text-sm tracking-wide uppercase mb-4">
             Productivity Tools
           </span>
@@ -170,7 +171,7 @@ export function Features() {
           {tools.map((tool, index) => (
             <Card
               key={index}
-              className="group p-6 md:p-8 border-2 border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg"
+              className="group p-6 md:p-8 border border-border/60 hover:border-primary/40 transition-all duration-300 hover:shadow-md hover:-translate-y-1"
             >
               {/* Icon */}
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
@@ -178,7 +179,7 @@ export function Features() {
               </div>
 
               {/* Highlight Badge */}
-              <span className="inline-block text-xs font-mono font-semibold text-secondary bg-secondary/10 px-2 py-1 rounded mb-3">
+              <span className="inline-block text-xs font-mono font-semibold text-primary bg-primary/10 px-2 py-1 rounded mb-3">
                 {tool.highlight}
               </span>
 

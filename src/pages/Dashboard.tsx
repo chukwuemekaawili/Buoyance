@@ -61,11 +61,11 @@ interface RecentActivity {
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
-  submitted: "bg-blue-600/10 text-blue-600 border-blue-600/20",
+  submitted: "bg-primary/10 text-primary border-primary/20",
   accepted: "bg-green-600/10 text-green-600 border-green-600/20",
   rejected: "bg-red-600/10 text-red-600 border-red-600/20",
   cancelled: "bg-muted text-muted-foreground",
-  pending: "bg-amber-600/10 text-amber-600 border-amber-600/20",
+  pending: "bg-secondary text-secondary-foreground border-border",
   paid: "bg-green-600/10 text-green-600 border-green-600/20",
   failed: "bg-red-600/10 text-red-600 border-red-600/20",
 };

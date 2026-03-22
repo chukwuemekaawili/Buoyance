@@ -21,7 +21,7 @@ export function CalculatorSection() {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
           <div>
-            <span className="inline-block text-accent font-semibold text-sm tracking-wide uppercase mb-4">
+            <span className="inline-block text-primary font-semibold text-sm tracking-wide uppercase mb-4">
               Interactive Tool
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -37,7 +37,7 @@ export function CalculatorSection() {
             <div className="space-y-3">
               {highlights.map((item, index) => (
                 <div key={index} className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-secondary flex-shrink-0" />
+                  <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
                   <span className="text-foreground font-medium">{item}</span>
                 </div>
               ))}

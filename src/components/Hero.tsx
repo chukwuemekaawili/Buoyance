@@ -2,11 +2,17 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, CheckCircle, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { scrollToId } from "@/components/ScrollToHash";
+import { usePostHog } from "@posthog/react";
 
 export function Hero() {
   const navigate = useNavigate();
+  const posthog = usePostHog();
 
   const handleStartCalculation = () => {
+    posthog.capture('cta_clicked', {
+      location: 'hero',
+      label: 'start_free_calculation',
+    });
     const calculatorSection = document.getElementById("calculator");
     if (calculatorSection) {
       scrollToId("calculator");
@@ -61,7 +67,7 @@ export function Hero() {
             className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-8 animate-slide-up"
             style={{ animationDelay: "0.1s" }}
           >
-            Deterministic tax calculations and intelligent optimization for individuals, 
+            Deterministic tax calculations and intelligent optimization for individuals,
             freelancers, and SMEs under the{" "}
             <span className="text-white font-semibold">Nigeria Tax Act 2025</span>
           </p>
@@ -71,18 +77,18 @@ export function Hero() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 animate-slide-up"
             style={{ animationDelay: "0.2s" }}
           >
-            <Button 
-              variant="hero" 
-              size="xl" 
+            <Button
+              variant="hero"
+              size="xl"
               className="w-full sm:w-auto"
               onClick={handleStartCalculation}
             >
               Start Free Calculation
               <ArrowRight className="h-5 w-5" />
             </Button>
-            <Button 
-              variant="outline-light" 
-              size="lg" 
+            <Button
+              variant="outline-light"
+              size="lg"
               className="w-full sm:w-auto"
               onClick={handleLearnMore}
             >

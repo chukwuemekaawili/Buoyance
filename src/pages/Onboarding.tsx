@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { writeAuditLog, AuditActions } from "@/lib/auditLog";
 import { ConsentModal } from "@/components/ConsentModal";
 import { validateTINOptional } from "@/lib/validators";
-import logoDark from "@/assets/buoyance_logo_dark.png";
+import logoDark from "@/assets/combination_black.svg";
 
 const USER_TYPES: { value: AppRole; label: string; description: string; icon: React.ReactNode }[] = [
   {

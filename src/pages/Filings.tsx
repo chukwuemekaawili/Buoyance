@@ -56,7 +56,7 @@ import { useIntegrationStatus } from "@/hooks/useIntegrationStatus";
 
 const statusColors: Record<FilingStatus, string> = {
   draft: "bg-muted text-muted-foreground",
-  submitted: "bg-blue-600/10 text-blue-600 border-blue-600/20",
+  submitted: "bg-primary/10 text-primary border-primary/20",
   accepted: "bg-green-600/10 text-green-600 border-green-600/20",
   rejected: "bg-red-600/10 text-red-600 border-red-600/20",
   cancelled: "bg-muted text-muted-foreground",
@@ -104,7 +104,7 @@ function getPaymentStatusBadge(status: PaymentStatusType) {
     case "unpaid":
       return <Badge variant="destructive">UNPAID</Badge>;
     case "partial":
-      return <Badge className="bg-amber-500 hover:bg-amber-500/80 text-white">PARTIAL</Badge>;
+      return <Badge className="bg-secondary text-secondary-foreground">PARTIAL</Badge>;
     case "paid":
       return <Badge className="bg-green-600 hover:bg-green-600/80 text-white">PAID</Badge>;
   }
