@@ -25,6 +25,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { Separator } from "@/components/ui/separator";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import logoDark from "@/assets/combination_black.svg";
+import logoLight from "@/assets/combination_white.svg";
 import { cn } from "@/lib/utils";
 
 // Helper to check if a path is active
@@ -200,7 +201,7 @@ export function Header() {
               className="flex-shrink-0"
             >
               <img
-                src={logoDark}
+                src={isScrolled ? logoDark : logoLight}
                 alt="BUOYANCE"
                 className="h-7 md:h-9 w-auto object-contain"
               />
