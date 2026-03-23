@@ -156,9 +156,13 @@ export function Header() {
     setIsMenuOpen(false);
   };
 
-  // Active link styles
-  const activeLinkClass = "text-primary bg-background/10 font-medium";
-  const inactiveLinkClass = "text-muted-foreground hover:text-primary hover:bg-muted";
+  // Active link styles — swap between hero (unscrolled) and scrolled states
+  const activeLinkClass = isScrolled
+    ? "text-primary bg-primary/10 font-medium"
+    : "text-white font-medium bg-white/15";
+  const inactiveLinkClass = isScrolled
+    ? "text-muted-foreground hover:text-primary hover:bg-muted"
+    : "text-white/90 hover:text-white hover:bg-white/10";
 
   // Marketing links for unauthenticated users
   const marketingLinks = [
