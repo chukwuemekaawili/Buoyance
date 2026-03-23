@@ -435,7 +435,7 @@ export function AIChatWidget() {
       {!isMinimized && (
         <>
           {/* Messages */}
-          <ScrollArea className="flex-1 p-3" ref={scrollAreaRef}>
+          <ScrollArea className="flex-1 p-3 [&>[data-radix-scroll-area-scrollbar]]:hidden" ref={scrollAreaRef}>
             {messages.length === 0 ? (
               <div className="space-y-4">
                 <div className="text-center py-6">
@@ -456,7 +456,7 @@ export function AIChatWidget() {
                       key={q}
                       variant="outline"
                       size="sm"
-                      className="w-full justify-start text-left h-auto py-2 px-3 text-xs"
+                      className="w-full justify-start text-left h-auto py-2 px-3 text-xs whitespace-normal leading-snug"
                       onClick={() => handleQuickQuestion(q)}
                     >
                       {q}
