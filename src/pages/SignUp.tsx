@@ -112,7 +112,7 @@ export default function SignUp() {
         variant: "destructive",
       });
     } else {
-      posthog.capture('signup_completed', { method: 'email' });
+      localStorage.setItem('pending_signup', 'email');
       setSubmittedEmail(email);
       setShowVerificationMessage(true);
     }
@@ -121,6 +121,7 @@ export default function SignUp() {
   const handleGoogleSignUp = async () => {
     handleStartSignup();
     setIsGoogleLoading(true);
+    localStorage.setItem('pending_signup', 'google');
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

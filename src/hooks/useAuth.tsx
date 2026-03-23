@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { usePostHog } from "@posthog/react";
 
 interface AuthContextType {
   user: User | null;
@@ -17,6 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const posthog = usePostHog();
 
   useEffect(() => {
     // Check if we are in local dev and should use mock auth
@@ -51,6 +53,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        const pending = localStorage.getItem('pending_signup');
+
+        if (event === 'SIGNED_IN' && pending) {
+          posthog.capture('signup_completed', {
+            method: pending,
+          });
+          localStorage.removeItem('pending_signup');
+        }
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
