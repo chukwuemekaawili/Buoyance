@@ -394,11 +394,11 @@ export function AIChatWidget() {
         "z-[60]",
         isMinimized
           ? "bottom-4 right-4 sm:bottom-6 sm:right-6 w-64 sm:w-72 h-14"
-          : "top-[4.5rem] bottom-4 left-2 right-2 sm:top-auto sm:bottom-6 sm:left-auto sm:right-6 sm:w-[420px] sm:h-[600px] max-h-[600px] flex flex-col"
+          : "top-[4.5rem] bottom-4 left-2 right-2 sm:top-auto sm:bottom-6 sm:left-auto sm:right-6 sm:w-[420px] sm:h-[min(600px,calc(100dvh-8rem))] max-h-[min(600px,calc(100dvh-8rem))] flex flex-col"
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b text-primary-foreground rounded-t-lg bg-gradient-to-r from-primary to-primary/80 shadow-[0_1px_8px_hsl(var(--primary)/0.35)]">
+      <div className="flex items-center justify-between p-3 border-b text-primary-foreground rounded-t-lg bg-gradient-to-r from-primary to-primary/80 shadow-[0_1px_8px_hsl(var(--primary)/0.35)] shrink-0">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-primary-foreground/20 rounded-lg">
             <Sparkles className="h-4 w-4" />
