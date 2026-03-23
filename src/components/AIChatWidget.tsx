@@ -391,13 +391,10 @@ export function AIChatWidget() {
     <Card
       className={cn(
         "fixed shadow-2xl transition-all duration-300",
-        // Position: ensure clickable on mobile by adding safe offset from header
-        "bottom-4 right-4 sm:bottom-6 sm:right-6",
-        // z-index above header (z-50), ensure close button clickable
         "z-[60]",
         isMinimized
-          ? "w-64 sm:w-72 h-14"
-          : "w-[calc(100vw-2rem)] sm:w-[420px] h-[calc(100dvh-5rem)] sm:h-[600px] max-h-[600px] flex flex-col"
+          ? "bottom-4 right-4 sm:bottom-6 sm:right-6 w-64 sm:w-72 h-14"
+          : "top-[4.5rem] bottom-4 left-2 right-2 sm:top-auto sm:bottom-6 sm:left-auto sm:right-6 sm:w-[420px] sm:h-[600px] max-h-[600px] flex flex-col"
       )}
     >
       {/* Header */}
