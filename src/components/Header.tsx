@@ -700,7 +700,7 @@ export function Header() {
               {user && (
                 <>
                   <WorkspaceSwitcher className="hidden xl:flex max-w-[200px] mr-1 text-foreground border-primary-foreground/30 hover:bg-muted hover:text-foreground" />
-                  <Button size="sm" asChild className="hidden sm:flex" variant="accent" className="font-medium text-sm">
+                  <Button size="sm" asChild variant="accent" className="hidden sm:flex font-medium text-sm">
                     <Link to="/filings/new">
                       <Plus className="h-4 w-4 mr-1" />
                       New Filing
@@ -1398,7 +1398,7 @@ export function Header() {
                 <Separator className="my-4 bg-muted" />
                 <div className="flex flex-col gap-3 pt-2 pb-6">
                   <SheetClose asChild>
-                    <Button variant="ghost" asChild className="w-full justify-center" className="text-muted-foreground hover:text-primary font-medium">
+                    <Button variant="ghost" asChild className="w-full justify-center text-muted-foreground hover:text-primary font-medium">
                       <Link to="/signin" onClick={handleNavClick}>Sign In</Link>
                     </Button>
                   </SheetClose>
