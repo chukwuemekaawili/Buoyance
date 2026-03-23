@@ -700,6 +700,12 @@ export function Header() {
               {user && (
                 <>
                   <WorkspaceSwitcher className="hidden xl:flex max-w-[200px] mr-1 text-foreground border-primary-foreground/30 hover:bg-muted hover:text-foreground" />
+                  {/* Icon-only on mobile, full label on sm+ */}
+                  <Button size="sm" asChild variant="accent" className="sm:hidden w-8 h-8 p-0">
+                    <Link to="/filings/new" aria-label="New Filing">
+                      <Plus className="h-4 w-4" />
+                    </Link>
+                  </Button>
                   <Button size="sm" asChild variant="accent" className="hidden sm:flex font-medium text-sm">
                     <Link to="/filings/new">
                       <Plus className="h-4 w-4 mr-1" />
