@@ -32,7 +32,7 @@ export function WorkspaceSwitcher({ className }: { className?: string }) {
     };
 
     if (isLoading) {
-        return <Skeleton className="h-9 w-[180px] rounded-md" />;
+        return <Skeleton className={cn("h-9 w-[180px] rounded-md", className)} />;
     }
 
     if (!activeWorkspace || workspaces.length === 0) {

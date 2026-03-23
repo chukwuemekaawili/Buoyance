@@ -55,11 +55,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (event, session) => {
         const pending = localStorage.getItem('pending_signup');
 
-        if (event === 'SIGNED_IN' && pending) {
-          posthog.capture('signup_completed', {
-            method: pending,
-          });
-          localStorage.removeItem('pending_signup');
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          console.log(`${event} DETECTED`);
+
+          if (pending && session?.user) {
+            console.log('FIRING signup_completed');
+
+            posthog.capture('signup_completed', {
+              method: pending,
+            });
+
+            localStorage.removeItem('pending_signup');
+          }
         }
         setSession(session);
         setUser(session?.user ?? null);

@@ -156,13 +156,15 @@ export function Header() {
     setIsMenuOpen(false);
   };
 
-  // Active link styles — swap between hero (unscrolled) and scrolled states
-  const activeLinkClass = isScrolled
-    ? "text-primary bg-primary/10 font-medium"
-    : "text-white font-medium bg-white/15";
-  const inactiveLinkClass = isScrolled
-    ? "text-muted-foreground hover:text-primary hover:bg-muted"
-    : "text-white/90 hover:text-white hover:bg-white/10";
+  // Hero style only applies on the home page before scrolling
+  const isHeroMode = currentPath === "/" && !isScrolled;
+
+  const activeLinkClass = isHeroMode
+    ? "text-white font-medium bg-white/15"
+    : "text-primary bg-primary/10 font-medium";
+  const inactiveLinkClass = isHeroMode
+    ? "text-white/90 hover:text-white hover:bg-white/10"
+    : "text-muted-foreground hover:text-primary hover:bg-muted";
 
   // Marketing links for unauthenticated users
   const marketingLinks = [
@@ -192,9 +194,9 @@ export function Header() {
     <>
       <header className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-all duration-300 backdrop-blur-md",
-          isScrolled 
-            ? "bg-background/95 border-b border-border shadow-sm text-foreground" 
-            : "bg-transparent border-transparent text-foreground"
+          isHeroMode
+            ? "bg-transparent border-transparent"
+            : "bg-background/95 border-b border-border shadow-sm text-foreground"
         )}>
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex items-center h-14 md:h-16">
@@ -205,7 +207,7 @@ export function Header() {
               className="flex-shrink-0"
             >
               <img
-                src={isScrolled ? logoDark : logoLight}
+                src={isHeroMode ? logoLight : logoDark}
                 alt="BUOYANCE"
                 className="h-7 md:h-9 w-auto object-contain"
               />
