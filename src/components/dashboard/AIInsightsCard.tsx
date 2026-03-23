@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, RefreshCw, AlertTriangle, TrendingUp, FileWarning, Coins } from "lucide-react";
+import { Sparkles, RefreshCw, AlertTriangle, TrendingUp, FileWarning, Coins } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useFeatureGate } from "@/hooks/useFeatureGate";
 import { formatKoboToNgn, stringToKobo, addKobo } from "@/lib/money";
+import { cn } from "@/lib/utils";
 
 interface Insight {
     icon: "warning" | "opportunity" | "info" | "action";
@@ -149,9 +150,18 @@ Example format:
             setHasLoaded(true);
         } catch (err: any) {
             console.error("AI Insights error:", err);
-            setError("Could not generate insights. The AI service may be temporarily unavailable.");
+            setError("Couldn't load your insights — the AI service may be busy right now.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const getBorderColor = (icon: string) => {
+        switch (icon) {
+            case "warning":     return "border-l-amber-500";
+            case "opportunity": return "border-l-green-500";
+            case "action":      return "border-l-blue-500";
+            default:            return "border-l-primary";
         }
     };
 
@@ -188,29 +198,39 @@ Example format:
             </CardHeader>
             <CardContent>
                 {!hasLoaded && !loading && (
-                    <div className="text-center py-4">
-                        <p className="text-sm text-muted-foreground mb-3">
-                            Get personalized tax insights based on your actual financial data.
-                        </p>
-                        <Button onClick={generateInsights} size="sm" className="gap-2">
+                    <div className="text-center py-6 space-y-3">
+                        <div className="h-12 w-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                            <Sparkles className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">See what your numbers say</p>
+                            <p className="text-xs text-muted-foreground">
+                                I'll scan your {new Date().getFullYear()} data and flag anything worth your attention.
+                            </p>
+                        </div>
+                        <Button onClick={generateInsights} size="sm" className="gap-2 mt-1">
                             <Sparkles className="h-4 w-4" />
-                            Generate Insights
+                            Show my insights
                         </Button>
                     </div>
                 )}
 
                 {loading && (
-                    <div className="flex items-center justify-center py-6 gap-3">
-                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground">Analyzing your financial data...</p>
+                    <div className="flex flex-col items-center justify-center py-8 gap-3">
+                        <Sparkles className="h-6 w-6 text-primary animate-pulse" />
+                        <p className="text-sm text-muted-foreground animate-pulse">Looking at your numbers...</p>
+                        <div className="h-1.5 rounded-full w-40 bg-gradient-to-r from-muted via-primary/20 to-muted animate-pulse" />
                     </div>
                 )}
 
                 {error && (
-                    <div className="text-center py-4">
-                        <p className="text-sm text-destructive">{error}</p>
-                        <Button onClick={generateInsights} size="sm" variant="outline" className="mt-2">
-                            Retry
+                    <div className="text-center py-4 space-y-2">
+                        <p className="text-sm text-muted-foreground">
+                            Couldn't load insights right now — the AI service may be busy.
+                        </p>
+                        <Button onClick={generateInsights} size="sm" variant="outline" className="gap-1.5">
+                            <RefreshCw className="h-3 w-3" />
+                            Try again
                         </Button>
                     </div>
                 )}
@@ -218,7 +238,13 @@ Example format:
                 {hasLoaded && !loading && insights.length > 0 && (
                     <div className="space-y-3">
                         {insights.map((insight, idx) => (
-                            <div key={idx} className="flex items-start gap-3 text-sm">
+                            <div
+                                key={idx}
+                                className={cn(
+                                    "flex items-start gap-3 text-sm pl-3 border-l-2 py-0.5",
+                                    getBorderColor(insight.icon)
+                                )}
+                            >
                                 {getIconComponent(insight.icon)}
                                 <p className="text-foreground leading-snug">{insight.text}</p>
                             </div>

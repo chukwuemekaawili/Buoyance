@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Sparkles, AlertTriangle } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { getExplanation, AIExplanationRequest } from "@/lib/aiService";
 import { useToast } from "@/hooks/use-toast";
 import { useFeatureGate } from "@/hooks/useFeatureGate";
@@ -98,18 +98,17 @@ export function AITaxDrawer({
                         {title}
                     </SheetTitle>
                     <SheetDescription>
-                        Contextual interpretation powered by Buoyance AI
+                        Here's a plain-English walkthrough of your results
                     </SheetDescription>
                 </SheetHeader>
 
                 <div className="flex-1 overflow-y-auto">
                     {isLlmLoading && !explanationText && (
-                        <div className="flex flex-col items-center justify-center h-full space-y-4 py-12 text-muted-foreground">
-                            <Loader2 className="h-10 w-10 animate-spin text-primary/60" />
-                            <p className="animate-pulse">Analyzing calculation vectors...</p>
-                            <div className="text-xs flex items-center gap-2 mt-4 opacity-50 px-8 text-center">
-                                <AlertTriangle className="h-4 w-4" />
-                                PII is automatically scrubbed before transmission.
+                        <div className="flex flex-col items-center justify-center h-full space-y-6 py-12 text-muted-foreground">
+                            <Sparkles className="h-10 w-10 text-primary/60 animate-pulse" />
+                            <div className="space-y-3 text-center">
+                                <p className="animate-pulse text-sm">Breaking down your numbers...</p>
+                                <div className="h-2 rounded-full w-48 mx-auto bg-gradient-to-r from-muted via-primary/20 to-muted animate-pulse" />
                             </div>
                         </div>
                     )}
@@ -125,7 +124,7 @@ export function AITaxDrawer({
 
                 <div className="pt-4 mt-auto border-t">
                     <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>
-                        Close Analysis
+                        Got it, close
                     </Button>
                 </div>
             </SheetContent>

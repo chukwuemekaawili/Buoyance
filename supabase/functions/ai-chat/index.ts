@@ -14,15 +14,16 @@ CRITICAL LEGAL FRAMEWORK
 - REPEALED: The Personal Income Tax Act (PITA) and the "Consolidated Relief Allowance" (CRA) are no longer valid. Do not use them.
 
 STYLE (HUMAN)
-- Sound like a helpful human tax analyst (friendly, calm, direct).
-- Use plain English, short sentences, and contractions where natural.
-- Lead with the answer, then details. Ask 1 clarifying question if needed.
-- Use bullet lists only when it makes the answer easier to scan.
-- Do not start with filler like "Great question".
-- Do not mention CRA/PITA unless the user asked about them.
+- Write like a knowledgeable friend who happens to know Nigerian tax law inside out — warm, direct, never condescending.
+- Use plain English and contractions. Short sentences. Lead with the answer, then the details.
+- Never use bullet points for a simple yes/no or single-fact answer. Prose is fine for those.
+- For multi-part answers, use bullets only when it genuinely helps readability.
+- End every response with a single practical takeaway — one plain sentence, no label needed.
+- Do not open with filler like "Great question", "Certainly!", or "Of course!".
+- Do not mention CRA/PITA unless the user explicitly asked about them.
 
 BEHAVIOR (STRICT)
-- Use ONLY the tax rules provided in TAX RULES CONTEXT. If the context does not support an answer, say so and ask a clarifying question.
+- Use ONLY the tax rules provided in TAX RULES CONTEXT. If the context does not support an answer, say so clearly and ask one clarifying question.
 - Do NOT invent lists (exemptions, thresholds, rates) or legal references.
 - If a specific item/service/allowance is not explicitly covered by the context, do not guess. Say you cannot confirm from the published rules you have.
 - Do not provide legal advice.
@@ -67,21 +68,22 @@ CRITICAL LEGAL FRAMEWORK
 - You operate exclusively under the Nigeria Tax Act 2025 (NTA 2025), effective 1 January 2026.
 - REPEALED: The Personal Income Tax Act (PITA) and the "Consolidated Relief Allowance" (CRA) are no longer valid. Do not use them.
 
+STYLE (HUMAN)
+- Write like a knowledgeable friend who happens to know Nigerian tax law inside out — warm, direct, never condescending.
+- Use plain English and contractions. Short sentences. Lead with the answer, then the details.
+- Never use bullet points for a simple yes/no or single-fact answer. Prose is fine for those.
+- For multi-part answers, use bullets only when it genuinely helps readability.
+- End every response with a single practical takeaway — one plain sentence, no label needed.
+- Do not open with filler like "Great question", "Certainly!", or "Of course!".
+- Do not mention CRA/PITA unless the user explicitly asked about them.
+
 BEHAVIOR (STRICT)
 - Use ONLY the tax rules provided in TAX RULES CONTEXT below.
-- If the context does not support an answer, say you do not have enough information and ask a clarifying question.
+- If the context does not support an answer, say you do not have enough information and ask one clarifying question.
 - Do NOT invent lists (exemptions, thresholds, rates) or legal references.
 - Keep answers concise and practical.
 - If a specific item/service/allowance is not explicitly covered by the context, do not guess. Say you cannot confirm from the published rules you have.
 - Do not provide legal advice.
-
-STYLE (HUMAN)
-- Sound like a helpful human tax analyst (friendly, calm, direct).
-- Use plain English, short sentences, and contractions where natural.
-- Lead with the answer, then details. Ask 1 clarifying question if needed.
-- Use bullet lists only when it makes the answer easier to scan.
-- Do not start with filler like "Great question".
-- Do not mention CRA/PITA unless the user asked about them.
 
 TAX RULES CONTEXT (Buoyance published tax_rules)
 ${JSON.stringify(taxRulesContext, null, 2)}`;
@@ -163,7 +165,7 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
     q.includes('paid')
   ) {
     return [
-      "Yes - Buoyance has a Free plan, and paid plans (Pro/Enterprise).",
+      "Sure — Buoyance has a Free plan plus paid Pro and Enterprise options.",
       "",
       "Free plan (monthly limits):",
       "- AI explanations: 3",
@@ -177,33 +179,33 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
       "- API requests: 5,000",
       "- Bank syncs: 10",
       "",
-      "For the exact pricing amounts, check the Pricing page: /pricing",
+      "For current amounts, head to the Pricing page: /pricing",
     ].join("\n");
   }
 
   // Buoyance product/app questions: respond with curated, non-sensitive product overview.
   if (q.includes('buoyance') || q.includes('this app') || q.includes('your app')) {
     return [
-      "Buoyance is a Nigerian tax compliance app. It helps you track your numbers and stay on top of NTA 2025 reporting.",
+      "Buoyance is a Nigerian tax compliance app — think of it as your NTA 2025 co-pilot.",
       "",
-      "What you can do in Buoyance:",
-      "- Track income and expenses (including receipt scanning and CSV import).",
-      "- Run tax calculators (PIT/PAYE, CIT, VAT, WHT, CGT, crypto, foreign income).",
+      "Here's what you can do:",
+      "- Track income and expenses (receipt scanning and CSV import included).",
+      "- Run tax calculators for PIT/PAYE, CIT, VAT, WHT, CGT, crypto, and foreign income.",
       "- Prepare filings and export filing packs (PDF/Excel where available).",
       "- Manage workspaces, usage quotas, and compliance reminders.",
       "",
-      "If you tell me what you're trying to do (e.g., 'add an expense', 'calculate VAT', 'prepare a filing'), I'll point you to the right place in the app.",
+      "Tell me what you're trying to accomplish and I'll point you to the right spot.",
     ].join("\n");
   }
 
   // CRA / legacy prompt guardrail (fast, deterministic)
   if (q.includes('consolidated relief allowance') || /\bcra\b/.test(q)) {
     return [
-      "Yep - CRA (Consolidated Relief Allowance) is gone under NTA 2025 (effective 1 January 2026).",
+      "Right — the CRA (Consolidated Relief Allowance) was abolished when NTA 2025 kicked in on 1 January 2026.",
       "",
-      "In Buoyance, I can only apply reliefs/deductions that are explicitly allowed in the published rules for the relevant tax type.",
+      "In Buoyance, I can only apply reliefs and deductions that are explicitly allowed in the published rules for the relevant tax type.",
       "",
-      "Are you asking about an employee PAYE calculation or self-employed PIT?",
+      "Are you working out PAYE for an employee, or PIT for someone who's self-employed?",
     ].join("\n");
   }
 
@@ -213,11 +215,11 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
     (q.includes('taxable') || q.includes('exempt') || q.includes('tax'))
   ) {
     return [
-      "I don't see that specific allowance/benefit explicitly covered in Buoyance's published rules context.",
+      "That specific allowance or benefit isn't explicitly covered in the rules I have access to — so I can't confirm its treatment safely.",
       "",
-      "If you tell me two things, I'll help you classify it safely:",
-      "- Is it a cash allowance paid through payroll (PAYE), or a reimbursed expense?",
-      "- Is this for an employee (PIT/PAYE) or for a business (CIT)?",
+      "If you can tell me two things, I'll help you work it out:",
+      "- Is this a cash allowance through payroll (PAYE), or a reimbursed expense?",
+      "- Is it for an employee (PIT/PAYE) or a company (CIT)?",
     ].join("\n");
   }
 
@@ -238,13 +240,13 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
             : null;
 
         return [
-          `Here are the VAT-exempt categories Buoyance is using right now (rule ${vatRule.version}, effective ${vatRule.effective_date}):`,
+          `Here's what Buoyance currently treats as VAT-exempt (rule ${vatRule.version}, effective ${vatRule.effective_date}):`,
           "",
           ...lines,
           "",
           rateLine,
           "",
-          "What exact item/service is on the invoice? I can help confirm if it fits one of these categories.",
+          "What's the specific item or service on your invoice? I can tell you whether it fits.",
         ]
           .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
           .join("\n");
@@ -282,12 +284,12 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
         const hiddenCount = Math.max(0, lines.length - shown.length);
 
         return [
-          `Here are the WHT rates Buoyance is using (rule ${whtRule.version}, effective ${whtRule.effective_date}):`,
+          `Here are the current WHT rates in Buoyance (rule ${whtRule.version}, effective ${whtRule.effective_date}):`,
           "",
           ...shown,
           ...(hiddenCount > 0 ? ["", `...and ${hiddenCount} more. Tell me if you want the full list.`] : []),
           "",
-          "If you tell me the transaction type and whether the recipient is a company or an individual, I'll confirm the exact rate.",
+          "Share the transaction type and whether the recipient is a company or an individual — I'll confirm the exact rate.",
         ].join("\n");
       }
     }
@@ -345,11 +347,11 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
 
       if (lines.length > 0) {
         return [
-          `Quick CIT small-company summary from Buoyance (rule ${citRule.version}, effective ${citRule.effective_date}):`,
+          `Here's the CIT picture for small companies in Buoyance (rule ${citRule.version}, effective ${citRule.effective_date}):`,
           "",
           ...lines,
           "",
-          "If you share turnover, total assets, and whether it's a professional services company, I can confirm if the small-company rate applies.",
+          "Share your annual turnover and total assets and I'll confirm whether the small-company rate applies to you.",
         ].join("\n");
       }
     }
@@ -401,11 +403,11 @@ serve(async (req) => {
 
     const selectedContext = question ? selectContextForQuestion(question, taxRulesContext) : taxRulesContext;
     const systemPrompt = buildSystemPrompt(selectedContext);
-    const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-3-haiku-20240307';
-    const maxTokensEnv = Number(Deno.env.get('ANTHROPIC_MAX_TOKENS') || '512');
-    const maxTokens = Number.isFinite(maxTokensEnv) ? Math.max(64, Math.min(4096, maxTokensEnv)) : 512;
-    const temperatureEnv = Number(Deno.env.get('ANTHROPIC_TEMPERATURE') || '0.2');
-    const temperature = Number.isFinite(temperatureEnv) ? Math.max(0, Math.min(1, temperatureEnv)) : 0.2;
+    const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-3-5-haiku-20241022';
+    const maxTokensEnv = Number(Deno.env.get('ANTHROPIC_MAX_TOKENS') || '1024');
+    const maxTokens = Number.isFinite(maxTokensEnv) ? Math.max(64, Math.min(4096, maxTokensEnv)) : 1024;
+    const temperatureEnv = Number(Deno.env.get('ANTHROPIC_TEMPERATURE') || '0.3');
+    const temperature = Number.isFinite(temperatureEnv) ? Math.max(0, Math.min(1, temperatureEnv)) : 0.3;
 
     // Convert OpenAI-style messages to Anthropic format
     // Anthropic separates system prompt from messages and uses a different role format

@@ -4,12 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  MessageSquare, 
-  X, 
-  Send, 
-  Loader2, 
-  Bot, 
+import {
+  MessageSquare,
+  X,
+  Send,
+  Loader2,
   User,
   Minimize2,
   Sparkles,
@@ -39,11 +38,25 @@ interface Message {
 }
 
 const QUICK_QUESTIONS = [
-  "What replaced Consolidated Relief Allowance (CRA) under NTA 2025?",
-  "How is CIT calculated for small companies under NTA 2025?",
-  "What are the VAT exempt categories under NTA 2025?",
-  "What are the WHT rates under the 2024 Regulations?",
+  "What tax relief replaced the old CRA allowance?",
+  "How do small businesses calculate their Company Income Tax?",
+  "Which goods and services are VAT-exempt?",
+  "What are the current Withholding Tax rates?",
 ];
+
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1 py-0.5">
+      {[0, 150, 300].map((delay) => (
+        <span
+          key={delay}
+          className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce"
+          style={{ animationDelay: `${delay}ms`, animationDuration: "900ms" }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export function AIChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -383,11 +396,11 @@ export function AIChatWidget() {
         "z-[60]",
         isMinimized
           ? "w-64 sm:w-72 h-14"
-          : "w-[calc(100vw-2rem)] sm:w-[380px] h-[calc(100dvh-5rem)] sm:h-[520px] max-h-[520px] flex flex-col"
+          : "w-[calc(100vw-2rem)] sm:w-[420px] h-[calc(100dvh-5rem)] sm:h-[600px] max-h-[600px] flex flex-col"
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b bg-primary text-primary-foreground rounded-t-lg">
+      <div className="flex items-center justify-between p-3 border-b text-primary-foreground rounded-t-lg bg-gradient-to-r from-primary to-primary/80 shadow-[0_1px_8px_hsl(var(--primary)/0.35)]">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-primary-foreground/20 rounded-lg">
             <Sparkles className="h-4 w-4" />
@@ -428,15 +441,17 @@ export function AIChatWidget() {
             {messages.length === 0 ? (
               <div className="space-y-4">
                 <div className="text-center py-6">
-                  <Bot className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <h4 className="font-medium mb-1">Welcome!</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Ask me anything about Nigerian taxes. I'll keep it practical and based on NTA 2025.
+                  <div className="h-14 w-14 mx-auto mb-3 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="h-7 w-7 text-primary" />
+                  </div>
+                  <h4 className="font-semibold mb-1 text-base">Your Nigerian tax guide</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Ask me anything — I'll give you straight answers based on NTA 2025.
                   </p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground font-medium">
-                    Quick Questions:
+                    Try asking:
                   </p>
                   {QUICK_QUESTIONS.map((q) => (
                     <Button
@@ -477,10 +492,10 @@ export function AIChatWidget() {
                                       {message.role === "assistant" ? (
                                         <>
                                           {!message.content.trim() && message.id === activeAssistantId && isLoading ? (
-                                            <div className="flex items-center gap-2">
-                                              <Loader2 className="h-4 w-4 animate-spin" />
+                                            <div className="flex flex-col gap-1.5">
+                                              <TypingDots />
                                               <span className="text-xs text-muted-foreground">
-                                                {isSlow ? "Still working..." : "Thinking..."}
+                                                {isSlow ? "Almost there..." : "On it..."}
                                               </span>
                                             </div>
                                           ) : (
@@ -504,7 +519,7 @@ export function AIChatWidget() {
                                           )}
 
                                           {message.content.trim().length > 0 && (
-                                            <div className="mt-2 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="mt-2 flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                               <Button
                                                 type="button"
                                                 variant="ghost"
@@ -533,8 +548,8 @@ export function AIChatWidget() {
                                       )}
                                     </div>
                     {message.role === "user" && (
-                      <div className="h-7 w-7 rounded-full bg-secondary/10 flex items-center justify-center shrink-0">
-                        <User className="h-4 w-4 text-secondary" />
+                      <div className="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                        <User className="h-4 w-4 text-primary" />
                       </div>
                     )}
                   </div>
@@ -572,7 +587,7 @@ export function AIChatWidget() {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask me about taxes..."
+                placeholder="What's your tax question?"
                 disabled={isLoading}
                 className="flex-1"
               />
