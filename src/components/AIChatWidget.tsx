@@ -9,6 +9,7 @@ import {
   X,
   Send,
   Loader2,
+  Bot,
   User,
   Minimize2,
   Sparkles,
