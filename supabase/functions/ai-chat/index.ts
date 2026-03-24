@@ -79,8 +79,16 @@ function formatNairaFromKobo(kobo: number): string {
   return `₦${fmt.format(naira)}`;
 }
 
-function buildSystemPrompt(taxRulesContext: Record<string, TaxRuleRow> | null): string {
-  if (!taxRulesContext) return staticSystemPrompt;
+function buildAuthContextSection(isAuthenticated: boolean, currentPage: string): string {
+  return `
+USER CONTEXT
+- Logged in: ${isAuthenticated ? 'Yes — they have a Buoyance account.' : 'No — this user is NOT signed in or has no account yet. If they ask how to do something inside Buoyance (file, track, calculate), first tell them to create a free account at buoyance.app/signup, then describe what they can do. Never skip this.'}
+- Current page: ${currentPage}`;
+}
+
+function buildSystemPrompt(taxRulesContext: Record<string, TaxRuleRow> | null, isAuthenticated = false, currentPage = '/'): string {
+  const authSection = buildAuthContextSection(isAuthenticated, currentPage);
+  if (!taxRulesContext) return staticSystemPrompt + authSection;
 
   return `You are the AI assistant built into Buoyance — a Nigerian tax compliance and financial management app. Think of yourself as a knowledgeable friend who knows Nigerian tax law, accounting, and the Buoyance app inside out.
 
@@ -124,7 +132,8 @@ HOW TO RESPOND
 - Never give formal legal advice. Light disclaimer only if stakes are high.
 
 TAX RULES CONTEXT (Buoyance published tax_rules)
-${JSON.stringify(taxRulesContext, null, 2)}`;
+${JSON.stringify(taxRulesContext, null, 2)}
+${authSection}`;
 }
 
 function selectContextForQuestion(
@@ -405,7 +414,9 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, stream = false } = await req.json();
+    const { messages, stream = false, userContext } = await req.json();
+    const isAuthenticated = userContext?.isAuthenticated === true;
+    const currentPage = typeof userContext?.currentPage === 'string' ? userContext.currentPage : '/';
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -440,7 +451,7 @@ serve(async (req) => {
     }
 
     const selectedContext = question ? selectContextForQuestion(question, taxRulesContext) : taxRulesContext;
-    const systemPrompt = buildSystemPrompt(selectedContext);
+    const systemPrompt = buildSystemPrompt(selectedContext, isAuthenticated, currentPage);
     const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-3-haiku-20240307';
     const maxTokensEnv = Number(Deno.env.get('ANTHROPIC_MAX_TOKENS') || '600');
     const maxTokens = Number.isFinite(maxTokensEnv) ? Math.max(64, Math.min(4096, maxTokensEnv)) : 600;

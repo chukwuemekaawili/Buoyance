@@ -157,6 +157,10 @@ export function AIChatWidget() {
           body: JSON.stringify({
             messages: payloadMessages,
             stream: true,
+            userContext: {
+              isAuthenticated: !!user,
+              currentPage: window.location.pathname,
+            },
           }),
         }
       );
