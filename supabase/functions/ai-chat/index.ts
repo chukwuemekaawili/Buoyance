@@ -10,92 +10,96 @@ const corsHeaders = {
 const SHARED_APP_KNOWLEDGE = `
 BUOYANCE APP — FULL FEATURE GUIDE
 
-MAIN PAGES
-- Dashboard → /dashboard — your tax health score, AI-generated insights on your numbers, upcoming filing deadlines, and a summary of your filings. This is the first thing you see after logging in.
-- Filings → /filings — create and manage all your tax filings: VAT returns, PIT annual returns, CIT returns, WHT remittances. Click the purple "+ New Filing" button to start a new one. Each filing has a status (Draft, Submitted, Overdue).
-- Income → /income — log every income source. You can tag each entry by type (salary, freelance, rental, dividends, etc.) and mark it as tax-exempt where applicable. Income data auto-feeds into the calculators.
-- Expenses → /expenses — log business expenses, mark them as tax-deductible, scan receipts using OCR (camera or upload), and import bulk records via CSV. Expenses auto-feed into the calculators.
-- WHT Credits → /wht-credits — track all Withholding Tax certificates you've received. These are automatically offset against your final tax liability when you run calculations or file.
-- My Calculations → /my-calculations — all saved calculator results in one place.
-- Academy → /academy — bite-sized lessons on Nigerian tax under NTA 2025. Good for first-timers.
-- Settings → manage your profile, workspace, billing plan (Free/Pro/Enterprise), and team members.
-- Payroll → /payroll — manage employee payroll and PAYE calculations.
-- Invoicing → /invoicing — create and send invoices with VAT included.
-- Compliance Calendar → /compliance — see all upcoming tax deadlines in a calendar view.
-- Tax Clearance → /tax-clearance — TCC (Tax Clearance Certificate) readiness checker.
-- Bank Connections → /bank-connections — connect your bank account to auto-import transactions (Pro plan).
+FREE VS PRO PLAN (important — never tell free users they can access Pro-only features)
+FREE plan includes: all 5 basic calculators (PIT, CIT, VAT, WHT, CGT), income & expense tracking, CSV import, filing preparation, PDF export, compliance calendar, academy, 3 AI explanations/month, 5 receipt OCR scans/month, 100 API requests/month.
+PRO plan adds: Crypto calculator, Foreign Income calculator, payroll multi-employee calculator, WHT credit recovery, TCC readiness tracker, audit workspace, AI dashboard insights, invoice generator, bank feed connections (10 syncs/month), team members & multi-workspace, 100 AI explanations/month, 500 OCR scans/month, 5,000 API requests/month.
+ENTERPRISE plan: unlimited everything.
+
+MAIN PAGES (correct routes — use these exactly)
+- Dashboard → /dashboard — tax health score, AI insights (Pro), filing overview, upcoming deadlines.
+- Filings → /filings — create VAT returns, PIT returns, CIT returns, WHT remittances. Click "+ New Filing" to start. Statuses: Draft, Submitted, Overdue.
+- Income → /incomes — log income by type (salary, freelance, rental, dividends). Mark tax-exempt where applicable. Auto-feeds into calculators.
+- Expenses → /expenses — log deductible expenses, scan receipts via OCR, import CSV. Auto-feeds into calculators.
+- WHT Credits → /wht-credits — track WHT certificates received. Offsets your tax liability. (Pro only)
+- My Calculations → /my-calculations — all saved calculator results.
+- Academy → /academy — bite-sized NTA 2025 lessons. Free for all users.
+- Payroll → /payroll — multi-employee payroll and PAYE. (Pro only)
+- Invoicing → /invoicing — create VAT-inclusive invoices. (Pro only)
+- Compliance Calendar → /compliance-calendar — all upcoming tax deadlines in calendar view. Free for all users.
+- TCC Readiness → /tcc — Tax Clearance Certificate readiness tracker. (Pro only)
+- Bank Connections → /bank-connections — connect bank account to auto-import transactions. (Pro only)
+- Settings → /settings — profile, workspace, billing plan, team members.
 
 CALCULATORS — HOW TO USE EACH ONE (all at /calculators)
 
-PIT / PAYE Calculator → /calculators/pit
+PIT / PAYE Calculator → /calculators/pit (FREE)
 - Who it's for: employees, PAYE workers, self-employed individuals filing PIT.
 - Step 1: Enter your Gross Income. Toggle between Monthly and Yearly — it converts automatically.
-- Step 2: Add your deductions (all optional): toggle on Pension (auto-calculates 8%) and/or NHF (auto-calculates 2.5%), enter Rent Relief (capped at ₦500k), NHIA health insurance premium, and Life Insurance premium.
-- Step 3: The calculator shows your Taxable Income (after deductions), a full band-by-band breakdown, Total Tax Payable, Net Income, and your Effective Tax Rate.
-- Tip: Click "Load from my records" to auto-fill income from what you've already logged under Income.
-- Tip: Click "Save Calculation" to store the result under My Calculations.
+- Step 2: Add deductions (all optional): toggle Pension (auto-calculates 8%) and/or NHF (auto-calculates 2.5%), enter Rent Relief (capped at ₦500k), NHIA premium, Life Insurance premium.
+- Step 3: See Taxable Income, band-by-band breakdown, Total Tax Payable, Net Income, and Effective Tax Rate.
+- Tip: "Load from my records" auto-fills income from your logged entries.
+- Tip: "Save Calculation" stores the result under My Calculations.
 
-VAT Calculator → /calculators/vat
+VAT Calculator → /calculators/vat (FREE)
 - Who it's for: VAT-registered businesses (mandatory if annual turnover > ₦25m).
-- Step 1: Enter Output VAT — the VAT amount you charged on your sales/invoices this period.
-- Step 2: Enter Input VAT — the VAT you paid on your business purchases (requires valid VAT invoices).
-- Result: Net VAT Payable = Output VAT − Input VAT. If Input > Output, you get a VAT Credit to carry forward to the next period.
-- Tip: Buoyance can auto-fill both fields from your logged income and expenses — just click "Load from my records".
-- Tip: After you see results, click "Explain Calculation" (AI button) for a plain-English breakdown.
+- Step 1: Enter Output VAT — VAT you charged on sales/invoices this period.
+- Step 2: Enter Input VAT — VAT you paid on business purchases (needs valid VAT invoices).
+- Result: Net VAT Payable = Output VAT − Input VAT. If Input > Output, you get a VAT Credit to carry forward.
+- Tip: "Load from my records" auto-fills from logged income and expenses.
+- Tip: "Explain Calculation" button gives an AI plain-English breakdown.
 
-WHT Calculator → /calculators/wht
+WHT Calculator → /calculators/wht (FREE)
 - Who it's for: anyone making payments subject to withholding tax (rent, professional fees, dividends, etc.).
-- Step 1: Toggle between Individual and Corporate (the type of recipient you're paying).
-- Step 2: Select the Payment Category from the dropdown — it shows the applicable rate.
+- Step 1: Toggle Individual or Corporate (recipient type).
+- Step 2: Select the Payment Category — it shows the applicable rate.
 - Step 3: Enter the Payment Amount.
-- Result: WHT Deductible amount + Net Payment (what the recipient actually receives).
-- Tip: The WHT you deduct must be remitted to FIRS. Track received WHT certificates under WHT Credits.
+- Result: WHT Deductible + Net Payment (what the recipient receives).
+- Tip: WHT deducted must be remitted to FIRS. Track certificates you've received under WHT Credits.
 
-CIT Calculator → /calculators/cit
+CIT Calculator → /calculators/cit (FREE)
 - Who it's for: limited liability companies filing Company Income Tax.
-- Step 1: Enter your Annual Revenue.
+- Step 1: Enter Annual Revenue.
 - Step 2: Enter Allowable Expenses (deductible business costs).
-- Step 3: Enter Capital Allowances (depreciation deductions on fixed assets).
-- Step 4: Enter any Loss Carry Forward from prior years.
-- Step 5: Toggle switches that apply — "Small Company" (turnover under threshold for reduced rate), "Professional Services" (different rate may apply), "Large MNE" (15% minimum effective tax rate under OECD Pillar 2 rules).
-- Result: Taxable profit, CIT payable, and effective rate.
-- Tip: Load from records to auto-fill revenue and expenses.
+- Step 3: Enter Capital Allowances (fixed asset depreciation).
+- Step 4: Enter Loss Carry Forward from prior years (if any).
+- Step 5: Toggle applicable switches — "Small Company" (reduced rate if turnover under threshold), "Professional Services", "Large MNE" (15% minimum ETR under OECD Pillar 2).
+- Result: Taxable profit, CIT payable, effective rate.
+- Tip: "Load from records" auto-fills revenue and expenses.
 
-CGT Calculator → /calculators/cgt
-- Who it's for: anyone who sold a chargeable asset (land, property, shares, equipment, etc.).
+CGT Calculator → /calculators/cgt (FREE)
+- Who it's for: anyone who sold a chargeable asset (land, property, shares, equipment).
 - Step 1: Enter Sale Proceeds (what you sold it for).
-- Step 2: Enter Cost Basis (what you originally paid for it, including acquisition costs).
-- Result: Capital Gain = Proceeds − Cost Basis, then CGT applies to the gain.
-- Note: Some assets are exempt from CGT — the calculator will flag these.
+- Step 2: Enter Cost Basis (original purchase price including acquisition costs).
+- Result: Capital Gain = Proceeds − Cost Basis, CGT applies to the gain.
+- Note: Some assets are CGT-exempt — the calculator flags these.
 
-Crypto Calculator → /calculators/crypto (PRO PLAN ONLY)
-- Who it's for: anyone with crypto transactions — buys, sells, mining income, staking rewards, airdrops.
-- Step 1: Click "+ Add Transaction" for each crypto event.
-- Step 2: For each transaction select the Type (Buy, Sell, Mining Income, Staking Rewards, Airdrop), Asset (BTC, ETH, BNB, SOL, etc.), Amount, Price in NGN at the time, and Date.
-- Add as many transactions as needed — the calculator handles the full history.
+Crypto Calculator → /calculators/crypto (PRO ONLY)
+- Who it's for: anyone with crypto transactions — buys, sells, mining, staking rewards, airdrops.
+- Click "+ Add Transaction" for each event. Select Type (Buy/Sell/Mining Income/Staking Rewards/Airdrop), Asset (BTC/ETH/BNB/SOL etc.), Amount, Price in NGN at the time, Date.
 - Result: Total crypto gains and tax liability under NTA 2025 digital asset rules.
-- Note: This is a Pro-only feature. Free users will see an upgrade prompt.
+- Free users see an upgrade prompt when they try to access this.
 
-Foreign Income Calculator → /calculators/foreign-income (PRO PLAN ONLY)
-- Who it's for: Nigerian residents with income from abroad — salary, dividends, interest, royalties, rental, capital gains, etc.
-- Step 1: Select the Source Country where the income came from.
-- Step 2: Select the Income Type.
-- Step 3: Enter the Amount and Currency (it auto-converts to NGN).
-- Step 4: Enter Tax Already Paid in the foreign country (for credit relief).
-- Step 5: Toggle "Apply Double Tax Treaty" — Buoyance checks if Nigeria has a DTA with that country.
+Foreign Income Calculator → /calculators/foreign-income (PRO ONLY)
+- Who it's for: Nigerian residents with income earned abroad.
+- Step 1: Select Source Country.
+- Step 2: Select Income Type (employment, dividends, interest, royalties, rental, capital gains, etc.).
+- Step 3: Enter Amount + Currency (auto-converts to NGN).
+- Step 4: Enter Tax Paid in the foreign country.
+- Step 5: Toggle "Apply Double Tax Treaty" — checks if Nigeria has a DTA with that country.
 - Result: Nigerian PIT liability after applying foreign tax credit.
-- Note: This is a Pro-only feature.
+- Free users see an upgrade prompt.
 
 PROACTIVE SUGGESTIONS — always mention the right calculator at the end when relevant:
 - Salary/PAYE question → PIT Calculator at /calculators/pit
 - VAT question → VAT Calculator at /calculators/vat
-- Making a payment to a vendor/contractor → WHT Calculator at /calculators/wht
+- Payment to vendor/contractor → WHT Calculator at /calculators/wht
 - Company profits/CIT → CIT Calculator at /calculators/cit
 - Selling property or shares → CGT Calculator at /calculators/cgt
-- Crypto income → Crypto Calculator at /calculators/crypto (Pro)
-- Income earned abroad → Foreign Income Calculator at /calculators/foreign-income (Pro)`;
+- Crypto income → Crypto Calculator at /calculators/crypto (Pro only)
+- Income earned abroad → Foreign Income Calculator at /calculators/foreign-income (Pro only)`;
 
-const staticSystemPrompt = `You are the AI assistant built into Buoyance — a Nigerian tax compliance and financial management app. Think of yourself as a knowledgeable friend who knows Nigerian tax law, accounting, and the Buoyance app inside out.
+// Static prompt used when tax_rules DB is unavailable — auth section is appended at call time
+const staticSystemPromptBase = `You are the AI assistant built into Buoyance — a Nigerian tax compliance and financial management app. Think of yourself as a knowledgeable friend who knows Nigerian tax law, accounting, and the Buoyance app inside out.
 
 WHAT YOU COVER
 You help with absolutely everything related to:
@@ -112,16 +116,13 @@ LEGAL FRAMEWORK
 
 HOW TO RESPOND
 - Keep it SHORT and conversational. 2–3 sentences for simple questions, longer only when genuinely needed.
-- For "how do I use X calculator" questions, give the step-by-step from the guide above — that's exactly what they need.
+- For "how do I use X calculator" questions, give the step-by-step — numbered list is fine here.
 - Answer in the FIRST sentence. No warm-up, no preamble.
 - Write like a WhatsApp message from a tax-savvy friend: casual, warm, confident, helpful.
-- Use contractions naturally. No markdown headers. No bold text. Bullets only for 3+ distinct items.
+- Use contractions naturally. Use bullet points and bold text when it genuinely helps clarity (steps, lists of items). Avoid markdown headers (##).
 - Never open with: "Great question", "Certainly!", "Of course!", "Sure!", "Absolutely!".
 - Always end with a clear next step — either an action in Buoyance or a follow-up question.
-- Never give formal legal advice. Light disclaimer only if stakes are high.
-
-TAX RULES CONTEXT
-(Unavailable - the rules database is not configured for this environment.)`;
+- Never give formal legal advice. Light disclaimer only if stakes are high.`;
 
 interface TaxRuleRow {
   tax_type: string;
@@ -160,9 +161,16 @@ USER CONTEXT
 
 function buildSystemPrompt(taxRulesContext: Record<string, TaxRuleRow> | null, isAuthenticated = false, currentPage = '/'): string {
   const authSection = buildAuthContextSection(isAuthenticated, currentPage);
-  if (!taxRulesContext) return staticSystemPrompt + authSection;
+  if (!taxRulesContext) {
+    // Inject auth right after the identity line
+    return staticSystemPromptBase.replace(
+      'Think of yourself as a knowledgeable friend who knows Nigerian tax law, accounting, and the Buoyance app inside out.',
+      `Think of yourself as a knowledgeable friend who knows Nigerian tax law, accounting, and the Buoyance app inside out.\n${authSection}`
+    );
+  }
 
   return `You are the AI assistant built into Buoyance — a Nigerian tax compliance and financial management app. Think of yourself as a knowledgeable friend who knows Nigerian tax law, accounting, and the Buoyance app inside out.
+${authSection}
 
 WHAT YOU COVER
 You help with absolutely everything related to:
@@ -180,17 +188,16 @@ LEGAL FRAMEWORK
 
 HOW TO RESPOND
 - Keep it SHORT and conversational. 2–3 sentences for simple questions, longer only when genuinely needed.
-- For "how do I use X calculator" questions, give the step-by-step from the guide above — that's exactly what they need.
+- For "how do I use X calculator" questions, give the step-by-step — numbered list is fine here.
 - Answer in the FIRST sentence. No warm-up, no preamble.
 - Write like a WhatsApp message from a tax-savvy friend: casual, warm, confident, helpful.
-- Use contractions naturally. No markdown headers. No bold text. Bullets only for 3+ distinct items.
+- Use contractions naturally. Use bullet points and bold text when it genuinely helps clarity (steps, lists of items). Avoid markdown headers (##).
 - Never open with: "Great question", "Certainly!", "Of course!", "Sure!", "Absolutely!".
 - Always end with a clear next step — either an action in Buoyance or a follow-up question.
 - Never give formal legal advice. Light disclaimer only if stakes are high.
 
 TAX RULES CONTEXT (Buoyance published tax_rules)
-${JSON.stringify(taxRulesContext, null, 2)}
-${authSection}`;
+${JSON.stringify(taxRulesContext, null, 2)}`;
 }
 
 function selectContextForQuestion(
@@ -202,12 +209,12 @@ function selectContextForQuestion(
   const q = question.toLowerCase();
   const wanted = new Set<string>();
 
-  if (q.includes('vat')) wanted.add('VAT');
-  if (q.includes('wht') || q.includes('withholding')) wanted.add('WHT');
-  if (q.includes('cit') || q.includes('company income tax')) wanted.add('CIT');
-  if (q.includes('pit') || q.includes('paye') || q.includes('personal income')) wanted.add('PIT');
-  if (q.includes('cgt') || q.includes('capital gains')) wanted.add('CGT');
-  if (q.includes('crypto') || q.includes('digital asset')) wanted.add('CGT'); // digital assets sit under CGT in our rules
+  if (q.includes('vat') || q.includes('invoice') || q.includes('value added')) wanted.add('VAT');
+  if (q.includes('wht') || q.includes('withholding') || q.includes('deduct') && q.includes('payment')) wanted.add('WHT');
+  if (q.includes('cit') || q.includes('company income tax') || q.includes('corporate tax') || q.includes('company tax')) wanted.add('CIT');
+  if (q.includes('pit') || q.includes('paye') || q.includes('personal income') || q.includes('salary') || q.includes('income tax')) wanted.add('PIT');
+  if (q.includes('cgt') || q.includes('capital gains') || q.includes('sold property') || q.includes('sold land') || q.includes('sold shares')) wanted.add('CGT');
+  if (q.includes('crypto') || q.includes('digital asset') || q.includes('bitcoin') || q.includes('ethereum')) wanted.add('CGT');
 
   if (wanted.size === 0) return ctx;
 
@@ -255,18 +262,21 @@ async function getTaxRulesContext(): Promise<Record<string, TaxRuleRow> | null> 
   return latestByType;
 }
 
-function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null): string | null {
+function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null, isAuthenticated = false, currentPage = '/'): string | null {
   const q = question.toLowerCase();
 
-  // Pricing/subscription questions (static product knowledge, not tax-law dependent)
+  // Pricing/subscription questions — tight matching only, avoid false positives on tax questions
   if (
     q.includes('pricing') ||
-    q.includes('price') ||
-    q.includes('cost') ||
+    q.includes('buoyance plan') ||
     q.includes('subscription') ||
-    q.includes('plan') ||
-    q.includes('free') ||
-    q.includes('paid')
+    q.includes('upgrade to pro') ||
+    q.includes('pro plan') ||
+    q.includes('free plan') ||
+    q.includes('how much does buoyance') ||
+    q.includes('buoyance cost') ||
+    q.includes('buoyance price') ||
+    q.includes('enterprise plan')
   ) {
     return [
       "Sure — Buoyance has a Free plan plus paid Pro and Enterprise options.",
@@ -289,16 +299,19 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
 
   // Buoyance product/app questions: respond with curated, non-sensitive product overview.
   if (q.includes('buoyance') || q.includes('this app') || q.includes('your app')) {
+    const signupLine = isAuthenticated
+      ? "You're already in — head to /dashboard to see your tax health score and get started."
+      : "You're not signed in yet. Create your free account at buoyance.app/signup and you're up in minutes.";
     return [
       "Buoyance is a Nigerian tax compliance app — think of it as your NTA 2025 co-pilot.",
       "",
       "Here's what you can do:",
       "- Track income and expenses (receipt scanning and CSV import included).",
       "- Run tax calculators for PIT/PAYE, CIT, VAT, WHT, CGT, crypto, and foreign income.",
-      "- Prepare filings and export filing packs (PDF/Excel where available).",
-      "- Manage workspaces, usage quotas, and compliance reminders.",
+      "- Prepare filings and export filing packs.",
+      "- Stay on top of deadlines with the compliance calendar.",
       "",
-      "Tell me what you're trying to accomplish and I'll point you to the right spot.",
+      signupLine,
     ].join("\n");
   }
 
@@ -490,7 +503,7 @@ serve(async (req) => {
     const question = lastUserMessage?.content?.trim() || '';
 
     const taxRulesContext = await getTaxRulesContext();
-    const fastReply = question ? buildFastReply(question, taxRulesContext) : null;
+    const fastReply = question ? buildFastReply(question, taxRulesContext, isAuthenticated, currentPage) : null;
     if (fastReply) {
       return new Response(
         JSON.stringify({ content: fastReply, model: 'buoyance-rules' }),
@@ -510,7 +523,7 @@ serve(async (req) => {
     const selectedContext = question ? selectContextForQuestion(question, taxRulesContext) : taxRulesContext;
     const systemPrompt = buildSystemPrompt(selectedContext, isAuthenticated, currentPage);
     const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-3-haiku-20240307';
-    const maxTokensEnv = Number(Deno.env.get('ANTHROPIC_MAX_TOKENS') || '600');
+    const maxTokensEnv = Number(Deno.env.get('ANTHROPIC_MAX_TOKENS') || '900');
     const maxTokens = Number.isFinite(maxTokensEnv) ? Math.max(64, Math.min(4096, maxTokensEnv)) : 600;
     const temperatureEnv = Number(Deno.env.get('ANTHROPIC_TEMPERATURE') || '0.4');
     const temperature = Number.isFinite(temperatureEnv) ? Math.max(0, Math.min(1, temperatureEnv)) : 0.4;

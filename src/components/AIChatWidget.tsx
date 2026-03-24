@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  MessageSquare,
   X,
   Send,
   Loader2,
@@ -412,7 +411,7 @@ export function AIChatWidget() {
             <h3 className="font-semibold text-sm">AI Tax Assistant</h3>
             {!isMinimized && (
               <p className="text-xs text-primary-foreground/70">
-                Ask about Nigerian taxes (NTA 2025)
+                Tax · Accounting · App guide · NTA 2025
               </p>
             )}
           </div>
