@@ -39,10 +39,12 @@ interface Message {
 }
 
 const QUICK_QUESTIONS = [
-  "What tax relief replaced the old CRA allowance?",
-  "How do small businesses calculate their Company Income Tax?",
-  "Which goods and services are VAT-exempt?",
-  "What are the current Withholding Tax rates?",
+  "How do I file my first tax return?",
+  "What expenses can I deduct from my business income?",
+  "How do I calculate VAT on my invoice?",
+  "I have WHT deducted — what do I do with it?",
+  "How does payroll tax work for my employees?",
+  "What records should I keep for tax purposes?",
 ];
 
 function TypingDots() {
@@ -443,7 +445,7 @@ export function AIChatWidget() {
                   </div>
                   <h4 className="font-semibold mb-1 text-base">Your Nigerian tax guide</h4>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Ask me anything — I'll give you straight answers based on NTA 2025.
+                    Ask me anything — tax, accounting, filing, or how to use Buoyance. I've got you.
                   </p>
                 </div>
                 <div className="space-y-2">
