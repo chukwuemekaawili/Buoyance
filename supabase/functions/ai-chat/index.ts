@@ -392,7 +392,7 @@ serve(async (req) => {
 
     const selectedContext = question ? selectContextForQuestion(question, taxRulesContext) : taxRulesContext;
     const systemPrompt = buildSystemPrompt(selectedContext);
-    const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-3-5-haiku-20241022';
+    const model = Deno.env.get('ANTHROPIC_MODEL') || 'claude-3-haiku-20240307';
     const maxTokensEnv = Number(Deno.env.get('ANTHROPIC_MAX_TOKENS') || '600');
     const maxTokens = Number.isFinite(maxTokensEnv) ? Math.max(64, Math.min(4096, maxTokensEnv)) : 600;
     const temperatureEnv = Number(Deno.env.get('ANTHROPIC_TEMPERATURE') || '0.4');
