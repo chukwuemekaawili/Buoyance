@@ -376,14 +376,24 @@ export function AIChatWidget() {
 
   if (!isOpen) {
     return (
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-primary hover:bg-primary/90"
-        size="icon"
-      >
-        <MessageSquare className="h-6 w-6" />
-        <span className="sr-only">Open AI Tax Assistant</span>
-      </Button>
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        {/* Floating hint chip */}
+        <div className="bg-white text-primary text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg border border-primary/15 flex items-center gap-1.5 pointer-events-none">
+          <Sparkles className="h-3 w-3" />
+          Ask me anything — NTA 2025
+        </div>
+        {/* FAB with pulse ring */}
+        <div className="relative flex items-center justify-center">
+          <span className="absolute inset-0 rounded-full bg-white/40 animate-ping" />
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="relative h-14 pl-4 pr-5 rounded-full shadow-[0_4px_28px_rgba(0,0,0,0.25)] bg-white hover:bg-white/95 text-primary font-bold text-sm gap-2 border border-white/20"
+          >
+            <Sparkles className="h-5 w-5 text-primary" />
+            Ask AI
+          </Button>
+        </div>
+      </div>
     );
   }
 
