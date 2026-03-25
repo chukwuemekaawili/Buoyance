@@ -249,6 +249,12 @@ Example format:
                                 <p className="text-foreground leading-snug">{insight.text}</p>
                             </div>
                         ))}
+                        <div className="mt-4 pt-3 border-t text-xs text-muted-foreground flex items-start gap-2">
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-500" />
+                            <p>
+                                <strong>Disclaimer:</strong> AI estimations may be inaccurate. Do not use for final filing without human verification.
+                            </p>
+                        </div>
                     </div>
                 )}
             </CardContent>

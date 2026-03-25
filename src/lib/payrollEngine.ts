@@ -74,45 +74,31 @@ export interface BatchPayrollResult {
     }>;
 }
 
-// NTA 2025 PAYE brackets
-const PAYE_BRACKETS = [
-    { min: 0n, max: 80000000n, rateNumerator: 0n },         // First ₦800K exempt
-    { min: 80000000n, max: 300000000n, rateNumerator: 15n },  // ₦800K-₦3M: 15%
-    { min: 300000000n, max: 1200000000n, rateNumerator: 18n }, // ₦3M-₦12M: 18%
-    { min: 1200000000n, max: 2500000000n, rateNumerator: 21n }, // ₦12M-₦25M: 21%
-    { min: 2500000000n, max: 5000000000n, rateNumerator: 23n }, // ₦25M-₦50M: 23%
-    { min: 5000000000n, max: null, rateNumerator: 25n },   // Above ₦50M: 25%
-];
+import { 
+    calculateGlobalPIT, 
+    calculateRentRelief, 
+    PAYROLL_RATES 
+} from './taxEngine';
 
 function calculatePAYE(annualGrossKobo: bigint, annualRentKobo: bigint = 0n): bigint {
-    // Rent Relief (replaces abolished CRA)
-    const rentReliefCalc = (annualRentKobo * 20n) / 100n;
-    const rentRelief = rentReliefCalc > 50000000n ? 50000000n : rentReliefCalc; // Max ₦500K
+    // 3. Rent Relief (if any)
+    const rentRelief = calculateRentRelief(annualRentKobo, annualGrossKobo);
 
     // Pension deduction (8% employee)
-    const pensionDeduction = (annualGrossKobo * 8n) / 100n;
+    const pensionDeduction = (annualGrossKobo * PAYROLL_RATES.PENSION_EMPLOYEE) / 100n;
 
-    // NHF deduction (2.5% of basic)
+    // NHF deduction (2.5% of basic salary)
     const basicSalary = (annualGrossKobo * 30n) / 100n;
-    const nhfDeduction = (basicSalary * 25n) / 1000n; // 2.5%
+    const nhfDeduction = (basicSalary * PAYROLL_RATES.NHF) / 1000n;
 
-    // Taxable income
-    const taxableIncome = annualGrossKobo - rentRelief - pensionDeduction - nhfDeduction;
-    if (taxableIncome <= 0n) return 0n;
+    // NHIA deduction (1.75% employee) - NTA 2025 allowable pre-tax deduction
+    const nhiaDeduction = (basicSalary * PAYROLL_RATES.NHIA_EMPLOYEE) / 10000n;
 
-    // Apply progressive tax brackets
-    let tax = 0n;
-    let remaining = taxableIncome;
+    // Taxable income (gross minus all allowable deductions)
+    const taxableIncome = annualGrossKobo - rentRelief - pensionDeduction - nhfDeduction - nhiaDeduction;
 
-    for (const bracket of PAYE_BRACKETS) {
-        if (remaining <= 0n) break;
-        const bracketSize = bracket.max ? (bracket.max - bracket.min) : remaining;
-        const taxableInBracket = remaining < bracketSize ? remaining : bracketSize;
-        tax += (taxableInBracket * bracket.rateNumerator) / 100n;
-        remaining -= taxableInBracket;
-    }
-
-    return tax;
+    // Apply centralized global PIT algorithm
+    return calculateGlobalPIT(taxableIncome);
 }
 
 export function calculateBasicPayroll(input: PayrollInput): PayrollResult {
@@ -129,17 +115,17 @@ export function calculateBasicPayroll(input: PayrollInput): PayrollResult {
     // Employee deductions
     const annualPAYE = calculatePAYE(annualGross, annualRent);
     const monthlyPAYE = annualPAYE / 12n;
-    const pensionEmployee = (gross * 8n) / 100n;
-    const nhf = (basic * 25n) / 1000n;
-    const nhiaEmployee = (gross * 5n) / 100n;
+    const pensionEmployee = (gross * PAYROLL_RATES.PENSION_EMPLOYEE) / 100n;
+    const nhf = (basic * PAYROLL_RATES.NHF) / 1000n;
+    const nhiaEmployee = (basic * PAYROLL_RATES.NHIA_EMPLOYEE) / 10000n;
     const totalDeductions = monthlyPAYE + pensionEmployee + nhf + nhiaEmployee;
 
     const netSalary = gross - totalDeductions;
 
     // Employer contributions
-    const pensionEmployer = (gross * 10n) / 100n;
-    const nsitf = (gross * 1n) / 100n;
-    const nhiaEmployer = (gross * 10n) / 100n;
+    const pensionEmployer = (gross * PAYROLL_RATES.PENSION_EMPLOYER) / 100n;
+    const nsitf = (gross * PAYROLL_RATES.NSITF) / 100n;
+    const nhiaEmployer = (gross * PAYROLL_RATES.NHIA_EMPLOYER) / 100n;
     const totalEmployer = pensionEmployer + nsitf + nhiaEmployer;
 
     const workState = input.work_state || 'Lagos';

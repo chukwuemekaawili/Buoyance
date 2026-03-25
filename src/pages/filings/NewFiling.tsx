@@ -1032,7 +1032,7 @@ export default function NewFiling() {
                   />
                   {inputAmount && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      {formatKoboToNgnPlain(parseNgnToKobo(inputAmount))} NGN
+                      ₦{formatKoboToNgnPlain(parseNgnToKobo(inputAmount))}
                     </p>
                   )}
                 </div>

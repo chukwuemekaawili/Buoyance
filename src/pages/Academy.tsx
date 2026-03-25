@@ -19,7 +19,9 @@ import {
     Library,
     Star,
     CheckCircle2,
+    CheckCircle2,
     Lock,
+    Diamond,
 } from "lucide-react";
 
 interface Course {
@@ -389,7 +391,7 @@ function AcademyContent() {
                                         <span className="text-3xl">{course.icon}</span>
                                         <div className="flex items-center gap-2">
                                             <Badge className={levelColors[course.level]}>{course.level}</Badge>
-                                            {course.locked && <Lock className="h-4 w-4 text-muted-foreground" />}
+                                            {course.locked && <Diamond className="h-4 w-4 text-amber-500" />}
                                         </div>
                                     </div>
                                     <CardTitle className="text-lg mt-2">{course.title}</CardTitle>
@@ -423,7 +425,7 @@ function AcademyContent() {
                                     >
                                         {course.locked ? (
                                             <span>
-                                                <Lock className="h-4 w-4 mr-2" /> Coming Soon
+                                                <Diamond className="h-4 w-4 mr-2 text-amber-500" /> PRO Restricted
                                             </span>
                                         ) : (
                                             <Link to={`/academy/course/${course.id}`}>

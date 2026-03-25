@@ -160,6 +160,31 @@ export async function uploadDocument(
     return data as ChecklistItem;
 }
 
+export async function toggleChecklistItemStatus(
+    userId: string,
+    jurisdiction: string,
+    requirementId: string,
+    isCompleted: boolean
+): Promise<void> {
+    if (isCompleted) {
+        const { error } = await supabase
+            .from('tcc_checklist_items')
+            .upsert({
+                user_id: userId,
+                jurisdiction,
+                requirement_id: requirementId,
+                status: 'verified',
+            }, { onConflict: 'user_id,jurisdiction,requirement_id' });
+        if (error) throw new Error(`Failed to save checklist state: ${error.message}`);
+    } else {
+        const { error } = await supabase
+            .from('tcc_checklist_items')
+            .delete()
+            .match({ user_id: userId, jurisdiction, requirement_id: requirementId });
+        if (error) throw new Error(`Failed to revert checklist state: ${error.message}`);
+    }
+}
+
 export async function generateEvidencePack(userId: string, jurisdiction: string): Promise<void> {
     const items = await getChecklistItems(userId, jurisdiction);
     const uploadedItems = items.filter(i => i.document_url);

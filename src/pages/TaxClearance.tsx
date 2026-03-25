@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileBadge, ArrowLeft, Loader2, Upload, ExternalLink, Download, ArrowRight, ShieldCheck, MailWarning, Clock } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { stringToKobo, addKobo } from "@/lib/money";
 
 interface TCCRequest {
     id: string;
@@ -71,6 +72,44 @@ export default function TaxClearance() {
                 throw new Error(`A TCC request for ${year} already exists.`);
             }
 
+            // Readiness Persistence: compliance check
+            const { data: filings, error: filingsError } = await supabase
+                .from("filings")
+                .select("id, output_json")
+                .eq("user_id", user.id)
+                .gte("period_start", `${year}-01-01`)
+                .lte("period_end", `${year}-12-31`);
+
+            if (filingsError) throw filingsError;
+
+            if (filings && filings.length > 0) {
+                const filingIds = filings.map(f => f.id);
+                const { data: payments, error: paymentsError } = await supabase
+                    .from("payments")
+                    .select("filing_id, amount_kobo, status")
+                    .in("filing_id", filingIds)
+                    .eq("status", "paid");
+                    
+                if (paymentsError) throw paymentsError;
+
+                for (const filing of filings) {
+                    const output = filing.output_json as Record<string, unknown> || {};
+                    const totalTaxKoboStr = String(output.taxPayableKobo || output.totalTaxKobo || "0");
+                    const totalTax = stringToKobo(totalTaxKoboStr);
+
+                    let paidKobo = 0n;
+                    for (const p of (payments || [])) {
+                        if (p.filing_id === filing.id) {
+                            paidKobo = addKobo(paidKobo, stringToKobo(p.amount_kobo));
+                        }
+                    }
+
+                    if (totalTax > paidKobo) {
+                        throw new Error(`You have pending liabilities for ${year}. Ensure all tax balances are paid before requesting a TCC.`);
+                    }
+                }
+            }
+
             const { data, error } = await supabase
                 .from("tcc_requests" as any)
                 .insert({
@@ -86,6 +125,7 @@ export default function TaxClearance() {
 
             setTccRecords(prev => [data as TCCRequest, ...prev]);
             toast({ title: "TCC Request Initiated", description: "Your profile has entered the compliance processing queue." });
+            setIsUploadDialogOpen(false);
 
         } catch (err: any) {
             toast({ title: "Application Failed", description: err.message, variant: "destructive" });
@@ -99,12 +139,26 @@ export default function TaxClearance() {
         if (!file || !activeWorkspace) return;
 
         try {
-            // Very basic mock update for the UI instead of full bucket wire-up for demo
             toast({ title: "Uploading receipt...", description: "Securely transmitting to storage." });
+            
+            const filePath = `${activeWorkspace.id}/tcc/${tccId}/${file.name}`;
+            const { error: uploadError } = await supabase.storage
+                .from('receipts')
+                .upload(filePath, file);
+                
+            if (uploadError) throw uploadError;
+            
+            const { data: publicUrlData } = supabase.storage
+                .from('receipts')
+                .getPublicUrl(filePath);
 
             const { error } = await supabase
                 .from('tcc_requests' as any)
-                .update({ status: 'processing', remita_rrr: `RMR-${Math.random().toString().slice(2, 10)}` })
+                .update({ 
+                    status: 'processing', 
+                    remita_rrr: file.name, 
+                    tcc_document_url: publicUrlData.publicUrl 
+                })
                 .eq('id', tccId);
 
             if (error) throw error;
@@ -150,7 +204,7 @@ export default function TaxClearance() {
                             </p>
                         </div>
 
-                        <Dialog>
+                        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
                             <DialogTrigger asChild>
                                 <Button className="shrink-0 gap-2">
                                     <ShieldCheck className="h-4 w-4" />

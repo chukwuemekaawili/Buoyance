@@ -24,7 +24,7 @@ import {
   getAvailableCurrencies,
   getDTACountries,
   hasTreatyWithNigeria,
-  getExchangeRate
+  fetchLiveExchangeRate
 } from "@/lib/foreignIncomeTaxCalculator";
 import { koboToString } from "@/lib/money";
 import { OptimizationOpportunities } from "@/components/OptimizationOpportunities";
@@ -67,6 +67,9 @@ export default function ForeignIncomeCalculator() {
   const [incomeType, setIncomeType] = useState("employment");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
+  const [exchangeRate, setExchangeRate] = useState(1500);
+  const [isFxLoading, setIsFxLoading] = useState(false);
+  const [domesticIncome, setDomesticIncome] = useState("");
   const [taxPaidForeign, setTaxPaidForeign] = useState("");
   const [applyTreaty, setApplyTreaty] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -90,7 +93,20 @@ export default function ForeignIncomeCalculator() {
   const currencies = getAvailableCurrencies();
   const dtaCountries = getDTACountries();
   const hasTreaty = hasTreatyWithNigeria(sourceCountry);
-  const { rate: exchangeRate, isStub } = getExchangeRate(currency);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchRate = async () => {
+      setIsFxLoading(true);
+      const rate = await fetchLiveExchangeRate(currency);
+      if (mounted) {
+        setExchangeRate(rate);
+        setIsFxLoading(false);
+      }
+    };
+    fetchRate();
+    return () => { mounted = false; };
+  }, [currency]);
 
   const handleNumberInput = (setter: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9.]/g, "");
@@ -110,8 +126,10 @@ export default function ForeignIncomeCalculator() {
       currency_code: currency,
       tax_paid_foreign: taxPaidNum,
       treaty_applicable: hasTreaty && applyTreaty,
+      domestic_income_ngn: parseFloat(domesticIncome) || 0,
+      exchange_rate_override: exchangeRate,
     });
-  }, [sourceCountry, incomeType, amount, currency, taxPaidForeign, hasTreaty, applyTreaty]);
+  }, [sourceCountry, incomeType, amount, currency, taxPaidForeign, hasTreaty, applyTreaty, domesticIncome, exchangeRate]);
 
   const formattedResult = taxResult ? formatForeignIncomeResult(taxResult) : null;
 
@@ -135,6 +153,8 @@ export default function ForeignIncomeCalculator() {
           amount: parseFloat(amount),
           currency,
           taxPaidForeign: parseFloat(taxPaidForeign) || 0,
+          domesticIncome: parseFloat(domesticIncome) || 0,
+          exchangeRateUsed: exchangeRate,
           treatyApplied: hasTreaty && applyTreaty,
         },
         output_json: {
@@ -250,7 +270,7 @@ export default function ForeignIncomeCalculator() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Rate: 1 {currency} = ₦{exchangeRate.toLocaleString()} {isStub && "(indicative)"}
+                    Rate: 1 {currency} = ₦{exchangeRate.toLocaleString()} {isFxLoading && "(fetching...)"}
                   </p>
                 </div>
 
@@ -267,19 +287,35 @@ export default function ForeignIncomeCalculator() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Tax Paid in Source Country ({currency})</Label>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  value={taxPaidForeign}
-                  onChange={handleNumberInput(setTaxPaidForeign)}
-                  className="font-mono"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Enter withholding or income tax already paid abroad
-                </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Domestic Income (₦)</Label>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    value={domesticIncome}
+                    onChange={handleNumberInput(setDomesticIncome)}
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground text-amber-600/80">
+                    Required to determine accurate progressive tax band
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tax Paid in Source Country ({currency})</Label>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    value={taxPaidForeign}
+                    onChange={handleNumberInput(setTaxPaidForeign)}
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter withholding or income tax already paid abroad
+                  </p>
+                </div>
               </div>
 
               {hasTreaty && (
@@ -316,7 +352,7 @@ export default function ForeignIncomeCalculator() {
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Income in NGN</span>
+                        <span className="text-muted-foreground">Income in ₦</span>
                         <span className="font-mono">{formattedResult.amountNgn}</span>
                       </div>
                       <div className="flex justify-between">
@@ -324,7 +360,7 @@ export default function ForeignIncomeCalculator() {
                         <span className="font-mono">{formattedResult.grossTaxLiability}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Foreign Tax Paid (NGN)</span>
+                        <span className="text-muted-foreground">Foreign Tax Paid (₦)</span>
                         <span className="font-mono">{formattedResult.taxPaidForeign}</span>
                       </div>
                       {taxResult.treatyApplied && (

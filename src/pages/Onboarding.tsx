@@ -126,6 +126,7 @@ function OnboardingContent() {
         .from("profiles")
         .update({
           display_name: displayName || null,
+          tin: tin || null,
           user_type: userType,
           onboarding_completed: true,
           updated_at: new Date().toISOString(),

@@ -17,7 +17,6 @@ React + TypeScript + Vite + Tailwind + Supabase
 
 ## Known Issues
 - No PRD
-- No documentation
 - Production is live
 - Auto deploy on main (risk)
 - Auth surface appears broken in production
@@ -25,14 +24,13 @@ React + TypeScript + Vite + Tailwind + Supabase
 
 ## Config Findings
 - Supabase client file: `src/integrations/supabase/client.ts`
-- Supabase URL is hardcoded in the client file
-- Supabase publishable key is hardcoded in the client file
-- The client file does not read from `import.meta.env`
-- The Supabase client is created directly in that file
-- Local `.env` contains Vite-prefixed Supabase variables, but this client file does not use them
-- Frontend config approach is inconsistent
-- This may explain the production auth failure on `/signin` with `Failed to fetch`
-- Hardcoded Supabase URL: `https://bajwsjrqrsglsndgtfpp.supabase.co`
+- Supabase URL is read from `import.meta.env.VITE_SUPABASE_URL`
+- Supabase publishable key is read from `import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY`
+- The client file correctly follows the standard Vite environment variable pattern
+- Local `.env` contains the required variables, and the client file consumes them correctly
+- Frontend config approach is consistent with Vite standards
+- The current production auth failure on `/signin` with `Failed to fetch` is likely due to the value of the environment variable itself, not a lack of environment variable support in the code.
+- Current VITE_SUPABASE_URL value: `https://bajwsjrqrsglsndgtfpp.supabase.co`
 - Verified result: DNS lookup failed / host does not exist
 - Current production auth failure is consistent with a dead Supabase backend endpoint
 - Local `supabase/migrations` folder has 39 migrations, confirming the backend schema can be fully reconstructed locally or in a new instance.

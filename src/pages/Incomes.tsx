@@ -115,9 +115,6 @@ export default function Incomes() {
         category: cat,
       });
       setClassification(result);
-      if (result.tax_exempt !== undefined) {
-        setTaxExempt(result.tax_exempt);
-      }
     } catch (err) {
       console.error('Classification failed:', err);
     } finally {
@@ -513,6 +510,29 @@ export default function Incomes() {
                         )}
                       </div>
                     </div>
+
+                    {classification && (
+                      <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg mb-4">
+                        <p className="font-medium text-sm mb-3">
+                          AI suggests this is {classification.tax_exempt ? "Tax Exempt" : "Taxable"}. Do you confirm this matches your records?
+                        </p>
+                        <Button 
+                          type="button"
+                          className="w-full mb-2"
+                          variant="outline"
+                          onClick={() => setTaxExempt(classification.tax_exempt ?? false)}
+                        >
+                          <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
+                          Yes, Apply AI Suggestion
+                        </Button>
+                        {classification.tax_exempt && (
+                          <p className="text-xs text-amber-600 font-medium flex gap-1 items-center mt-2">
+                            <AlertCircle className="h-3 w-3" />
+                            Warning: Tax exemption claims are subject to NTA audits.
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
                       <div>

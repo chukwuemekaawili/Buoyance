@@ -142,18 +142,26 @@ Respond with just one sentence, no markdown.`
 
                 {/* AI Tax Treatment Explanation - Feature 3 */}
                 {(treatmentLoading || aiTreatment) && (
-                    <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                        {treatmentLoading ? (
-                            <>
-                                <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0 mt-0.5" />
-                                <p className="text-sm text-muted-foreground animate-pulse">Analyzing tax treatment...</p>
-                            </>
-                        ) : (
-                            <>
-                                <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                                <p className="text-sm text-foreground leading-snug">{aiTreatment}</p>
-                            </>
-                        )}
+                    <div className="flex flex-col gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                        <div className="flex items-start gap-2">
+                            {treatmentLoading ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0 mt-0.5" />
+                                    <p className="text-sm text-muted-foreground animate-pulse">Analyzing tax treatment...</p>
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                                    <p className="text-sm text-foreground leading-snug">{aiTreatment}</p>
+                                </>
+                            )}
+                        </div>
+                        <div className="mt-1 pt-2 border-t text-xs text-amber-600/90 flex items-start gap-1">
+                            <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                            <p>
+                                <strong>Disclaimer:</strong> AI estimations may be inaccurate. Do not use for final filing without human verification.
+                            </p>
+                        </div>
                     </div>
                 )}
 

@@ -282,8 +282,8 @@ export default function FilingDetail() {
       await NotificationTriggers.filingSubmitted(filing.id, filing.tax_type);
 
       toast({
-        title: "Filing submitted",
-        description: `Your tax filing has been submitted. Reference: ${submitResult.firs_reference || "N/A"}`
+        title: "Filing Finalized",
+        description: `Your tax filing pack has been generated. Ensure you submit it manually to the tax authority.`
       });
       loadFiling();
     } catch (err: any) { toast({ title: "Submission failed", description: err.message, variant: "destructive" }); }
@@ -466,7 +466,7 @@ export default function FilingDetail() {
                   <Button variant="outline" onClick={() => navigate(`/filings/new?edit=${filing.id}`)}>
                     <FileText className="h-4 w-4 mr-2" />Edit Draft
                   </Button>
-                  <Button onClick={handleSubmit} disabled={submitting}>{submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}Submit Filing</Button>
+                  <Button onClick={handleSubmit} disabled={submitting}>{submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}Finalize & Self-File</Button>
                 </div>
               )}
 

@@ -90,9 +90,8 @@ function InvoicingContent() {
     const formatNgn = (kobo: number) => `₦${(kobo / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
 
     const generateInvoiceNumber = () => {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        const rand = (n: number) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-        return `BUO-${rand(6)}`;
+        const uuid = crypto.randomUUID().split('-')[0].toUpperCase();
+        return `BUO-${uuid}`;
     };
 
     const createInvoice = async () => {
@@ -284,7 +283,7 @@ function InvoicingContent() {
                                                     Create Invoice
                                                 </Button>
                                                 <Button variant="outline" className="w-full" onClick={() => {
-                                                    const fakeNumber = `BUO-DRAFT-${Math.floor(Math.random() * 1000)}`;
+                                                    const fakeNumber = `BUO-DRAFT-${crypto.randomUUID().split('-')[0].toUpperCase()}`;
                                                     generateInvoicePDF({
                                                         invoice_number: fakeNumber,
                                                         client_name: clientName || "Draft Invoice",

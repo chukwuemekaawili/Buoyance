@@ -128,18 +128,16 @@ function DashboardContent() {
       // Fetch profile for health indicator
       const { data: profileRows, error: profileError } = await supabase
         .from("profiles")
-        .select("user_type, display_name")
+        .select("user_type, display_name, tin")
         .eq("id", user!.id)
         .limit(1);
 
       if (profileError) throw profileError;
       const profileRow = profileRows?.[0];
 
-      // Get TIN from settings if stored there (or profile if we add it)
-      // For now, we'll simulate - in production this would be from profile.tin
       setProfileData({
         tax_identity: profileRow?.user_type || null,
-        tin: null, // Would come from profile.tin when available
+        tin: profileRow?.tin || null,
       });
 
       // Fetch calculations count

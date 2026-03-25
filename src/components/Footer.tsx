@@ -93,7 +93,7 @@ export function Footer() {
               </div>
               <div className="flex items-center gap-1.5 text-xs text-primary-foreground/60">
                 <Shield className="h-3.5 w-3.5" />
-                <span>NRS Compliant</span>
+                <span>NRS Formatted</span>
               </div>
             </div>
           </div>

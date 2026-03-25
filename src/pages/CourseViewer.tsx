@@ -1457,7 +1457,7 @@ const courseDatabase: Record<string, CourseData> = {
                 title: "Filing Tax Returns",
                 content: [
                     "To file a return: Log in → Click 'Taxes Due' on your dashboard → Select the tax type (VAT, CIT, WHT, etc.) → Under 'Action', click 'Process' to begin.",
-                    "For VAT returns: Complete the required schedules — sales adjustment, exempt and zero-rated goods/services, input VAT details. The VAT form auto-loads after all schedules are completed. Enter total sales/income (exclusive of VAT), select currency (NGN), and tick the declaration box.",
+                    "For VAT returns: Complete the required schedules — sales adjustment, exempt and zero-rated goods/services, input VAT details. The VAT form auto-loads after all schedules are completed. Enter total sales/income (exclusive of VAT), select currency (₦), and tick the declaration box.",
                     "For CIT returns: Upload or enter your audited financial statements, complete the tax computation schedule (assessable profits, capital allowances, reliefs), attach WHT credit certificates, and submit.",
                     "After submission, a Document Identity Number (DIN) is generated. This DIN is your receipt — save it. The system then prompts you to pay (full or installments). Payment goes through the Remita platform or you can print a payment slip for bank deposit.",
                 ],

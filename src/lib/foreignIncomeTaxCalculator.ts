@@ -7,22 +7,30 @@
 
 import { parseNgnToKobo, mulKoboByRate, subKobo, formatKoboToNgn, koboToString, stringToKobo, addKobo, isZeroKobo, maxKobo } from "@/lib/money";
 
-// Stub exchange rates (would be replaced by live API)
-const STUB_EXCHANGE_RATES: Record<string, number> = {
-  USD: 1550,  // 1 USD = 1550 NGN
-  EUR: 1680,  // 1 EUR = 1680 NGN
-  GBP: 1950,  // 1 GBP = 1950 NGN
-  CAD: 1150,  // 1 CAD = 1150 NGN
-  AUD: 1020,  // 1 AUD = 1020 NGN
-  ZAR: 85,    // 1 ZAR = 85 NGN
-  GHS: 125,   // 1 GHS = 125 NGN
-  KES: 12,    // 1 KES = 12 NGN
-  CNY: 215,   // 1 CNY = 215 NGN
-  INR: 18.5,  // 1 INR = 18.5 NGN
-  AED: 422,   // 1 AED = 422 NGN
-  CHF: 1750,  // 1 CHF = 1750 NGN
-  JPY: 10.5,  // 1 JPY = 10.5 NGN
-};
+// Real-time API exchange rate fetcher replaces hardcoded stubs
+export const AVAILABLE_CURRENCIES = [
+  "USD", "EUR", "GBP", "CAD", "AUD", "ZAR", 
+  "GHS", "KES", "CNY", "INR", "AED", "CHF", "JPY"
+];
+
+export async function fetchLiveExchangeRate(currencyCode: string): Promise<number> {
+  if (currencyCode === "NGN") return 1;
+  try {
+    const apiKey = import.meta.env.VITE_EXCHANGE_RATE_API_KEY;
+    const url = apiKey 
+      ? `https://v6.exchangerate-api.com/v6/${apiKey}/latest/${currencyCode}`
+      : `https://api.exchangerate-api.com/v4/latest/${currencyCode}`; // Fallback to public tier if missing
+      
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("FX API failed");
+    
+    const data = await response.json();
+    return data.conversion_rates ? data.conversion_rates.NGN : (data.rates ? data.rates.NGN : 1500);
+  } catch (err) {
+    console.error("FX fetch failed", err);
+    return 1500; // Conservative fallback to prevent app crash
+  }
+}
 
 // Countries with Double Taxation Agreements with Nigeria
 const DTA_COUNTRIES: Record<string, { name: string; treatyYear: number }> = {
@@ -53,6 +61,8 @@ export interface ForeignIncomeInput {
   currency_code: string;
   tax_paid_foreign?: number;
   treaty_applicable?: boolean;
+  domestic_income_ngn?: number; // Needed to apply bands correctly!
+  exchange_rate_override?: number; // Injected from async fetch
 }
 
 export interface ForeignIncomeResult {
@@ -67,42 +77,9 @@ export interface ForeignIncomeResult {
   effectiveRate: number;
 }
 
-// NTA 2025: Foreign income is taxed at progressive PIT rates (same bands as domestic income)
-// WARNING: This applies the bands to foreign income in isolation.
-// A full assessment aggregates all worldwide income into a single PIT computation.
-const NTA2025_PIT_BANDS_FI = [
-  { threshold_kobo: 80000000, rate: 0.00 },  // 0% ≤₦800k
-  { threshold_kobo: 220000000, rate: 0.15 },  // 15%
-  { threshold_kobo: 300000000, rate: 0.19 },  // 19%
-  { threshold_kobo: 700000000, rate: 0.21 },  // 21%
-  { threshold_kobo: 1200000000, rate: 0.24 },  // 24%
-  { threshold_kobo: null, rate: 0.25 },  // 25%
-] as const;
+import { calculateGlobalPIT } from './taxEngine';
 
-function applyProgressivePITFI(incomeKobo: bigint): bigint {
-  let remaining = incomeKobo;
-  let tax = 0n;
-  for (const band of NTA2025_PIT_BANDS_FI) {
-    if (remaining <= 0n) break;
-    const cap = band.threshold_kobo !== null ? BigInt(band.threshold_kobo) : remaining;
-    const taxable = remaining < cap ? remaining : cap;
-    tax += (taxable * BigInt(Math.round(band.rate * 10000))) / 1000000n;
-    remaining -= taxable;
-  }
-  return tax;
-}
 
-/**
- * Get exchange rate for a currency
- */
-export function getExchangeRate(currencyCode: string): { rate: number; isStub: boolean } {
-  const rate = STUB_EXCHANGE_RATES[currencyCode.toUpperCase()];
-  if (rate) {
-    return { rate, isStub: true };
-  }
-  // Default fallback
-  return { rate: 1550, isStub: true }; // Default to USD rate
-}
 
 /**
  * Check if a country has a DTA with Nigeria
@@ -132,15 +109,15 @@ export function getDTACountries(): Array<{ code: string; name: string; treatyYea
  * Get available currencies
  */
 export function getAvailableCurrencies(): string[] {
-  return Object.keys(STUB_EXCHANGE_RATES);
+  return AVAILABLE_CURRENCIES;
 }
 
 /**
  * Calculate foreign income tax with double-tax relief
  */
 export function calculateForeignIncomeTax(input: ForeignIncomeInput): ForeignIncomeResult {
-  // Get exchange rate
-  const { rate: exchangeRate } = getExchangeRate(input.currency_code);
+  // Use passed real exchange rate or fallback
+  const exchangeRate = input.exchange_rate_override || 1500;
 
   // Convert to NGN
   const amountNgn = input.amount_foreign_currency * exchangeRate;
@@ -150,8 +127,15 @@ export function calculateForeignIncomeTax(input: ForeignIncomeInput): ForeignInc
   const taxPaidForeignNgn = (input.tax_paid_foreign || 0) * exchangeRate;
   const taxPaidForeignKobo = parseNgnToKobo(taxPaidForeignNgn.toFixed(2));
 
-  // Calculate gross Nigerian tax liability using progressive PIT bands (NTA 2025)
-  const grossTaxLiabilityKobo = applyProgressivePITFI(amountNgnKobo);
+  // Calculate gross tax liability properly by aggregating worldwide income
+  const domesticNgnKobo = parseNgnToKobo((input.domestic_income_ngn || 0).toFixed(2));
+  const totalWorldwideKobo = amountNgnKobo + domesticNgnKobo;
+
+  const taxOnTotal = calculateGlobalPIT(totalWorldwideKobo);
+  const taxOnDomesticOnly = calculateGlobalPIT(domesticNgnKobo);
+
+  // The true tax liability attributable to the foreign income is the marginal difference
+  const grossTaxLiabilityKobo = maxKobo(0n, subKobo(taxOnTotal, taxOnDomesticOnly));
 
   // Check treaty applicability
   const treatyApplied = input.treaty_applicable ?? hasTreatyWithNigeria(input.source_country);

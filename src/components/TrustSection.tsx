@@ -4,7 +4,7 @@ const trustBadges = [
   {
     icon: Lock,
     title: "AES-256 Encrypted",
-    description: "Bank-grade encryption for all data at rest and in transit",
+    description: "Standard encryption for all data at rest and in transit",
   },
   {
     icon: MapPin,
@@ -13,8 +13,8 @@ const trustBadges = [
   },
   {
     icon: FileCheck,
-    title: "NRS Compliant",
-    description: "Integrated with Nigeria Revenue Service systems",
+    title: "NRS Formatted",
+    description: "Outputs structured for manual Nigeria Revenue Service submission",
   },
   {
     icon: Shield,

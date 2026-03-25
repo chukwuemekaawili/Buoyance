@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -8,24 +8,55 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Shield, Upload, Download, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
-import { getJurisdictionLabel, getReadinessColor, DEFAULT_REQUIREMENTS } from "@/lib/tccService";
+import { getJurisdictionLabel, getReadinessColor, DEFAULT_REQUIREMENTS, getChecklistItems, toggleChecklistItemStatus } from "@/lib/tccService";
+import { useAuth } from "@/hooks/useAuth";
 
-// Use default requirements directly since we're not hitting DB
 const getRequirements = (jurisdiction: string) =>
-    DEFAULT_REQUIREMENTS.filter(r => r.jurisdiction === jurisdiction).map((r, i) => ({ ...r, id: `req-${i}` }));
+    DEFAULT_REQUIREMENTS.filter(r => r.jurisdiction === jurisdiction).map(r => ({ ...r, id: r.requirement_type }));
 
 function TCCReadinessContent() {
+    const { user } = useAuth();
     const [jurisdiction, setJurisdiction] = useState("federal");
     const requirements = useMemo(() => getRequirements(jurisdiction), [jurisdiction]);
     const [completed, setCompleted] = useState<Set<string>>(new Set());
 
-    const toggleItem = (id: string) => {
+    useEffect(() => {
+        if (!user) return;
+        getChecklistItems(user.id, jurisdiction)
+            .then(items => {
+                const completedSet = new Set(
+                    items.filter(i => i.status === 'verified' || i.status === 'uploaded').map(i => i.requirement_id)
+                );
+                setCompleted(completedSet);
+            })
+            .catch(console.error);
+    }, [user, jurisdiction]);
+
+    const toggleItem = async (id: string) => {
+        if (!user) return;
+        const isCurrentlyCompleted = completed.has(id);
+        const nextCompleted = !isCurrentlyCompleted;
+        
+        // Optimistic update
         setCompleted(prev => {
             const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
+            if (nextCompleted) next.add(id);
+            else next.delete(id);
             return next;
         });
+
+        try {
+            await toggleChecklistItemStatus(user.id, jurisdiction, id, nextCompleted);
+        } catch (error) {
+            console.error(error);
+            // Revert on failure
+            setCompleted(prev => {
+                const next = new Set(prev);
+                if (isCurrentlyCompleted) next.add(id);
+                else next.delete(id);
+                return next;
+            });
+        }
     };
 
     const mandatoryReqs = requirements.filter(r => r.is_mandatory);

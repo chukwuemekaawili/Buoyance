@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Lock, Zap, CheckCircle2 } from "lucide-react";
+import { Diamond, Zap, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface ProGateModalProps {
@@ -19,8 +19,8 @@ export function ProGateModal({ isOpen, onClose, featureName, description }: ProG
 
                 {/* Header Hero Area */}
                 <div className="bg-gradient-to-br from-primary/20 via-primary/5 to-background p-6 md:p-8 text-center border-b">
-                    <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                        <Lock className="w-8 h-8 text-primary" />
+                    <div className="mx-auto w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-4">
+                        <Diamond className="w-8 h-8 text-amber-500" />
                     </div>
                     <DialogTitle className="text-2xl font-bold mb-2">Unlock {featureName}</DialogTitle>
                     <DialogDescription className="text-base text-muted-foreground">

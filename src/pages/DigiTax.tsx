@@ -60,20 +60,10 @@ export default function DigiTax() {
     };
 
     const handleMbsSync = async () => {
-        setIsSyncing(true);
-        // In production, this hits an Edge Function that queries the actual DigiTax API.
-        // For MVP phase, we simulate the array ingestion from a webhook poll.
-        try {
-            await new Promise(res => setTimeout(res, 2000)); // Simulate API latency
-            toast({ title: "MBS Sync Complete", description: "All active digital invoices retrieved." });
-
-            // We assume the DB webhook caught them. Just refetch for demo.
-            fetchInvoices();
-        } catch (err: any) {
-            toast({ title: "Sync failed", description: err.message, variant: "destructive" });
-        } finally {
-            setIsSyncing(false);
-        }
+        toast({ 
+            title: "Integration Paused", 
+            description: "DigiTax API integration is temporarily paused for compliance upgrades. Coming Soon."
+        });
     };
 
     const logToLedger = async (inv: DigiTaxInvoice) => {

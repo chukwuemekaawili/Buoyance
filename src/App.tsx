@@ -174,9 +174,6 @@ const App = () => (
                       {/* Archived Items */}
                       <Route path="/archived" element={<ArchivedItems />} />
 
-                      {/* Settings */}
-                      <Route path="/settings" element={<Settings />} />
-
                       {/* Notifications */}
                       <Route path="/notifications" element={<Notifications />} />
                       {/* Admin */}

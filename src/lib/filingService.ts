@@ -173,30 +173,11 @@ export async function updateFilingDraft(
 export async function submitFiling(
   filingId: string,
   outputJson: Record<string, unknown>
-): Promise<{ success: boolean; rule_version: string; submitted_at: string; firs_reference?: string }> {
+): Promise<{ success: boolean; rule_version: string; submitted_at: string }> {
 
-  // 1. Transform internal schema to FIRS TaxPro Max XML/JSON schema
-  console.log("Preparing FIRS FIRS payload mapping...");
-  const firsPayload = {
-    taxpayerIdentifier: "PendingTIN", // To be fetched from user identity
-    taxPeriod: "2025-01",
-    taxType: "PIT", // Needs dynamic mapping
-    computations: outputJson,
-    totalTaxPayable: outputJson.taxPayableKobo ?? 0
-  };
-
-  // 2. Transmit to FIRS Integration API (Edge Function / External API Mock)
-  console.log("Transmitting to FIRS:", firsPayload);
-
-  // Simulating FIRS API response latency
-  await new Promise(resolve => setTimeout(resolve, 800));
-
-  // In a real implementation we would fetch from a secure endpoint:
-  // const response = await fetch("https://api.taxpromax.firs.gov.ng/v1/submit", { ... });
-  // if (!response.ok) throw new Error("FIRS API Rejection");
-  const mockFirsRef = `FIRS-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000000)}`;
-
-  // 3. Document submission in Supabase Database via RPC
+  // No real TaxPro Max API connection exists yet. 
+  // We record this as a "Self-Filed" state to prevent implying false compliance.
+  
   const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const mockAuthEnabled = import.meta.env?.VITE_MOCK_AUTH === 'true' || isLocalDev;
 
@@ -205,8 +186,7 @@ export async function submitFiling(
     return {
       success: true,
       rule_version: "2025-v1",
-      submitted_at: new Date().toISOString(),
-      firs_reference: mockFirsRef
+      submitted_at: new Date().toISOString()
     };
   }
 
@@ -214,8 +194,7 @@ export async function submitFiling(
     p_filing_id: filingId,
     p_output_json: {
       ...outputJson,
-      firs_reference: mockFirsRef,
-      submission_channel: "API"
+      submission_channel: "Self-Filed"
     } as Json,
   });
 
@@ -224,10 +203,7 @@ export async function submitFiling(
     throw error;
   }
 
-  return {
-    ...(data as { success: boolean; rule_version: string; submitted_at: string }),
-    firs_reference: mockFirsRef
-  };
+  return data as { success: boolean; rule_version: string; submitted_at: string };
 }
 
 /**

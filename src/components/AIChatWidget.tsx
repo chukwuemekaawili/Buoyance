@@ -601,8 +601,8 @@ export function AIChatWidget() {
                 <Send className="h-4 w-4" />
               </Button>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-2 text-center">
-              AI responses are informational only. Consult a tax professional for advice.
+            <p className="text-[10px] text-amber-600/90 font-medium mt-2 text-center">
+              <strong>Disclaimer:</strong> AI estimations may be inaccurate. Do not use for final filing without human verification.
             </p>
           </form>
 
