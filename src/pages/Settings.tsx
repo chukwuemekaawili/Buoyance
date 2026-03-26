@@ -334,13 +334,13 @@ function SettingsContent() {
     try {
       const { error } = await supabase
         .from("profiles")
-        .upsert({
-          id: user.id,
+        .update({
           display_name: displayName,
           tin: tin || null,
           work_state: workState || null,
           updated_at: new Date().toISOString()
-        }, { onConflict: "id" });
+        })
+        .eq("id", user.id);
 
       if (error) throw error;
 
