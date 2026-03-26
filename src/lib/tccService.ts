@@ -4,6 +4,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { getStatePortal } from '@/lib/states';
 
 export interface TCCRequirement {
     id: string;
@@ -82,9 +83,12 @@ export async function getRequirements(jurisdiction: string): Promise<TCCRequirem
 
     // If no data in DB, return defaults
     if (!data || data.length === 0) {
+        // Fallback to 'lagos' (which serves as a generic State IRS template) 
+        // if they are not specifically requesting federal or FCT
+        const defaultJurisdiction = ['federal', 'fct'].includes(jurisdiction) ? jurisdiction : 'lagos';
         return DEFAULT_REQUIREMENTS
-            .filter(r => r.jurisdiction === jurisdiction)
-            .map((r, i) => ({ ...r, id: `default-${i}` }));
+            .filter(r => r.jurisdiction === defaultJurisdiction)
+            .map((r, i) => ({ ...r, id: `default-${i}`, jurisdiction: jurisdiction }));
     }
 
     return data as TCCRequirement[];
@@ -229,15 +233,16 @@ ${uploadedItems.map((item, i) => `${i + 1}. ${item.requirement?.description || i
 }
 
 export function getJurisdictionLabel(jurisdiction: string): string {
-    const labels: Record<string, string> = {
-        federal: 'Federal (FIRS)',
-        lagos: 'Lagos (LIRS)',
-        fct: 'FCT (FIRS)',
-        rivers: 'Rivers (RIRS)',
-        ogun: 'Ogun (OGIRS)',
-        oyo: 'Oyo State IRS',
-    };
-    return labels[jurisdiction] || jurisdiction;
+    if (jurisdiction === 'federal') return 'Federal (FIRS)';
+    if (jurisdiction === 'fct') return 'FCT (FIRS)';
+    
+    const portal = getStatePortal(jurisdiction);
+    if (portal) {
+        return `${portal.name} (${portal.acronym})`;
+    }
+    
+    // Capitalize fallback
+    return jurisdiction.charAt(0).toUpperCase() + jurisdiction.slice(1);
 }
 
 export function getReadinessColor(score: number): string {

@@ -12,6 +12,7 @@ import { calculateBatchPayroll, formatCurrency, getPayslipData, type BatchPayrol
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { NIGERIAN_STATES } from "@/lib/states";
 import { generatePayslipPDF } from "@/lib/payslipGenerator";
 import { AITaxDrawer } from "@/components/calculators/AITaxDrawer";
 import { Sparkles } from "lucide-react";
@@ -21,14 +22,27 @@ function PayrollContent() {
     const { toast } = useToast();
     const [saving, setSaving] = useState(false);
     const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+    const [defaultWorkState, setDefaultWorkState] = useState("");
     const [employees, setEmployees] = useState([
-        { id: crypto.randomUUID(), employeeName: "", monthlyGross: "", annualRent: "", workState: "Lagos" }
+        { id: crypto.randomUUID(), employeeName: "", monthlyGross: "", annualRent: "", workState: "" }
     ]);
     const [result, setResult] = useState<BatchPayrollResult | null>(null);
     const [isAIDrawerOpen, setIsAIDrawerOpen] = useState(false);
 
+    // Fetch user's registered work state to use as default payroll location
+    useState(() => {
+        if (!user) return;
+        (async () => {
+            const { data } = await supabase.from('profiles').select('work_state').eq('id', user.id).single();
+            if (data?.work_state) {
+                setDefaultWorkState(data.work_state);
+                setEmployees(prev => prev.map(e => e.workState === "" ? { ...e, workState: data.work_state } : e));
+            }
+        })();
+    });
+
     const addEmployee = () => {
-        setEmployees(prev => [...prev, { id: crypto.randomUUID(), employeeName: "", monthlyGross: "", annualRent: "", workState: "Lagos" }]);
+        setEmployees(prev => [...prev, { id: crypto.randomUUID(), employeeName: "", monthlyGross: "", annualRent: "", workState: defaultWorkState }]);
     };
 
     const removeEmployee = (id: string) => {
@@ -112,15 +126,11 @@ function PayrollContent() {
                                                 <div>
                                                     <Label className="text-xs">Work State</Label>
                                                     <Select value={emp.workState} onValueChange={(v) => updateEmployee(emp.id, "workState", v)}>
-                                                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                                                        <SelectTrigger className="h-9"><SelectValue placeholder="Select State..." /></SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="Lagos">Lagos</SelectItem>
-                                                            <SelectItem value="FCT">FCT Abuja</SelectItem>
-                                                            <SelectItem value="Rivers">Rivers</SelectItem>
-                                                            <SelectItem value="Ogun">Ogun</SelectItem>
-                                                            <SelectItem value="Oyo">Oyo</SelectItem>
-                                                            <SelectItem value="Kano">Kano</SelectItem>
-                                                            <SelectItem value="Kaduna">Kaduna</SelectItem>
+                                                            {NIGERIAN_STATES.map(state => (
+                                                                <SelectItem key={state} value={state}>{state}</SelectItem>
+                                                            ))}
                                                         </SelectContent>
                                                     </Select>
                                                 </div>

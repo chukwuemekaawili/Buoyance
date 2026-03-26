@@ -128,7 +128,7 @@ export function calculateBasicPayroll(input: PayrollInput): PayrollResult {
     const nhiaEmployer = (gross * PAYROLL_RATES.NHIA_EMPLOYER) / 100n;
     const totalEmployer = pensionEmployer + nsitf + nhiaEmployer;
 
-    const workState = input.work_state || 'Lagos';
+    const workState = input.work_state || 'Not Specified';
 
     return {
         employee_name: input.employee_name,
@@ -259,7 +259,7 @@ export function calculateBatchPayroll(inputs: PayrollInput[], month: string): Ba
     // Aggregate PAYE by state
     const groupedPayeByState: Record<string, bigint> = {};
     for (const res of results) {
-        const state = inputs.find(i => i.employee_name === res.employee_name)?.work_state || 'Lagos';
+        const state = inputs.find(i => i.employee_name === res.employee_name)?.work_state || 'Not Specified';
         groupedPayeByState[state] = (groupedPayeByState[state] || 0n) + res.deductions.paye_kobo;
     }
 

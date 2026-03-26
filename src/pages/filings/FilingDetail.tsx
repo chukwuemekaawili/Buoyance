@@ -77,6 +77,7 @@ import { PreFlightChecklist, hasBlockingErrors } from "@/components/filings/PreF
 import { SideBySideInstructions } from "@/components/filings/SideBySideInstructions";
 import { PortalFieldMap } from "@/components/filings/PortalFieldMap";
 import { AIPreSubmitCheck } from "@/components/filings/AIPreSubmitCheck";
+import { getStatePortal } from "@/lib/states";
 
 const statusColors: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",

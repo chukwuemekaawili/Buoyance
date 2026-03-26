@@ -19,10 +19,11 @@ function ComplianceCalendarContent() {
     const [year, setYear] = useState(2026);
     const [month, setMonth] = useState(new Date().getMonth());
     const [userType, setUserType] = useState('individual');
+    const [workState, setWorkState] = useState<string | null>(null);
 
     const tasks = useMemo(() =>
-        generateTasksForYear(user?.id || 'demo', year, userType),
-        [user, year, userType]
+        generateTasksForYear(user?.id || 'demo', year, userType, workState),
+        [user, year, userType, workState]
     );
 
     const monthTasks = useMemo(() =>
@@ -44,20 +45,31 @@ function ComplianceCalendarContent() {
     const { toast } = useToast();
     const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
 
-    // Load completed tasks from Supabase
+    // Load completed tasks and profile from Supabase
     useEffect(() => {
         if (!user) return;
         (async () => {
             try {
-                const { data, error } = await supabase
-                    .from('compliance_tasks' as any)
-                    .select('task_key')
-                    .eq('user_id', user.id)
-                    .eq('status', 'completed');
-                if (error) throw error;
-                if (data) setCompletedIds(new Set(data.map((d: any) => d.task_key)));
+                const [tasksRes, profileRes] = await Promise.all([
+                    supabase
+                        .from('compliance_tasks' as any)
+                        .select('task_key')
+                        .eq('user_id', user.id)
+                        .eq('status', 'completed'),
+                    supabase
+                        .from('profiles')
+                        .select('user_type, work_state')
+                        .eq('id', user.id)
+                        .single()
+                ]);
+
+                if (tasksRes.data) setCompletedIds(new Set(tasksRes.data.map((d: any) => d.task_key)));
+                if (profileRes.data) {
+                    if (profileRes.data.user_type) setUserType(profileRes.data.user_type);
+                    if (profileRes.data.work_state) setWorkState(profileRes.data.work_state);
+                }
             } catch {
-                // Table may not exist yet
+                // Table may not exist yet or profile missing
             }
         })();
     }, [user]);

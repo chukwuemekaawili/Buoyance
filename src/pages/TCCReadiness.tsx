@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { NIGERIAN_STATES } from "@/lib/states";
 import { Shield, Upload, Download, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { getJurisdictionLabel, getReadinessColor, DEFAULT_REQUIREMENTS, getChecklistItems, toggleChecklistItemStatus } from "@/lib/tccService";
 import { useAuth } from "@/hooks/useAuth";
@@ -80,8 +81,11 @@ function TCCReadinessContent() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="federal">Federal (FIRS)</SelectItem>
-                                <SelectItem value="lagos">Lagos (LIRS)</SelectItem>
-                                <SelectItem value="fct">FCT (FIRS)</SelectItem>
+                                {NIGERIAN_STATES.map((state) => (
+                                    <SelectItem key={state} value={state.toLowerCase().replace(/\s+/g, '_')}>
+                                        {state} (SIRS)
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>

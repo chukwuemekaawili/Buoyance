@@ -3,9 +3,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
+import { getStatePortal } from '@/lib/states';
+
 export type TaskStatus = 'pending' | 'upcoming' | 'overdue' | 'completed' | 'filed';
 export type TaxType = 'VAT' | 'PAYE' | 'CIT' | 'PIT' | 'WHT' | 'CGT' | 'EDT' | 'PENSION' | 'NHF' | 'NSITF' | 'NHIA';
-export type Regulator = 'FIRS' | 'LIRS' | 'KWIRS' | 'KTIRS' | 'PENCOM' | 'NHF' | 'NSITF' | 'NHIA';
+export type Regulator = string;
 
 export interface ComplianceTask {
     id?: string;
@@ -49,7 +51,7 @@ const DEADLINE_RULES: Array<{
         // PAYE - 10th of next month
         {
             tax_type: 'PAYE',
-            regulator: 'LIRS',
+            regulator: 'SIRS',
             frequency: 'monthly',
             day_of_month: 10,
             month_offset: 1,
@@ -85,7 +87,7 @@ const DEADLINE_RULES: Array<{
         // PIT Annual - March 31
         {
             tax_type: 'PIT',
-            regulator: 'LIRS',
+            regulator: 'SIRS',
             frequency: 'annual',
             day_of_month: 31,
             month_offset: 3,
@@ -134,7 +136,7 @@ const DEADLINE_RULES: Array<{
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export function generateTasksForYear(userId: string, year: number, userType: string = 'individual'): ComplianceTask[] {
+export function generateTasksForYear(userId: string, year: number, userType: string = 'individual', workState?: string | null): ComplianceTask[] {
     const tasks: ComplianceTask[] = [];
 
     for (const rule of DEADLINE_RULES) {
@@ -153,7 +155,7 @@ export function generateTasksForYear(userId: string, year: number, userType: str
                 tasks.push({
                     user_id: userId,
                     tax_type: rule.tax_type,
-                    regulator: rule.regulator,
+                    regulator: rule.regulator === 'SIRS' ? (getStatePortal(workState)?.acronym || 'State IRS') : rule.regulator,
                     due_date: dueDate.toISOString().split('T')[0],
                     status: dueDate < new Date() ? 'overdue' : 'pending',
                     title: rule.title_template.replace('{period}', period),
@@ -167,7 +169,7 @@ export function generateTasksForYear(userId: string, year: number, userType: str
             tasks.push({
                 user_id: userId,
                 tax_type: rule.tax_type,
-                regulator: rule.regulator,
+                regulator: rule.regulator === 'SIRS' ? (getStatePortal(workState)?.acronym || 'State IRS') : rule.regulator,
                 due_date: dueDate.toISOString().split('T')[0],
                 status: dueDate < new Date() ? 'overdue' : 'pending',
                 title: rule.title_template.replace('{year}', String(year - 1)),
@@ -254,8 +256,8 @@ export function getTaskPriorityColor(task: ComplianceTask): string {
     return 'blue';
 }
 
-export function getRegulatorLabel(regulator: Regulator): string {
-    const labels: Record<Regulator, string> = {
+export function getRegulatorLabel(regulator: string): string {
+    const labels: Record<string, string> = {
         FIRS: 'Federal Inland Revenue Service',
         LIRS: 'Lagos State Internal Revenue Service',
         KWIRS: 'Kogi State Internal Revenue Service',

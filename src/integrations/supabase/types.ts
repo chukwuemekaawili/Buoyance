@@ -850,6 +850,7 @@ export type Database = {
           tin: string | null
           updated_at: string | null
           user_type: Database["public"]["Enums"]["app_role"] | null
+          work_state: string | null
         }
         Insert: {
           created_at?: string
@@ -860,6 +861,7 @@ export type Database = {
           tin?: string | null
           updated_at?: string | null
           user_type?: Database["public"]["Enums"]["app_role"] | null
+          work_state?: string | null
         }
         Update: {
           created_at?: string
@@ -870,6 +872,7 @@ export type Database = {
           tin?: string | null
           updated_at?: string | null
           user_type?: Database["public"]["Enums"]["app_role"] | null
+          work_state?: string | null
         }
         Relationships: []
       }
