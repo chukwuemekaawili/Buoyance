@@ -242,9 +242,15 @@ export default function FilingDetail() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [addingPayment, setAddingPayment] = useState(false);
   const [initiatingOnline, setInitiatingOnline] = useState(false);
+  const [workState, setWorkState] = useState<string | null>(null);
 
   useEffect(() => { if (!authLoading && !user) navigate("/signin"); }, [user, authLoading, navigate]);
   useEffect(() => { if (user && id) loadFiling(); }, [user, id]);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('profiles').select('work_state').eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => { if (data?.work_state) setWorkState(data.work_state); });
+  }, [user]);
 
   const loadFiling = async () => {
     try {
@@ -553,12 +559,24 @@ export default function FilingDetail() {
                       ) : filing.tax_type === "PIT" ? (
                         <div className="p-4 bg-muted/50 rounded-lg space-y-3">
                           <p className="text-sm text-muted-foreground">
-                            Personal Income Tax is filed with your State IRS (e.g., LIRS for Lagos, KGIRS for Kaduna).
+                            Personal Income Tax is filed with your State Internal Revenue Service.
+                            {workState ? (
+                              <> Your filing state: <strong>{workState}</strong>.</>
+                            ) : (
+                              <> Set your state in <strong>Settings &rarr; Profile</strong> to get a direct portal link.</>
+                            )}
                           </p>
-                          <Button variant="outline" onClick={() => window.open("https://lirs.gov.ng", "_blank")}>
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Open State Portal (LIRS Example)
-                          </Button>
+                          {getStatePortal(workState) ? (
+                            <Button variant="outline" onClick={() => window.open(getStatePortal(workState)!.url, "_blank")}>
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Open {getStatePortal(workState)!.acronym} Portal ({getStatePortal(workState)!.name})
+                            </Button>
+                          ) : (
+                            <Button variant="outline" onClick={() => window.open("https://taxpromax.firs.gov.ng", "_blank")}>
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Find Your State IRS (FIRS Portal)
+                            </Button>
+                          )}
                         </div>
                       ) : (
                         <div className="p-4 bg-muted/50 rounded-lg">
