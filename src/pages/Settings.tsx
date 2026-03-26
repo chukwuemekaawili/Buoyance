@@ -386,14 +386,33 @@ function SettingsContent() {
 
     setIdentitySaving(true);
     try {
-      // Save to the dedicated tax_identity column
-      const { error } = await supabase
+      // Safely ensure row exists before updating (bypasses Upsert PostgREST constraint errors)
+      const { data: existingProfile } = await supabase
         .from("profiles")
-        .upsert({
-          id: user.id,
-          tax_identity: taxIdentity,
-          updated_at: new Date().toISOString()
-        }, { onConflict: "id" });
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      let error;
+      if (existingProfile) {
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            user_type: taxIdentity,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", user.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert({
+            id: user.id,
+            user_type: taxIdentity,
+            updated_at: new Date().toISOString()
+          });
+        error = insertError;
+      }
 
       if (error) throw error;
 
