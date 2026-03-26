@@ -332,15 +332,37 @@ function SettingsContent() {
 
     setProfileSaving(true);
     try {
-      const { error } = await supabase
+      // Safely ensure row exists before updating, bypassing upsert constraint issues
+      const { data: existingProfile } = await supabase
         .from("profiles")
-        .update({
-          display_name: displayName,
-          tin: tin || null,
-          work_state: workState || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", user.id);
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      let error;
+      if (existingProfile) {
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            display_name: displayName,
+            tin: tin || null,
+            work_state: workState || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", user.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert({
+            id: user.id,
+            display_name: displayName,
+            tin: tin || null,
+            work_state: workState || null,
+            updated_at: new Date().toISOString()
+          });
+        error = insertError;
+      }
 
       if (error) throw error;
 
