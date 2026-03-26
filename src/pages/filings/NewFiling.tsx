@@ -526,9 +526,13 @@ export default function NewFiling() {
     // Optionally save to profile
     if (user) {
       try {
-        await supabase
-          .from("profiles")
-          .upsert({ id: user.id, tax_identity: newIdentity }, { onConflict: "id" });
+        // Safely ensure row exists before updating, bypassing upsert constraints
+        const { data: existingProfile } = await supabase.from('profiles').select('id').eq('id', user.id).maybeSingle();
+        if (existingProfile) {
+          await supabase.from('profiles').update({ tax_identity: newIdentity, updated_at: new Date().toISOString() }).eq('id', user.id);
+        } else {
+          await supabase.from('profiles').insert({ id: user.id, tax_identity: newIdentity, updated_at: new Date().toISOString() });
+        }
       } catch (err) {
         console.error("Failed to save industry preference:", err);
       }
