@@ -36,28 +36,9 @@ import {
 } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/hooks/useWorkspace";
-import {
-  Loader2,
-  ArrowLeft,
-  User,
-  Lock,
-  Shield,
-  Bell,
-  Mail,
-  Save,
-  Eye,
-  EyeOff,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  AlertCircle,
-  FileText,
-  Briefcase,
-  CreditCard,
-  Zap,
-  Activity,
-  Server
-} from "lucide-react";
+import { FileText, Heart, Calculator, Star, ArrowRight, ArrowLeft, Building2, Crown, Zap, Save, AlertCircle, Shield, KeySquare, Bell, CreditCard, Users, Clock, Loader2, CheckCircle2, User, Mail, Plus, Briefcase, MapPin } from "lucide-react";
+import { NIGERIAN_STATES } from "@/lib/states";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { validateTINOptional } from "@/lib/validators";
 import { ConsentVersionLink } from "@/components/ConsentVersionLink";
@@ -276,6 +257,7 @@ function SettingsContent() {
   const [tin, setTin] = useState("");
   const [tinError, setTinError] = useState("");
   const [taxIdentity, setTaxIdentity] = useState<TaxIdentity | "">("");
+  const [workState, setWorkState] = useState("");
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
   const [identitySaving, setIdentitySaving] = useState(false);
@@ -314,7 +296,7 @@ function SettingsContent() {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name, tin, tax_identity")
+        .select("display_name, tin, tax_identity, work_state")
         .eq("id", user!.id)
         .limit(1);
 
@@ -322,6 +304,7 @@ function SettingsContent() {
       const profileRow = data?.[0];
       setDisplayName(profileRow?.display_name || "");
       setTin(profileRow?.tin || "");
+      setWorkState(profileRow?.work_state || "");
       // Load tax_identity directly from the dedicated column
       if (profileRow?.tax_identity && TAX_IDENTITY_OPTIONS.some(opt => opt.value === profileRow.tax_identity)) {
         setTaxIdentity(profileRow.tax_identity as TaxIdentity);
@@ -355,6 +338,7 @@ function SettingsContent() {
           id: user.id,
           display_name: displayName,
           tin: tin || null,
+          work_state: workState || null,
           updated_at: new Date().toISOString()
         }, { onConflict: "id" });
 
@@ -594,6 +578,29 @@ function SettingsContent() {
                         Required for filing submissions. Format: 10 digits (e.g., 1234567890)
                       </p>
                     )}
+                  </div>
+
+                  {/* Work State Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="workState" className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      State of Tax Residence
+                    </Label>
+                    <Select value={workState} onValueChange={setWorkState} disabled={profileLoading}>
+                      <SelectTrigger id="workState">
+                        <SelectValue placeholder="Select your state" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {NIGERIAN_STATES.map((state) => (
+                          <SelectItem key={state} value={state}>
+                            {state === "FCT" ? "FCT Abuja" : state}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Required for accurate PIT calculations and State IRS portal routing.
+                    </p>
                   </div>
 
                   <Button
