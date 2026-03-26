@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, User, Building2, Briefcase, Building, UserCog, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRBAC } from "@/hooks/useRBAC";
@@ -61,6 +62,7 @@ function OnboardingContent() {
   const [displayName, setDisplayName] = useState("");
   const [tin, setTin] = useState("");
   const [tinError, setTinError] = useState("");
+  const [workState, setWorkState] = useState("");
   const [userType, setUserType] = useState<AppRole>("individual");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConsentModal, setShowConsentModal] = useState(false);
@@ -127,6 +129,7 @@ function OnboardingContent() {
         .update({
           display_name: displayName || null,
           tin: tin || null,
+          work_state: workState || null,
           user_type: userType,
           onboarding_completed: true,
           updated_at: new Date().toISOString(),
@@ -223,6 +226,58 @@ function OnboardingContent() {
                 )}
                 <p className="text-xs text-muted-foreground">
                   Required for filing submissions. You can add it later in Settings.
+                </p>
+              </div>
+
+              {/* State of Residence / Work */}
+              <div className="space-y-2">
+                <Label htmlFor="workState">State of Tax Residence <span className="text-destructive">*</span></Label>
+                <Select value={workState} onValueChange={setWorkState}>
+                  <SelectTrigger id="workState">
+                    <SelectValue placeholder="Select your state..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Abia">Abia</SelectItem>
+                    <SelectItem value="Adamawa">Adamawa</SelectItem>
+                    <SelectItem value="Akwa Ibom">Akwa Ibom</SelectItem>
+                    <SelectItem value="Anambra">Anambra</SelectItem>
+                    <SelectItem value="Bauchi">Bauchi</SelectItem>
+                    <SelectItem value="Bayelsa">Bayelsa</SelectItem>
+                    <SelectItem value="Benue">Benue</SelectItem>
+                    <SelectItem value="Borno">Borno</SelectItem>
+                    <SelectItem value="Cross River">Cross River</SelectItem>
+                    <SelectItem value="Delta">Delta</SelectItem>
+                    <SelectItem value="Ebonyi">Ebonyi</SelectItem>
+                    <SelectItem value="Edo">Edo</SelectItem>
+                    <SelectItem value="Ekiti">Ekiti</SelectItem>
+                    <SelectItem value="Enugu">Enugu</SelectItem>
+                    <SelectItem value="Abuja">FCT — Abuja</SelectItem>
+                    <SelectItem value="Gombe">Gombe</SelectItem>
+                    <SelectItem value="Imo">Imo</SelectItem>
+                    <SelectItem value="Jigawa">Jigawa</SelectItem>
+                    <SelectItem value="Kaduna">Kaduna</SelectItem>
+                    <SelectItem value="Kano">Kano</SelectItem>
+                    <SelectItem value="Katsina">Katsina</SelectItem>
+                    <SelectItem value="Kebbi">Kebbi</SelectItem>
+                    <SelectItem value="Kogi">Kogi</SelectItem>
+                    <SelectItem value="Kwara">Kwara</SelectItem>
+                    <SelectItem value="Lagos">Lagos</SelectItem>
+                    <SelectItem value="Nasarawa">Nasarawa</SelectItem>
+                    <SelectItem value="Niger">Niger</SelectItem>
+                    <SelectItem value="Ogun">Ogun</SelectItem>
+                    <SelectItem value="Ondo">Ondo</SelectItem>
+                    <SelectItem value="Osun">Osun</SelectItem>
+                    <SelectItem value="Oyo">Oyo</SelectItem>
+                    <SelectItem value="Plateau">Plateau</SelectItem>
+                    <SelectItem value="Rivers">Rivers</SelectItem>
+                    <SelectItem value="Sokoto">Sokoto</SelectItem>
+                    <SelectItem value="Taraba">Taraba</SelectItem>
+                    <SelectItem value="Yobe">Yobe</SelectItem>
+                    <SelectItem value="Zamfara">Zamfara</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Used to route you to the correct State IRS portal for Personal Income Tax filing.
                 </p>
               </div>
 
