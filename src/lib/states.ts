@@ -48,7 +48,14 @@ export const NIGERIAN_STATES = Object.values(STATE_IRS_PORTALS).map(state => sta
 
 export function getStatePortal(workState?: string | null): StateIRS | null {
   if (!workState) return null;
-  const key = workState.toLowerCase().replace(/\s+/g, "_");
-  if (key === 'fct_—_abuja') return STATE_IRS_PORTALS['abuja'];
+  
+  // First, try to exactly match the display name (which is what is saved in the DB)
+  const match = Object.values(STATE_IRS_PORTALS).find(
+    (portal) => portal.name.toLowerCase() === workState.trim().toLowerCase()
+  );
+  if (match) return match;
+
+  // Fallback to strict key matching if needed
+  const key = workState.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, '');
   return STATE_IRS_PORTALS[key] ?? null;
 }

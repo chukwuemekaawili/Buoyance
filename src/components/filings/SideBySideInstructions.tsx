@@ -19,9 +19,11 @@ import {
 import { format } from "date-fns";
 import { formatKoboToNgn, stringToKobo } from "@/lib/money";
 import type { Filing } from "@/lib/filingService";
+import { getStatePortal } from "@/lib/states";
 
 interface SideBySideInstructionsProps {
   filing: Filing;
+  workState?: string | null;
 }
 
 interface CopyableField {
@@ -30,7 +32,7 @@ interface CopyableField {
   format?: "currency" | "date" | "text";
 }
 
-export function SideBySideInstructions({ filing }: SideBySideInstructionsProps) {
+export function SideBySideInstructions({ filing, workState }: SideBySideInstructionsProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const handleCopy = async (label: string, value: string) => {
@@ -138,13 +140,21 @@ export function SideBySideInstructions({ filing }: SideBySideInstructionsProps) 
 
   const fields = getFields();
 
-  // Get portal URL based on tax type
+   // Get portal URL based on tax type
   const getPortalInfo = () => {
     if (filing.tax_type === "PIT") {
+      const statePortal = getStatePortal(workState);
+      if (statePortal) {
+        return {
+          name: `${statePortal.acronym} Portal (${statePortal.name})`,
+          url: statePortal.url,
+          description: `PIT is filed with the ${statePortal.name} State Internal Revenue Service`
+        };
+      }
       return {
-        name: "State IRS Portal",
-        url: "https://lirs.gov.ng",
-        description: "PIT is filed with your State IRS (e.g., LIRS for Lagos, KGIRS for Kaduna)"
+        name: `Unable to match state: ${workState || "MISSING"}`,
+        url: "#",
+        description: `We could not match your saved profile state ("${workState}") to an IRS portal. Please update your profile in Settings.`
       };
     }
     return {
@@ -211,17 +221,31 @@ export function SideBySideInstructions({ filing }: SideBySideInstructionsProps) 
             </div>
             <div className="flex-1">
               <h4 className="font-semibold">Open Portal</h4>
-              <p className="text-sm text-muted-foreground mt-1">
-                {portal.description}
-              </p>
-              <Button 
-                size="sm" 
-                className="mt-3"
-                onClick={() => window.open(portal.url, "_blank")}
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Open {portal.name}
-              </Button>
+              {filing.tax_type === "PIT" && !workState ? (
+                <div className="mt-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-md">
+                  <p className="text-sm text-amber-600 font-medium flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    Missing State of Residence
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    We cannot link you to your state's tax portal because your State of Tax Residence is not set in your profile. Please go to your Settings, select your state, and click Save Profile.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {portal.description}
+                  </p>
+                  <Button 
+                    size="sm" 
+                    className="mt-3"
+                    onClick={() => window.open(portal.url, "_blank")}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open {portal.name}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 

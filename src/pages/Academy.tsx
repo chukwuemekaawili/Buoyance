@@ -19,7 +19,6 @@ import {
     Library,
     Star,
     CheckCircle2,
-    CheckCircle2,
     Lock,
     Diamond,
 } from "lucide-react";

@@ -247,11 +247,7 @@ export default function FilingDetail() {
 
   useEffect(() => { if (!authLoading && !user) navigate("/signin"); }, [user, authLoading, navigate]);
   useEffect(() => { if (user && id) loadFiling(); }, [user, id]);
-  useEffect(() => {
-    if (!user) return;
-    supabase.from('profiles').select('work_state').eq('user_id', user.id).maybeSingle()
-      .then(({ data }) => { if (data?.work_state) setWorkState(data.work_state); });
-  }, [user]);
+
 
   const loadFiling = async () => {
     try {
@@ -261,6 +257,14 @@ export default function FilingDetail() {
       setFiling(data);
       const paymentsData = await fetchFilingPayments(id!);
       setPayments(paymentsData as ExtendedPayment[]);
+
+      // Fetch work state synchronously with filing load
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('work_state').eq('id', user.id).maybeSingle();
+        if (profile?.work_state) {
+          setWorkState(profile.work_state);
+        }
+      }
     } catch (err: any) {
       toast({ title: "Failed to load filing", description: err.message, variant: "destructive" });
     } finally { setLoading(false); }
@@ -608,7 +612,7 @@ export default function FilingDetail() {
             </TabsContent>
 
             {/* Side-by-Side Instructions Tab */}
-            <TabsContent value="instructions"><SideBySideInstructions filing={filing} /></TabsContent>
+            <TabsContent value="instructions"><SideBySideInstructions filing={filing} workState={workState} /></TabsContent>
 
             {/* Verify & Archive Tab */}
             <TabsContent value="verify">
