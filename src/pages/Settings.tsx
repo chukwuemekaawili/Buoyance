@@ -398,7 +398,7 @@ function SettingsContent() {
         const { error: updateError } = await supabase
           .from("profiles")
           .update({
-            user_type: taxIdentity,
+            tax_identity: taxIdentity,
             updated_at: new Date().toISOString()
           })
           .eq("id", user.id);
@@ -408,7 +408,7 @@ function SettingsContent() {
           .from("profiles")
           .insert({
             id: user.id,
-            user_type: taxIdentity,
+            tax_identity: taxIdentity,
             updated_at: new Date().toISOString()
           });
         error = insertError;
