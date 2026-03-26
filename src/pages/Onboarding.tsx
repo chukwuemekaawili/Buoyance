@@ -124,17 +124,40 @@ function OnboardingContent() {
       // NOTE: Onboarding only updates profiles table. 
       // user_roles is managed by trigger (default) and admins only.
       // The user_type in profiles is for UI display/preference only.
-      const { error: profileError } = await supabase
+      const { data: existingProfile } = await supabase
         .from("profiles")
-        .update({
-          display_name: displayName || null,
-          tin: tin || null,
-          work_state: workState || null,
-          user_type: userType,
-          onboarding_completed: true,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      let profileError;
+      if (existingProfile) {
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            display_name: displayName || null,
+            tin: tin || null,
+            work_state: workState || null,
+            user_type: userType,
+            onboarding_completed: true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", user.id);
+        profileError = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert({
+            id: user.id,
+            display_name: displayName || null,
+            tin: tin || null,
+            work_state: workState || null,
+            user_type: userType,
+            onboarding_completed: true,
+            updated_at: new Date().toISOString(),
+          });
+        profileError = insertError;
+      }
 
       if (profileError) throw profileError;
 
