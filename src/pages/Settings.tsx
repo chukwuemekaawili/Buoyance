@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspace } from "@/hooks/useWorkspace";
-import { FileText, Heart, Calculator, Star, ArrowRight, ArrowLeft, Building2, Crown, Zap, Save, AlertCircle, Shield, KeySquare, Bell, CreditCard, Users, Clock, Loader2, CheckCircle2, User, Mail, Plus, Briefcase, MapPin } from "lucide-react";
+import { FileText, Heart, Calculator, Star, ArrowRight, ArrowLeft, Building2, Crown, Zap, Save, AlertCircle, AlertTriangle, Shield, KeySquare, Bell, CreditCard, Users, Clock, Loader2, CheckCircle2, User, Mail, Plus, Briefcase, MapPin, Lock, Eye, EyeOff, Activity, Server, BookOpen, Globe, Smartphone } from "lucide-react";
 import { NIGERIAN_STATES } from "@/lib/states";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
