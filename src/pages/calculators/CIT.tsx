@@ -258,7 +258,6 @@ export default function CITCalculator() {
     }
     const formatted = new Intl.NumberFormat("en-NG").format(parseInt(value));
     setLossCarryForwardInput(formatted);
-    setLossCarryForwardInput(formatted);
   };
 
   const handleSaveCalculation = async () => {
@@ -719,7 +718,7 @@ export default function CITCalculator() {
                     loss_carry_forward_ngn: formatKoboToNgn(lossCarryForwardKobo),
                     assessable_profit_ngn: formatKoboToNgn(assessableProfitKobo),
                     chargeable_income_ngn: formatKoboToNgn(chargeableIncomeKobo),
-                    cit_standard_rate_applied: standardRate.toFixed(2) + "%",
+                    cit_standard_rate_applied: (appliedRate * 100).toFixed(0) + "%",
                     development_levy_applied: formatKoboToNgn(devLevyKobo),
                     final_tax_payable_ngn: formatKoboToNgn(taxPayableKobo)
                   },

@@ -49,7 +49,7 @@ import {
   type Filing,
   type FilingStatus,
 } from "@/lib/filingService";
-import { fetchFilingPayments, type Payment } from "@/lib/paymentService";
+import { fetchFilingPayments, isPaymentConfirmed, type Payment } from "@/lib/paymentService";
 import { writeAuditLog, AuditActions } from "@/lib/auditLog";
 import { formatKoboToNgn, stringToKobo, addKobo } from "@/lib/money";
 import { useIntegrationStatus } from "@/hooks/useIntegrationStatus";
@@ -171,12 +171,13 @@ function FilingsContent() {
     if (totalTax === 0n) return "paid";
 
     const payments = filingPayments[filing.id] || [];
-    const paidSum = payments
-      .filter((p) => p.status === "paid")
+    // Uses isPaymentConfirmed — same rule as FilingDetail.tsx and taxHealthCalculator.ts.
+    const confirmedSum = payments
+      .filter(p => isPaymentConfirmed(p))
       .reduce((sum, p) => addKobo(sum, stringToKobo(p.amount_kobo)), 0n);
 
-    if (paidSum === 0n) return "unpaid";
-    if (paidSum < totalTax) return "partial";
+    if (confirmedSum === 0n) return "unpaid";
+    if (confirmedSum < totalTax) return "partial";
     return "paid";
   };
 
@@ -273,7 +274,10 @@ function FilingsContent() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Tax Filings</h1>
-                <p className="text-muted-foreground mt-2">Manage your tax filing submissions</p>
+                <p className="text-muted-foreground mt-2">Manage your locally prepared tax records</p>
+                <div className="mt-3 text-sm border-l-4 border-yellow-500 pl-3 py-1 bg-yellow-500/10 text-yellow-800 dark:text-yellow-200">
+                  <strong>Note:</strong> This record is prepared locally and may still require manual submission to the relevant tax authority.
+                </div>
               </div>
               <Button asChild>
                 <Link to="/filings/new">
@@ -326,7 +330,7 @@ function FilingsContent() {
             <TabsList className="mb-6">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="draft">Draft</TabsTrigger>
-              <TabsTrigger value="submitted">Submitted</TabsTrigger>
+              <TabsTrigger value="submitted">Prepared</TabsTrigger>
               <TabsTrigger value="accepted">Accepted</TabsTrigger>
               <TabsTrigger value="rejected">Rejected</TabsTrigger>
             </TabsList>
@@ -384,7 +388,7 @@ function FilingsContent() {
                                 variant="outline"
                                 className={statusColors[filing.status]}
                               >
-                                {filing.status}
+                                {filing.status === "submitted" ? "Locally Prepared" : filing.status}
                               </Badge>
                               {/* Payment Status Badge - computed live */}
                               {filing.status !== "draft" && (() => {
@@ -430,7 +434,7 @@ function FilingsContent() {
                               )}
                               {filing.submitted_at && (
                                 <span>
-                                  Submitted: {format(new Date(filing.submitted_at), "MMM d, yyyy")}
+                                  Prepared: {format(new Date(filing.submitted_at), "MMM d, yyyy")}
                                 </span>
                               )}
                             </div>

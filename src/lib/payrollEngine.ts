@@ -1,12 +1,22 @@
 // Basic Payroll Engine (Single Employee)
 // Calculates PAYE, pension, NHF, NHIA, and net salary
 
+export type PayrollScheme = "organized_private_sector_basic_salary_assumed";
+export type NHIABasisMode = "organized_private_sector_basic_salary";
+
+export const DEFAULT_PAYROLL_SCHEME: PayrollScheme = "organized_private_sector_basic_salary_assumed";
+export const DEFAULT_NHIA_BASIS_MODE: NHIABasisMode = "organized_private_sector_basic_salary";
+export const NHIA_AUTO_CALCULATION_WARNING =
+    "NHIA auto-calculation currently assumes organized private sector basic-salary treatment and may require configuration.";
+
 export interface PayrollInput {
     employee_name: string;
     monthly_gross_kobo: bigint;
     annual_rent_paid_kobo?: bigint;
     work_state?: string;
     month: string; // YYYY-MM
+    payroll_scheme?: PayrollScheme;
+    nhia_basis_mode?: NHIABasisMode;
 }
 
 export interface PayrollResult {
@@ -80,7 +90,36 @@ import {
     PAYROLL_RATES 
 } from './taxEngine';
 
-function calculatePAYE(annualGrossKobo: bigint, annualRentKobo: bigint = 0n): bigint {
+function resolvePayrollConfiguration(input?: Pick<PayrollInput, 'payroll_scheme' | 'nhia_basis_mode'>) {
+    return {
+        payroll_scheme: input?.payroll_scheme ?? DEFAULT_PAYROLL_SCHEME,
+        nhia_basis_mode: input?.nhia_basis_mode ?? DEFAULT_NHIA_BASIS_MODE,
+    };
+}
+
+function calculateNhiaEmployeeDeduction(basicSalaryKobo: bigint, nhiaBasisMode: NHIABasisMode): bigint {
+    switch (nhiaBasisMode) {
+        case "organized_private_sector_basic_salary":
+        default:
+            // TODO(config): Add scheme-specific NHIA calculation branches before supporting non-OPS payroll cases.
+            return (basicSalaryKobo * PAYROLL_RATES.NHIA_EMPLOYEE) / 10000n;
+    }
+}
+
+function calculateNhiaEmployerContribution(basicSalaryKobo: bigint, nhiaBasisMode: NHIABasisMode): bigint {
+    switch (nhiaBasisMode) {
+        case "organized_private_sector_basic_salary":
+        default:
+            // TODO(config): Current NHIA employer contribution path assumes OPS basic-salary treatment only.
+            return (basicSalaryKobo * PAYROLL_RATES.NHIA_EMPLOYER) / 100n;
+    }
+}
+
+function calculatePAYE(
+    annualGrossKobo: bigint,
+    annualRentKobo: bigint = 0n,
+    nhiaBasisMode: NHIABasisMode = DEFAULT_NHIA_BASIS_MODE
+): bigint {
     // 3. Rent Relief (if any)
     const rentRelief = calculateRentRelief(annualRentKobo, annualGrossKobo);
 
@@ -91,8 +130,8 @@ function calculatePAYE(annualGrossKobo: bigint, annualRentKobo: bigint = 0n): bi
     const basicSalary = (annualGrossKobo * 30n) / 100n;
     const nhfDeduction = (basicSalary * PAYROLL_RATES.NHF) / 1000n;
 
-    // NHIA deduction (1.75% employee) - NTA 2025 allowable pre-tax deduction
-    const nhiaDeduction = (basicSalary * PAYROLL_RATES.NHIA_EMPLOYEE) / 10000n;
+    // TODO(config): This auto-calculation is intentionally limited to the OPS basic-salary assumption for now.
+    const nhiaDeduction = calculateNhiaEmployeeDeduction(basicSalary, nhiaBasisMode);
 
     // Taxable income (gross minus all allowable deductions)
     const taxableIncome = annualGrossKobo - rentRelief - pensionDeduction - nhfDeduction - nhiaDeduction;
@@ -105,6 +144,7 @@ export function calculateBasicPayroll(input: PayrollInput): PayrollResult {
     const gross = input.monthly_gross_kobo;
     const annualGross = gross * 12n;
     const annualRent = input.annual_rent_paid_kobo || 0n;
+    const payrollConfig = resolvePayrollConfiguration(input);
 
     // Salary breakdown (typical Nigerian structure)
     const basic = (gross * 30n) / 100n;
@@ -113,11 +153,12 @@ export function calculateBasicPayroll(input: PayrollInput): PayrollResult {
     const others = gross - basic - housing - transport;
 
     // Employee deductions
-    const annualPAYE = calculatePAYE(annualGross, annualRent);
+    const annualPAYE = calculatePAYE(annualGross, annualRent, payrollConfig.nhia_basis_mode);
     const monthlyPAYE = annualPAYE / 12n;
     const pensionEmployee = (gross * PAYROLL_RATES.PENSION_EMPLOYEE) / 100n;
     const nhf = (basic * PAYROLL_RATES.NHF) / 1000n;
-    const nhiaEmployee = (basic * PAYROLL_RATES.NHIA_EMPLOYEE) / 10000n;
+    // TODO(config): Do not treat this NHIA path as universal until payroll_scheme / nhia_basis_mode is configurable in-product.
+    const nhiaEmployee = calculateNhiaEmployeeDeduction(basic, payrollConfig.nhia_basis_mode);
     const totalDeductions = monthlyPAYE + pensionEmployee + nhf + nhiaEmployee;
 
     const netSalary = gross - totalDeductions;
@@ -125,7 +166,8 @@ export function calculateBasicPayroll(input: PayrollInput): PayrollResult {
     // Employer contributions
     const pensionEmployer = (gross * PAYROLL_RATES.PENSION_EMPLOYER) / 100n;
     const nsitf = (gross * PAYROLL_RATES.NSITF) / 100n;
-    const nhiaEmployer = (gross * PAYROLL_RATES.NHIA_EMPLOYER) / 100n;
+    // TODO(config): This employer NHIA contribution also assumes OPS basic-salary treatment.
+    const nhiaEmployer = calculateNhiaEmployerContribution(basic, payrollConfig.nhia_basis_mode);
     const totalEmployer = pensionEmployer + nsitf + nhiaEmployer;
 
     const workState = input.work_state || 'Not Specified';
@@ -188,7 +230,7 @@ export function calculateBasicPayroll(input: PayrollInput): PayrollResult {
                 amount_kobo: nhiaEmployee + nhiaEmployer,
                 remit_to: 'National Health Insurance Authority',
                 deadline: '10th of following month',
-                note: 'Employee 5% + Employer 10%',
+                note: 'Assumed OPS basic-salary treatment; may require configuration',
             },
             {
                 item: 'NSITF',
@@ -221,7 +263,7 @@ export function getPayslipData(result: PayrollResult) {
             { label: 'PAYE Tax', amount: result.deductions.paye_kobo },
             { label: 'Pension (8%)', amount: result.deductions.pension_employee_kobo },
             { label: 'NHF (2.5%)', amount: result.deductions.nhf_kobo },
-            { label: 'NHIA (5%)', amount: result.deductions.nhia_employee_kobo },
+            { label: 'NHIA (Auto, assumed OPS basic salary)', amount: result.deductions.nhia_employee_kobo },
         ],
         gross: result.earnings.gross_salary_kobo,
         total_deductions: result.deductions.total_deductions_kobo,
@@ -231,6 +273,7 @@ export function getPayslipData(result: PayrollResult) {
 
 export function calculateBatchPayroll(inputs: PayrollInput[], month: string): BatchPayrollResult {
     const results = inputs.map(calculateBasicPayroll);
+    const batchPayrollConfig = resolvePayrollConfiguration(inputs[0]);
 
     let gross_salary_kobo = 0n;
     let net_salary_kobo = 0n;
@@ -303,7 +346,7 @@ export function calculateBatchPayroll(inputs: PayrollInput[], month: string): Ba
             amount_kobo: nhia_employee_kobo + nhia_employer_kobo,
             remit_to: 'National Health Insurance Authority',
             deadline: '10th of following month',
-            note: 'Employee 5% + Employer 10%',
+            note: `Assumed OPS basic-salary treatment (${batchPayrollConfig.payroll_scheme}); may require configuration`,
         });
     }
 

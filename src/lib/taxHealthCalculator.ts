@@ -10,6 +10,7 @@
  */
 
 import { stringToKobo, addKobo, isZeroKobo } from "@/lib/money";
+import { isPaymentConfirmed } from "@/lib/paymentService";
 
 export interface ProfileData {
   tax_identity: string | null;
@@ -31,6 +32,8 @@ export interface PaymentData {
   filing_id: string;
   amount_kobo: string;
   status: string;
+  /** Required to apply the combined confirmed-payment rule (status=paid OR verification_status=verified). */
+  verification_status?: string | null;
 }
 
 export interface ActivityData {
@@ -119,7 +122,7 @@ function calculateFilingBalance(filing: FilingData, payments: PaymentData[]): bi
   const totalTaxKobo = filing.total_tax_kobo ? stringToKobo(filing.total_tax_kobo) : 0n;
   
   const paidKobo = payments
-    .filter(p => p.filing_id === filing.id && p.status === "paid")
+    .filter(p => p.filing_id === filing.id && isPaymentConfirmed(p))
     .reduce((sum, p) => addKobo(sum, stringToKobo(p.amount_kobo)), 0n);
   
   const balance = totalTaxKobo - paidKobo;
@@ -228,7 +231,7 @@ export function calculateTaxHealth(input: TaxHealthInput): TaxHealthResult {
         impact: "positive",
         score: 50,
         maxScore: 50,
-        description: "Latest filing submitted and fully paid",
+        description: "Latest filing locally prepared and fully paid",
       });
     } else if (isSubmitted && !isPaid) {
       // Partial credit for submitted but unpaid
@@ -238,9 +241,9 @@ export function calculateTaxHealth(input: TaxHealthInput): TaxHealthResult {
         impact: "neutral",
         score: 25,
         maxScore: 50,
-        description: "Latest filing submitted but has outstanding balance",
+        description: "Latest filing locally prepared but has outstanding balance",
       });
-      recommendations.push("Complete payment for your submitted filing");
+      recommendations.push("Complete payment for your prepared filing");
     } else {
       // Draft filing
       factors.push({
@@ -248,9 +251,9 @@ export function calculateTaxHealth(input: TaxHealthInput): TaxHealthResult {
         impact: "negative",
         score: 0,
         maxScore: 50,
-        description: `Latest filing is in ${lastFiling.status} status`,
+        description: `Latest filing is in ${lastFiling.status === "submitted" ? "locally prepared" : lastFiling.status} status`,
       });
-      recommendations.push("Submit your draft filing to improve compliance");
+      recommendations.push("Finalise and prepare your draft filing to improve compliance");
     }
   }
   

@@ -168,15 +168,15 @@ export async function updateFilingDraft(
 }
 
 /**
- * Submit a filing via RPC and TaxPro Max API.
+ * Save a prepared filing record via RPC.
  */
 export async function submitFiling(
   filingId: string,
   outputJson: Record<string, unknown>
 ): Promise<{ success: boolean; rule_version: string; submitted_at: string }> {
 
-  // No real TaxPro Max API connection exists yet. 
-  // We record this as a "Self-Filed" state to prevent implying false compliance.
+  // No live TaxPro Max API connection exists yet.
+  // We record this as a local "Self-Filed" state to avoid implying official submission.
   
   const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const mockAuthEnabled = import.meta.env?.VITE_MOCK_AUTH === 'true' || isLocalDev;

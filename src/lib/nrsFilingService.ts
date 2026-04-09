@@ -1,8 +1,8 @@
 /**
  * NRS (Nigeria Revenue Service) Filing Service
  * 
- * Handles submission of filings to the tax authority.
- * Currently in stub mode - requires NRS API integration.
+ * Tracks authority-submission metadata when Buoyance eventually supports it.
+ * Direct authority submission is not currently enabled.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -29,18 +29,17 @@ export interface NRSFilingStatus {
  * Check if NRS integration is available
  */
 export function isNRSAvailable(): { available: boolean; reason?: string } {
-  // In stub mode, return as unavailable
   return {
     available: false,
-    reason: "NRS e-Filing integration requires API configuration with the Nigeria Revenue Service.",
+    reason: "Direct tax-authority submission is not currently enabled in Buoyance. Use the manual filing workflow and store any external reference separately.",
   };
 }
 
 /**
- * Submit a filing to NRS (stub mode)
+ * Direct submission is intentionally unavailable until a real authority integration exists.
  */
 export async function submitToNRS(filingId: string): Promise<NRSSubmissionResult> {
-  // Verify the filing exists and is submitted
+  // Verify the filing exists and is prepared
   const { data: filing, error: fetchError } = await supabase
     .from("filings")
     .select("id, status, tax_type, nrs_status")
@@ -58,69 +57,28 @@ export async function submitToNRS(filingId: string): Promise<NRSSubmissionResult
   if (filing.status !== "submitted" && filing.status !== "accepted") {
     return {
       success: false,
-      message: "Only submitted or accepted filings can be sent to NRS",
-      isStubbed: true,
+      message: "Only prepared or accepted filings can be referenced for external authority follow-up.",
+      isStubbed: false,
     };
   }
 
   if (filing.nrs_status === "submitted" || filing.nrs_status === "accepted") {
     return {
       success: false,
-      message: "Filing has already been submitted to NRS",
-      isStubbed: true,
+      message: "An external authority reference already exists for this filing.",
+      isStubbed: false,
     };
-  }
-
-  // Generate a stub NRS reference
-  const stubReference = `NRS-STUB-${filing.tax_type}-${Date.now().toString(36).toUpperCase()}`;
-  const submittedAt = new Date().toISOString();
-
-  // Update the filing with stub NRS data
-  const { error: updateError } = await supabase
-    .from("filings")
-    .update({
-      nrs_reference: stubReference,
-      nrs_status: "pending",
-      nrs_submitted_at: submittedAt,
-    } as any)
-    .eq("id", filingId);
-
-  if (updateError) {
-    console.error("Failed to update filing with NRS status:", updateError);
-    return {
-      success: false,
-      message: "Failed to record NRS submission",
-      isStubbed: true,
-    };
-  }
-
-  // Log audit event
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    await supabase.from("audit_logs").insert({
-      actor_user_id: user.id,
-      action: "filing.nrs_submitted",
-      entity_type: "filing",
-      entity_id: filingId,
-      metadata: {
-        nrs_reference: stubReference,
-        stubbed: true,
-      },
-    } as any);
   }
 
   return {
-    success: true,
-    nrsReference: stubReference,
-    nrsStatus: "pending",
-    message: "[STUB] Filing queued for NRS submission. Actual submission requires NRS API integration.",
-    isStubbed: true,
-    submittedAt,
+    success: false,
+    message: "Direct submission to the tax authority is not available in Buoyance yet. File externally and record the authority reference through your manual workflow.",
+    isStubbed: false,
   };
 }
 
 /**
- * Check the status of an NRS submission
+ * Check the stored status of an external authority reference
  */
 export async function checkNRSStatus(filingId: string): Promise<NRSFilingStatus | null> {
   const { data, error } = await supabase
@@ -142,7 +100,7 @@ export async function checkNRSStatus(filingId: string): Promise<NRSFilingStatus 
 }
 
 /**
- * Get all filings with NRS submission status
+ * Get all filings with stored authority-submission metadata
  */
 export async function getFilingsWithNRSStatus(): Promise<NRSFilingStatus[]> {
   const { data, error } = await supabase

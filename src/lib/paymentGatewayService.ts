@@ -154,13 +154,30 @@ export async function verifyPayment(
 }
 
 /**
- * Handle payment callback - updates the local DB record.
+ * Handle payment callback - updates the local DB record after Paystack redirect.
+ *
+ * ⚠️ CURRENTLY DEAD CODE — this function is exported but never called anywhere in the app.
+ *
+ * The Paystack redirect URL is set to `/payments?verify=true` (see initiatePayment above),
+ * but the Payments page does NOT read the `verify` query param or invoke this function.
+ * As a result, gateway payments currently stay at status="pending" indefinitely after redirect.
+ *
+ * DO NOT wire this up client-side without the webhook backend in place first.
+ *
+ * SECURITY WARNING: If wired up client-side, this function would transition a payment to
+ * "paid" based solely on a browser-supplied reference string — no cryptographic proof.
+ *
+ * TODO(payment-integrity): The correct fix is a Supabase Edge Function that:
+ *   1. Receives Paystack webhook POSTs at a secret URL
+ *   2. Validates the X-Paystack-Signature HMAC-SHA512 header using PAYSTACK_SECRET_KEY
+ *   3. Only then updates payment status to "paid" in the DB
+ * Until that exists, NO client-side path should write status="paid" for gateway payments.
  */
 export async function handlePaymentCallback(
   paymentId: string,
   reference: string,
   status: "success" | "failed",
-  gatewayResponse: Record<string, unknown>
+  _gatewayResponse: Record<string, unknown>
 ): Promise<boolean> {
   const { error } = await supabase
     .from("payments")

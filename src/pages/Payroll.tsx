@@ -2,13 +2,14 @@ import { useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calculator, Download, Banknote, Building2, Heart, Home, Briefcase, Loader2, Save, Plus, Trash2, Users } from "lucide-react";
-import { calculateBatchPayroll, formatCurrency, getPayslipData, type BatchPayrollResult } from "@/lib/payrollEngine";
+import { AlertTriangle, Calculator, Download, Banknote, Building2, Heart, Home, Briefcase, Loader2, Save, Plus, Trash2, Users } from "lucide-react";
+import { NHIA_AUTO_CALCULATION_WARNING, calculateBatchPayroll, formatCurrency, getPayslipData, type BatchPayrollResult } from "@/lib/payrollEngine";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,6 +83,12 @@ function PayrollContent() {
                         <p className="text-muted-foreground mt-2">
                             Calculate PAYE, pension, NHF, NHIA, and net salary per NTA 2025 rates.
                         </p>
+                        <Alert className="mt-4 border-amber-500/30 bg-amber-500/10 text-amber-950 dark:text-amber-100">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertDescription>
+                                {NHIA_AUTO_CALCULATION_WARNING}
+                            </AlertDescription>
+                        </Alert>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -191,6 +198,9 @@ function PayrollContent() {
                                                 <span>Total NHIA (Emp + Employer)</span>
                                                 <span className="font-medium">{formatCurrency(result.totals.nhia_employee_kobo + result.totals.nhia_employer_kobo)}</span>
                                             </div>
+                                            <p className="text-xs text-amber-700 dark:text-amber-300 pt-1">
+                                                Warning: NHIA is currently auto-calculated using assumed organized private sector basic-salary treatment.
+                                            </p>
                                             <div className="flex justify-between font-bold text-sm py-2 border-t mt-2">
                                                 <span>Total Cost to Employer</span>
                                                 <span>{formatCurrency(result.totals.total_cost_to_employer_kobo)}</span>

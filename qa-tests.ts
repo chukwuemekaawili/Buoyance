@@ -15,20 +15,25 @@ async function runTests() {
   console.log(`Test C1 (Rent Relief): EXPECTED 200,000,000 | ACTUAL ${c1Relief}`);
   console.log(`Test C1: ${c1Relief === 20000000n ? 'PASS' : 'FAIL'}`);
 
-  // Test C2: NHIA Payroll
+  // Test C2: NHIA employee deduction — UNDER CURRENT DISCLOSED ASSUMPTION ONLY
+  // ASSUMPTION: Organized Private Sector (OPS) basic-salary treatment.
+  //   payroll_scheme = "organized_private_sector_basic_salary_assumed"
+  //   nhia_basis_mode = "organized_private_sector_basic_salary"
+  // This test verifies the current engine behavior, NOT a universal legal claim.
+  // If payroll_scheme becomes configurable, separate test branches will be required.
   const c2Input = {
     employee_name: "Test",
     month: "2026-03",
     monthly_gross_kobo: 500000000n / 12n // 5M annual
   };
   const c2AnnualGross = c2Input.monthly_gross_kobo * 12n; // 5M
-  const c2Basic = (c2AnnualGross * 30n) / 100n; // 1.5M
-  const c2ExpectedNHIA_annual = (c2Basic * 175n) / 10000n; // 1.75% of basic
-  
+  const c2Basic = (c2AnnualGross * 30n) / 100n; // 30% of annual gross = basic (OPS split assumption)
+  const c2ExpectedNHIA_annual = (c2Basic * 500n) / 10000n; // 5% of annual basic (PAYROLL_RATES.NHIA_EMPLOYEE = 500/10000)
+
   const payroll = calculateBasicPayroll(c2Input);
   const actualNHIAMonthly = payroll.deductions.nhia_employee_kobo;
   const expectedMonthlyNHIA = c2ExpectedNHIA_annual / 12n;
-  console.log(`Test C2 (NHIA Deduct): EXPECTED ${expectedMonthlyNHIA} | ACTUAL ${actualNHIAMonthly}`);
+  console.log(`Test C2 (NHIA Employee Deduction, OPS assumption): EXPECTED ${expectedMonthlyNHIA} | ACTUAL ${actualNHIAMonthly}`);
   console.log(`Test C2: ${actualNHIAMonthly === expectedMonthlyNHIA ? 'PASS' : 'FAIL'}`);
 
   // Test C3: Global PIT Aggregation (Foreign + Domestic)

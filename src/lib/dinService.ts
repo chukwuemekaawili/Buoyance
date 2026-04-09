@@ -134,7 +134,7 @@ export function getStatusLabel(status: SubmissionStatus): string {
     const labels: Record<SubmissionStatus, string> = {
         draft: 'Draft',
         exported: 'Exported (CSV Ready)',
-        submitted: 'Submitted to Portal',
+        submitted: 'Portal Submission Logged',
         paid: 'Payment Made',
         reconciled: 'Reconciled ✅',
     };

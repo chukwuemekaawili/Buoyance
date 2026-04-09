@@ -81,7 +81,7 @@ export function AIPreSubmitCheck({
                     messages: [
                         {
                             role: "user",
-                            content: `A Nigerian taxpayer is about to submit a ${filingTaxType} filing. Compare their declared amounts against their actual ledger records and give exactly 3 checks.
+                            content: `A Nigerian taxpayer is about to save a local ${filingTaxType} filing record in Buoyance (not yet submitted to any tax authority). Compare their declared amounts against their actual ledger records and give exactly 3 checks.
 
 COMPARISON:
 ${JSON.stringify(comparison, null, 2)}

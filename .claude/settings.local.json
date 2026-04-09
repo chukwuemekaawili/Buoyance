@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "Bash(python \"C:/Users/defaultuser0/Desktop/buoyance/buoyance-main/../../../AppData/Local/Temp/create_buoyance_doc.py\")",
+      "Bash(python /tmp/create_buoyance_doc.py)",
+      "Bash(python create_buoyance_doc.py)"
     ]
   }
 }

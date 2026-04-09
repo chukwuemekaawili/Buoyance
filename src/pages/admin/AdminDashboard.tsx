@@ -158,7 +158,7 @@ function AdminDashboardContent() {
                     {stats?.draftFilings || 0} Draft
                   </Badge>
                   <Badge variant="secondary" className="text-xs">
-                    {stats?.submittedFilings || 0} Submitted
+                    {stats?.submittedFilings || 0} Locally Prepared
                   </Badge>
                 </div>
               </CardContent>

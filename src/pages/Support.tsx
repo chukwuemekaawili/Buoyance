@@ -20,7 +20,7 @@ const categories = [
 const faqs = [
   { q: "How accurate are the tax calculations?", a: "Our calculations are deterministic and based exclusively on the Nigeria Tax Act 2025. Every calculation is explainable with no approximations.", category: "Tax Calculator" },
   { q: "What tax bands does Buoyance support?", a: "We support all progressive tax bands under NTA 2025: 0% up to ₦800,000, 15% on next ₦2.2M, 18% on next ₦9M, 21% on next ₦13M, 23% on next ₦25M, and 25% above ₦50M.", category: "Tax Calculator" },
-  { q: "Can I file my taxes directly through Buoyance?", a: "Yes, our platform supports automated preparation and submission workflows integrated with the Nigeria Revenue Service (NRS) for eligible taxpayers.", category: "Filing & Submissions" },
+  { q: "Can I file my taxes directly through Buoyance?", a: "Buoyance currently prepares your filing records and export packs locally. You may still need to submit them yourself on FIRS TaxPro Max or the relevant State IRS portal.", category: "Filing & Submissions" },
   { q: "Is my financial data secure?", a: "Absolutely. We use AES-256 encryption for all data, store information exclusively in Nigerian data centers, and follow strict NRS compliance standards.", category: "Security & Privacy" },
   { q: "How do I cancel my subscription?", a: "You can cancel anytime from your account settings. Your access continues until the end of your billing period.", category: "Billing & Payments" },
   { q: "Can I export my tax reports?", a: "Yes, you can export detailed tax breakdowns in PDF format suitable for record-keeping or sharing with your accountant.", category: "Filing & Submissions" },

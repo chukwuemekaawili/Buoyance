@@ -226,11 +226,11 @@ export function validateTIN(value: string): ValidationResult {
     return { isValid: false, error: "Tax Identification Number is required" };
   }
   
-  // Nigerian TIN format: exactly 10 digits (JTB standard)
+  // Nigerian TIN format: exactly 10 digits (JTB standard) - FORMAT CHECK ONLY
   const cleaned = value.replace(/[\s-]/g, "");
   
   if (!/^\d{10}$/.test(cleaned)) {
-    return { isValid: false, error: "TIN must be a valid 10-digit JTB number" };
+    return { isValid: false, error: "TIN format must be exactly 10 digits" };
   }
   
   return { isValid: true };

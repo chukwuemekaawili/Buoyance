@@ -495,7 +495,7 @@ export default function ArchivedItems() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className="bg-muted text-muted-foreground">
-                                    {filing.status}
+                                    {filing.status === "submitted" ? "Locally Prepared" : filing.status}
                                   </Badge>
                                   <Button
                                     variant="outline"

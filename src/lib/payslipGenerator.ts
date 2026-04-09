@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import { format } from "date-fns";
-import { formatCurrency, type PayrollResult, getPayslipData } from "./payrollEngine";
+import { NHIA_AUTO_CALCULATION_WARNING, formatCurrency, type PayrollResult, getPayslipData } from "./payrollEngine";
 
 export function generatePayslipPDF(result: PayrollResult, employerName: string = "Employer") {
     const doc = new jsPDF({
@@ -163,7 +163,7 @@ export function generatePayslipPDF(result: PayrollResult, employerName: string =
     doc.text(formatCurrency(payslip.net), pageWidth - margin - 10, yPos + 14, { align: "right" });
 
     // Footer notes
-    const footerY = doc.internal.pageSize.getHeight() - 20;
+    const footerY = doc.internal.pageSize.getHeight() - 24;
 
     doc.setDrawColor(220, 220, 220);
     doc.line(margin, footerY, pageWidth - margin, footerY);
@@ -172,6 +172,7 @@ export function generatePayslipPDF(result: PayrollResult, employerName: string =
     doc.setFontSize(8);
     doc.setFont("helvetica", "italic");
     doc.text("This is a system generated payslip. Tax calculations are based on Nigeria Tax Act 2025.", margin, footerY + 6);
+    doc.text(NHIA_AUTO_CALCULATION_WARNING, margin, footerY + 11, { maxWidth: pageWidth - (margin * 2) - 20 });
     doc.text("Buoyance.ng", pageWidth - margin - 10, footerY + 6, { align: "right" });
 
     // Save the PDF

@@ -137,7 +137,7 @@ export function exportAuditLog(userId: string): string {
 export function getEventTypeLabel(type: EventType): string {
     const labels: Record<EventType, string> = {
         filing_created: 'Filing Created',
-        filing_submitted: 'Filing Submitted',
+        filing_submitted: 'Filing Prepared',
         filing_paid: 'Filing Paid',
         filing_reconciled: 'Filing Reconciled',
         payment_made: 'Payment Made',

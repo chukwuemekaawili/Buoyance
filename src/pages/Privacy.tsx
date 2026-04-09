@@ -61,7 +61,7 @@ export default function Privacy() {
           <p className="text-muted-foreground mb-4">We use collected information to:</p>
           <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-6">
             <li>Provide accurate tax calculations and compliance services</li>
-            <li>Process and submit tax filings on your behalf</li>
+            <li>Prepare filing records, export packs, and compliance reminders for you</li>
             <li>Communicate with you about your account and services</li>
             <li>Improve our platform and develop new features</li>
             <li>Comply with legal obligations and regulatory requirements</li>
@@ -86,11 +86,14 @@ export default function Privacy() {
           <h2 className="text-2xl font-bold text-foreground mt-8 mb-4">5. Data Sharing</h2>
           <p className="text-muted-foreground mb-4">We may share your information with:</p>
           <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-6">
-            <li><strong>Nigeria Revenue Service (NRS):</strong> For tax filing submissions as authorized by you</li>
+            <li><strong>Tax authorities or their portals:</strong> Only where you explicitly direct a filing/export workflow or disclosure is legally required</li>
             <li><strong>Payment Processors:</strong> To process subscription payments securely</li>
             <li><strong>Legal Authorities:</strong> When required by law or legal process</li>
             <li><strong>Service Providers:</strong> Third parties who assist in operating our platform (under strict confidentiality agreements)</li>
           </ul>
+          <p className="text-muted-foreground mb-6">
+            At present, Buoyance primarily prepares tax records locally and most filings are completed by you outside the app.
+          </p>
           <p className="text-muted-foreground mb-6">
             We do not sell, trade, or rent your personal information to third parties for marketing purposes.
           </p>

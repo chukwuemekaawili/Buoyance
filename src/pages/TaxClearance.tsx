@@ -84,11 +84,14 @@ export default function TaxClearance() {
 
             if (filings && filings.length > 0) {
                 const filingIds = filings.map(f => f.id);
+                // Fetch confirmed payments: gateway-paid (status=paid) OR admin-verified (verification_status=verified).
+                // Self-reported pending payments do NOT count toward TCC eligibility.
                 const { data: payments, error: paymentsError } = await supabase
                     .from("payments")
-                    .select("filing_id, amount_kobo, status")
+                    .select("filing_id, amount_kobo, status, verification_status")
                     .in("filing_id", filingIds)
-                    .eq("status", "paid");
+                    .or("status.eq.paid,verification_status.eq.verified")
+                    .eq("archived", false);
                     
                 if (paymentsError) throw paymentsError;
 
@@ -124,7 +127,7 @@ export default function TaxClearance() {
             if (error) throw error;
 
             setTccRecords(prev => [data as TCCRequest, ...prev]);
-            toast({ title: "TCC Request Initiated", description: "Your profile has entered the compliance processing queue." });
+            toast({ title: "TCC Record Created", description: "Your local TCC tracking record has been created." });
             setIsUploadDialogOpen(false);
 
         } catch (err: any) {
@@ -163,7 +166,7 @@ export default function TaxClearance() {
 
             if (error) throw error;
 
-            toast({ title: "Proof Uploaded", description: "State updated to 'processing'." });
+            toast({ title: "Proof Uploaded", description: "Your receipt has been attached to this TCC record." });
             fetchTCCs();
 
         } catch (err: any) {
@@ -200,8 +203,11 @@ export default function TaxClearance() {
                                 Tax Clearance Certificates
                             </h1>
                             <p className="text-muted-foreground mt-1 text-lg">
-                                Request and manage your statutory FIRS / State TCC documents.
+                                Track your TCC requests and supporting documents for manual FIRS or State IRS follow-up.
                             </p>
+                            <div className="mt-3 text-sm border-l-4 border-yellow-500 pl-3 py-1 bg-yellow-500/10 text-yellow-800 dark:text-yellow-200">
+                                <strong>Note:</strong> Buoyance currently tracks TCC records and evidence locally. Submission, payment confirmation, and authority follow-up may still happen outside the app.
+                            </div>
                         </div>
 
                         <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
@@ -213,9 +219,9 @@ export default function TaxClearance() {
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>New TCC Application</DialogTitle>
+                                    <DialogTitle>New TCC Tracking Record</DialogTitle>
                                     <DialogDescription>
-                                        Select the assessment year you need clearance for. You must have fully paid ledgers for this period.
+                                        Select the assessment year you need clearance for. Buoyance will create a local record for your request and supporting evidence.
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="py-4 space-y-4">
@@ -234,7 +240,7 @@ export default function TaxClearance() {
                                 <DialogFooter>
                                     <Button onClick={handleApply} disabled={isApplying}>
                                         {isApplying ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                                        Initiate Application
+                                        Create Record
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>
@@ -259,8 +265,8 @@ export default function TaxClearance() {
                         <Card className="bg-background">
                             <CardContent className="p-6">
                                 <Clock className="h-8 w-8 text-blue-500 mb-2" />
-                                <h3 className="font-semibold text-lg">Processing Time</h3>
-                                <p className="text-sm text-muted-foreground mt-1">Normally 2-4 weeks. Uploading your Remita payment receipt instantly accelerates the validation check.</p>
+                                <h3 className="font-semibold text-lg">Tracking Guidance</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Authority timelines vary. Uploading your Remita receipt helps keep your internal TCC record complete.</p>
                             </CardContent>
                         </Card>
                     </div>
@@ -286,7 +292,7 @@ export default function TaxClearance() {
                                             <div className="grid grid-cols-2 gap-4 mt-6">
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">Application Number</p>
-                                                    <p className="font-mono text-sm">{record.application_number || 'Pending FIRS ID'}</p>
+                                                    <p className="font-mono text-sm">{record.application_number || 'Pending Authority Ref'}</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">TCC Number</p>
@@ -299,7 +305,7 @@ export default function TaxClearance() {
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm text-muted-foreground">Submitted</p>
+                                                    <p className="text-sm text-muted-foreground">Locally Prepared</p>
                                                     <p className="font-mono text-sm">{new Date(record.created_at).toLocaleDateString()}</p>
                                                 </div>
                                             </div>
@@ -309,7 +315,7 @@ export default function TaxClearance() {
                                             {record.status === 'pending' && !record.remita_rrr && (
                                                 <>
                                                     <p className="text-xs text-center text-muted-foreground mb-1">
-                                                        Paid processing fees at bank? Upload Remita receipt here.
+                                                        Already paid outside Buoyance? Upload your Remita receipt to keep this record complete.
                                                     </p>
                                                     <div>
                                                         <input
@@ -329,16 +335,24 @@ export default function TaxClearance() {
                                             )}
 
                                             {record.status === 'approved' && (
-                                                <Button className="w-full bg-green-600 hover:bg-green-700">
-                                                    <Download className="h-4 w-4 mr-2" /> Download Final TCC
+                                                <Button
+                                                    className="w-full bg-green-600 hover:bg-green-700"
+                                                    disabled={!record.tcc_document_url}
+                                                    onClick={() => {
+                                                        if (record.tcc_document_url) {
+                                                            window.open(record.tcc_document_url, "_blank", "noopener,noreferrer");
+                                                        }
+                                                    }}
+                                                >
+                                                    <Download className="h-4 w-4 mr-2" /> Open TCC Document
                                                 </Button>
                                             )}
 
                                             {record.status !== 'approved' && record.remita_rrr && (
                                                 <div className="text-center">
                                                     <Clock className="h-8 w-8 text-amber-500 mx-auto mb-2" />
-                                                    <p className="text-sm font-medium">Under FIRS Review</p>
-                                                    <p className="text-xs text-muted-foreground">Awaiting final validation</p>
+                                                    <p className="text-sm font-medium">Awaiting Authority Follow-Up</p>
+                                                    <p className="text-xs text-muted-foreground">Track progress with the issuing authority outside Buoyance</p>
                                                 </div>
                                             )}
                                         </div>

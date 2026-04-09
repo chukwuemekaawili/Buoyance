@@ -30,14 +30,12 @@ import {
   Eye, 
   Archive, 
   CheckCircle, 
-  XCircle, 
   Loader2,
   FileText
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   fetchUserPayments, 
-  updatePaymentStatus, 
   archivePayment, 
   Payment, 
   PaymentStatus 
@@ -69,7 +67,6 @@ function PaymentsContent() {
   const [activeTab, setActiveTab] = useState("all");
   const [archiveTarget, setArchiveTarget] = useState<Payment | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
-  const [updatingPaymentId, setUpdatingPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -94,59 +91,6 @@ function PaymentsContent() {
     }
   };
 
-  const handleMarkPaid = async (payment: Payment) => {
-    setUpdatingPaymentId(payment.id);
-    try {
-      await updatePaymentStatus(payment.id, "paid");
-      await writeAuditLog({
-        action: AuditActions.PAYMENT_UPDATED,
-        entity_type: "payment",
-        entity_id: payment.id,
-        after_json: { status: "paid" },
-      });
-      toast({
-        title: "Payment Updated",
-        description: "Payment marked as paid.",
-      });
-      loadPayments();
-    } catch (error) {
-      console.error("Error updating payment:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update payment status.",
-        variant: "destructive",
-      });
-    } finally {
-      setUpdatingPaymentId(null);
-    }
-  };
-
-  const handleMarkFailed = async (payment: Payment) => {
-    setUpdatingPaymentId(payment.id);
-    try {
-      await updatePaymentStatus(payment.id, "failed");
-      await writeAuditLog({
-        action: AuditActions.PAYMENT_UPDATED,
-        entity_type: "payment",
-        entity_id: payment.id,
-        after_json: { status: "failed" },
-      });
-      toast({
-        title: "Payment Updated",
-        description: "Payment marked as failed.",
-      });
-      loadPayments();
-    } catch (error) {
-      console.error("Error updating payment:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update payment status.",
-        variant: "destructive",
-      });
-    } finally {
-      setUpdatingPaymentId(null);
-    }
-  };
 
   const handleArchive = async () => {
     if (!archiveTarget) return;
@@ -242,10 +186,28 @@ function PaymentsContent() {
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={statusColors[payment.status]}>
-                              {payment.status}
-                            </Badge>
+                          <div className="flex items-center gap-2 flex-wrap justify-end">
+                            {/* Show a specific label for self-reported pending vs gateway pending */}
+                            {payment.status === "pending" && payment.verification_status === "pending" && (
+                              <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 text-xs">
+                                Awaiting Review
+                              </Badge>
+                            )}
+                            {payment.status === "pending" && payment.verification_status !== "pending" && (
+                              <Badge className={statusColors["pending"]}>
+                                pending
+                              </Badge>
+                            )}
+                            {payment.status !== "pending" && (
+                              <Badge className={statusColors[payment.status]}>
+                                {payment.status}
+                              </Badge>
+                            )}
+                            {payment.verification_status === "verified" && (
+                              <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs">
+                                Verified
+                              </Badge>
+                            )}
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -259,23 +221,17 @@ function PaymentsContent() {
                                     View Filing
                                   </Link>
                                 </DropdownMenuItem>
-                                {payment.status === "pending" && (
-                                  <>
-                                    <DropdownMenuItem
-                                      onClick={() => handleMarkPaid(payment)}
-                                      disabled={updatingPaymentId === payment.id}
-                                    >
-                                      <CheckCircle className="h-4 w-4 mr-2" />
-                                      Mark as Paid
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => handleMarkFailed(payment)}
-                                      disabled={updatingPaymentId === payment.id}
-                                    >
-                                      <XCircle className="h-4 w-4 mr-2" />
-                                      Mark as Failed
-                                    </DropdownMenuItem>
-                                  </>
+                                {payment.status === "pending" && payment.verification_status === "pending" && (
+                                  <DropdownMenuItem disabled>
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Awaiting Admin Review
+                                  </DropdownMenuItem>
+                                )}
+                                {payment.status === "pending" && payment.payment_method === "paystack" && (
+                                  <DropdownMenuItem disabled>
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Awaiting Gateway Confirmation
+                                  </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem
                                   onClick={() => setArchiveTarget(payment)}

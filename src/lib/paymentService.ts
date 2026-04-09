@@ -15,13 +15,53 @@ export interface Payment {
   currency: string;
   payment_method: string | null;
   reference: string | null;
+  /**
+   * Financial transaction state.
+   * "pending"  — awaiting gateway callback or admin review
+   * "paid"     — confirmed via gateway callback (Paystack/Flutterwave)
+   * "failed"   — gateway or admin rejected
+   * "refunded" — reversed
+   *
+   * NOTE: Manually logged payments created via "Record Manual Payment" stay "pending"
+   * until an admin verifies them via the admin_verify_payment RPC. Do NOT transition
+   * this to "paid" from the client — that bypasses the verification workflow.
+   */
   status: "pending" | "paid" | "failed" | "refunded";
+  /**
+   * Evidence/receipt verification state (separate from financial state).
+   * "pending"  — logged, awaiting admin review
+   * "verified" — admin has confirmed the payment evidence
+   * "rejected" — admin rejected the payment evidence
+   *
+   * A payment is considered settled for balance purposes when:
+   *   status === "paid"  (gateway confirmed)  OR
+   *   verification_status === "verified"  (admin verified a manually logged payment)
+   */
+  verification_status: "pending" | "verified" | "rejected";
   paid_at: string | null;
   created_at: string;
   archived: boolean;
 }
 
 export type PaymentStatus = Payment["status"];
+
+/**
+ * Single source of truth for "is this payment confirmed/settled?".
+ *
+ * A payment counts toward a filing's paid balance when:
+ *   - status === "paid"                 → Paystack/Flutterwave gateway confirmed
+ *   - verification_status === "verified" → admin verified a manually logged payment
+ *
+ * Everything else (pending, rejected, failed) does NOT count.
+ *
+ * Use this function everywhere instead of inlining the rule.
+ */
+export function isPaymentConfirmed(payment: {
+  status: string;
+  verification_status?: string | null;
+}): boolean {
+  return payment.status === "paid" || payment.verification_status === "verified";
+}
 
 /**
  * Fetch all payments for the current user.
@@ -164,16 +204,18 @@ export async function archivePayment(paymentId: string): Promise<void> {
 }
 
 /**
- * Get total paid amount for user (sum of all paid payments).
+ * Get total confirmed amount for the current user across all filings.
+ * Uses the combined rule: status=paid (gateway) OR verification_status=verified (admin).
  */
 export async function getTotalPaidAmount(): Promise<bigint> {
   const { data, error } = await supabase
     .from("payments")
-    .select("amount_kobo")
-    .eq("status", "paid");
+    .select("amount_kobo, status, verification_status")
+    .or("status.eq.paid,verification_status.eq.verified")
+    .eq("archived", false);
 
   if (error) {
-    console.error("Failed to get total paid:", error);
+    console.error("Failed to get total confirmed paid:", error);
     throw error;
   }
 
@@ -186,17 +228,19 @@ export async function getTotalPaidAmount(): Promise<bigint> {
 }
 
 /**
- * Get total paid for a specific filing.
+ * Get total confirmed amount for a specific filing.
+ * Uses the combined rule: status=paid (gateway) OR verification_status=verified (admin).
  */
 export async function getFilingTotalPaid(filingId: string): Promise<bigint> {
   const { data, error } = await supabase
     .from("payments")
-    .select("amount_kobo")
+    .select("amount_kobo, status, verification_status")
     .eq("filing_id", filingId)
-    .eq("status", "paid");
+    .or("status.eq.paid,verification_status.eq.verified")
+    .eq("archived", false);
 
   if (error) {
-    console.error("Failed to get filing total paid:", error);
+    console.error("Failed to get filing confirmed paid:", error);
     throw error;
   }
 

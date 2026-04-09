@@ -36,7 +36,6 @@ import {
   Send,
   Plus,
   CreditCard,
-  CheckCircle,
   Upload,
   FileSpreadsheet,
   ClipboardList,
@@ -64,7 +63,7 @@ import {
 import {
   fetchFilingPayments,
   createPayment,
-  updatePaymentStatus,
+  isPaymentConfirmed,
   type Payment,
 } from "@/lib/paymentService";
 import { initiatePayment } from "@/lib/paymentGatewayService";
@@ -199,11 +198,12 @@ function computeOutput(filing: Filing): Record<string, unknown> {
   }
 }
 
+// ExtendedPayment adds receipt/upload columns that are stored in the DB but
+// not in the base Payment interface. verification_status is inherited from Payment.
 interface ExtendedPayment extends Payment {
   receipt_path?: string | null;
   receipt_file_name?: string | null;
   receipt_uploaded_at?: string | null;
-  verification_status?: string;
 }
 
 // Copy button component
@@ -308,8 +308,11 @@ export default function FilingDetail() {
       const amountKobo = koboToString(parseNgnToKobo(paymentAmount));
       const paymentId = await createPayment({ filingId: filing.id, amountKobo, method: paymentMethod, reference: paymentReference });
 
-      // CRITICAL: Mark payment as "paid" immediately since user is recording an already-made payment
-      await updatePaymentStatus(paymentId, "paid");
+      // DO NOT call updatePaymentStatus here.
+      // The record_payment RPC already creates the payment with status="pending"
+      // and verification_status="pending". It stays that way until an admin reviews it
+      // via the admin_verify_payment RPC. Changing status to "paid" from the client
+      // bypasses the verification workflow entirely.
 
       // Upload receipt if provided
       if (receiptFile) {
@@ -321,20 +324,18 @@ export default function FilingDetail() {
         await supabase.from("payments").update({ receipt_path: filePath, receipt_file_name: receiptFile.name, receipt_uploaded_at: new Date().toISOString() }).eq("id", paymentId);
       }
 
-      // Trigger notification for payment recorded
-      await NotificationTriggers.paymentVerified(paymentId, formatKoboToNgn(stringToKobo(amountKobo)));
+      // Notification uses "self-reported" wording — not gateway-confirmed.
+      await NotificationTriggers.paymentSelfReported(paymentId, formatKoboToNgn(stringToKobo(amountKobo)));
 
-      toast({ title: "Payment recorded", description: "Your payment has been logged and your filing status updated to PAID." });
+      toast({
+        title: "Payment logged for review",
+        description: "Your payment evidence has been submitted. A team member will verify it — this typically takes 1–2 business days.",
+      });
       setShowPaymentDialog(false);
       setPaymentAmount(""); setPaymentReference(""); setReceiptFile(null);
       loadFiling();
     } catch (err: any) { toast({ title: "Failed to add payment", description: err.message, variant: "destructive" }); }
     finally { setAddingPayment(false); }
-  };
-
-  const handleMarkPaid = async (paymentId: string) => {
-    try { await updatePaymentStatus(paymentId, "paid"); toast({ title: "Payment marked as paid" }); loadFiling(); }
-    catch (err: any) { toast({ title: "Failed to update payment", description: err.message, variant: "destructive" }); }
   };
 
   const handleDownloadPDF = () => { if (filing) downloadFilingPDF(filing); };
@@ -355,14 +356,25 @@ export default function FilingDetail() {
 
   const computedOutput = filing ? computeOutput(filing) : {};
   const taxDueKobo = filing ? getFilingTaxKobo({ ...filing, output_json: computedOutput }) : 0n;
-  const totalPaidKobo = payments.filter((p) => p.status === "paid").reduce((sum, p) => addKobo(sum, stringToKobo(p.amount_kobo)), 0n);
-  const balanceKobo = taxDueKobo > totalPaidKobo ? taxDueKobo - totalPaidKobo : 0n;
 
-  // Compute payment status
+  // Uses isPaymentConfirmed (single source of truth): status==="paid" OR verification_status==="verified".
+  // Self-reported pending payments do NOT count until admin verifies via admin_verify_payment RPC.
+  const confirmedPaidKobo = payments
+    .filter(p => isPaymentConfirmed(p))
+    .reduce((sum, p) => addKobo(sum, stringToKobo(p.amount_kobo)), 0n);
+
+  // Pending review = user-logged manual payments awaiting admin review.
+  const pendingReviewKobo = payments
+    .filter(p => p.status === "pending" && p.verification_status === "pending")
+    .reduce((sum, p) => addKobo(sum, stringToKobo(p.amount_kobo)), 0n);
+
+  const balanceKobo = taxDueKobo > confirmedPaidKobo ? taxDueKobo - confirmedPaidKobo : 0n;
+
+  // Payment status is based on confirmed amounts only — self-reported pending does not count.
   const getPaymentStatus = (): "unpaid" | "partial" | "paid" | null => {
     if (taxDueKobo === 0n) return null;
-    if (totalPaidKobo === 0n) return "unpaid";
-    if (totalPaidKobo < taxDueKobo) return "partial";
+    if (confirmedPaidKobo === 0n) return "unpaid";
+    if (confirmedPaidKobo < taxDueKobo) return "partial";
     return "paid";
   };
   const paymentStatus = getPaymentStatus();
@@ -410,7 +422,9 @@ export default function FilingDetail() {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap justify-end">
                   {/* Filing Status Badge */}
-                  <Badge variant="outline" className={statusColors[filing.status]}>{filing.status}</Badge>
+                  <Badge variant="outline" className={statusColors[filing.status]}>
+                    {filing.status === "submitted" ? "Locally Prepared" : filing.status}
+                  </Badge>
 
                   {/* Payment Status Badge - TASK 1 */}
                   {!isDraft && paymentStatus && (
@@ -470,14 +484,14 @@ export default function FilingDetail() {
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>Filing ID: {filing.id}</p>
                 {filing.rule_version && <p>Rule Version: {filing.rule_version}</p>}
-                {filing.submitted_at && <p>Submitted: {format(new Date(filing.submitted_at), "MMMM d, yyyy 'at' h:mm a")}</p>}
+                {filing.submitted_at && <p>Prepared: {format(new Date(filing.submitted_at), "MMMM d, yyyy 'at' h:mm a")}</p>}
               </div>
               {isDraft && (
                 <div className="flex flex-wrap gap-3 pt-4">
                   <Button variant="outline" onClick={() => navigate(`/filings/new?edit=${filing.id}`)}>
                     <FileText className="h-4 w-4 mr-2" />Edit Draft
                   </Button>
-                  <Button onClick={handleSubmit} disabled={submitting}>{submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}Finalize & Self-File</Button>
+                  <Button onClick={handleSubmit} disabled={submitting}>{submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}Save Filing Record</Button>
                 </div>
               )}
 
@@ -605,7 +619,7 @@ export default function FilingDetail() {
                   <div className="text-sm text-muted-foreground pt-4 border-t">
                     <p><strong>Filing ID:</strong> {filing.id}</p>
                     <p><strong>Rule Version:</strong> {filing.rule_version || "N/A"}</p>
-                    {filing.submitted_at && <p><strong>Submitted:</strong> {format(new Date(filing.submitted_at), "dd/MM/yyyy 'at' HH:mm")}</p>}
+                    {filing.submitted_at && <p><strong>Prepared:</strong> {format(new Date(filing.submitted_at), "dd/MM/yyyy 'at' HH:mm")}</p>}
                   </div>
                 </CardContent>
               </Card>
@@ -626,13 +640,21 @@ export default function FilingDetail() {
                             <CreditCard className="h-5 w-5" />
                             Tax Payment Ledger
                           </CardTitle>
-                          <CardDescription>
-                            Tax Due: {formatKoboToNgn(taxDueKobo)} | Paid: {formatKoboToNgn(totalPaidKobo)}
-                            {totalPaidKobo >= taxDueKobo && taxDueKobo > 0n && (
-                              <Badge className="ml-2 bg-green-600">PAID IN FULL</Badge>
-                            )}
-                            {totalPaidKobo === 0n && taxDueKobo > 0n && (
-                              <Badge variant="destructive" className="ml-2">UNPAID</Badge>
+                          <CardDescription className="space-y-1 mt-1">
+                            <span className="block">Tax Due: {formatKoboToNgn(taxDueKobo)}</span>
+                            <span className="block">
+                              Confirmed Paid: {formatKoboToNgn(confirmedPaidKobo)}
+                              {confirmedPaidKobo >= taxDueKobo && taxDueKobo > 0n && (
+                                <Badge className="ml-2 bg-green-600">PAID IN FULL</Badge>
+                              )}
+                              {confirmedPaidKobo === 0n && taxDueKobo > 0n && (
+                                <Badge variant="destructive" className="ml-2">UNPAID</Badge>
+                              )}
+                            </span>
+                            {pendingReviewKobo > 0n && (
+                              <span className="block text-amber-600 dark:text-amber-400">
+                                Awaiting Review: {formatKoboToNgn(pendingReviewKobo)} (not yet verified)
+                              </span>
                             )}
                           </CardDescription>
                         </div>
@@ -668,8 +690,11 @@ export default function FilingDetail() {
                             <DialogContent className="max-h-[85vh] overflow-y-auto">
                               <DialogHeader>
                                 <DialogTitle>Log External Payment</DialogTitle>
-                                <DialogDescription>
-                                  This ledger tracks compliance. Make the actual payment via Remita or the government portal, then log it here.
+                                <DialogDescription className="space-y-2">
+                                  <span className="block">First make the actual payment via Remita or your state/FIRS portal, then log your evidence here.</span>
+                                  <span className="block font-medium text-amber-600 dark:text-amber-400">
+                                    Logged payments are reviewed by our team before being marked as verified. This typically takes 1–2 business days. Your filing will not show as paid until verification is complete.
+                                  </span>
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="space-y-4 py-4">
@@ -710,23 +735,32 @@ export default function FilingDetail() {
                                   </p>
                                 </div>
                                 <div>
-                                  <Label>Receipt (optional)</Label>
+                                  <Label>
+                                    Receipt <span className="text-destructive">*</span>
+                                  </Label>
                                   <Input
                                     type="file"
                                     accept="image/*,.pdf"
                                     onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
                                     className="mt-1"
                                   />
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    Upload payment evidence for admin verification
+                                  {/* Receipt is required because admin_verify_payment RPC rejects
+                                      payments with no receipt_path. Without a receipt, this payment
+                                      will never transition to verified and will not count toward balance. */}
+                                  <p className="text-xs text-destructive mt-1 font-medium">
+                                    Required — admin verification is not possible without a receipt or proof of payment.
                                   </p>
                                 </div>
                               </div>
                               <DialogFooter>
                                 <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>Cancel</Button>
-                                <Button onClick={handleAddPayment} disabled={addingPayment || !paymentAmount}>
+                                <Button
+                                  onClick={handleAddPayment}
+                                  disabled={addingPayment || !paymentAmount || !receiptFile}
+                                  title={!receiptFile ? "A receipt is required before submitting for review" : undefined}
+                                >
                                   {addingPayment && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                                  Record Payment
+                                  Submit for Review
                                 </Button>
                               </DialogFooter>
                             </DialogContent>
@@ -735,14 +769,14 @@ export default function FilingDetail() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <Alert className="mb-4 bg-muted/50">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription className="text-xs">
-                          This ledger tracks your tax compliance. Make the actual payment via Remita or the FIRS/State portal, then record it here with your reference number.
+                      <Alert className="mb-4 bg-amber-500/10 border-amber-500/30">
+                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                        <AlertDescription className="text-xs text-amber-800 dark:text-amber-200">
+                          Make the actual payment via Remita or the FIRS/State portal first, then log your evidence here. Logged payments are reviewed by our team before being counted as verified — your filing will not show as paid until that review is complete.
                         </AlertDescription>
                       </Alert>
                       {payments.length === 0 ? (
-                        <p className="text-muted-foreground text-center py-4">No payments recorded yet. Record your payment after making it via Remita or the tax portal.</p>
+                        <p className="text-muted-foreground text-center py-4">No payment evidence logged yet. Pay via Remita or the tax portal first, then log it here.</p>
                       ) : (
                         <div className="space-y-3">
                           {payments.map((payment) => (
@@ -752,11 +786,31 @@ export default function FilingDetail() {
                                 <p className="text-xs text-muted-foreground">{payment.payment_method?.replace("_", " ")} • {format(new Date(payment.created_at), "dd/MM/yyyy")}{payment.reference && ` • Ref: ${payment.reference}`}</p>
                                 {payment.receipt_path && <p className="text-xs text-primary mt-1"><Upload className="h-3 w-3 inline mr-1" />Receipt uploaded</p>}
                               </div>
-                              <div className="flex items-center gap-2">
-                                {payment.verification_status && <Badge variant="outline" className={statusColors[payment.verification_status]}>{payment.verification_status}</Badge>}
-                                <Badge variant="outline" className={statusColors[payment.status]}>{payment.status}</Badge>
-                                {payment.status === "pending" && <Button size="sm" variant="ghost" onClick={() => handleMarkPaid(payment.id)}><CheckCircle className="h-4 w-4" /></Button>}
-                                {payment.receipt_path && <Button size="sm" variant="ghost" onClick={async () => { const url = await getReceiptSignedUrl(payment.receipt_path!); if (url) window.open(url, "_blank"); }}><ExternalLink className="h-4 w-4" /></Button>}
+                              <div className="flex items-center gap-2 flex-wrap justify-end">
+                                {/* Verification status badge */}
+                                {payment.verification_status === "verified" && (
+                                  <Badge variant="outline" className="bg-green-600/10 text-green-600 border-green-600/20 text-xs">Admin Verified</Badge>
+                                )}
+                                {payment.verification_status === "rejected" && (
+                                  <Badge variant="outline" className="bg-red-600/10 text-red-600 border-red-600/20 text-xs">Rejected</Badge>
+                                )}
+                                {payment.status === "pending" && payment.verification_status === "pending" && (
+                                  <Badge variant="outline" className="bg-amber-600/10 text-amber-600 border-amber-600/20 text-xs">Awaiting Review</Badge>
+                                )}
+                                {payment.status === "pending" && payment.payment_method === "paystack" && payment.verification_status !== "pending" && (
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap">Awaiting Gateway</span>
+                                )}
+                                {payment.status === "paid" && (
+                                  <Badge variant="outline" className="bg-green-600/10 text-green-600 border-green-600/20 text-xs">Confirmed</Badge>
+                                )}
+                                {payment.status === "failed" && (
+                                  <Badge variant="outline" className="bg-red-600/10 text-red-600 border-red-600/20 text-xs">Failed</Badge>
+                                )}
+                                {payment.receipt_path && (
+                                  <Button size="sm" variant="ghost" onClick={async () => { const url = await getReceiptSignedUrl(payment.receipt_path!); if (url) window.open(url, "_blank"); }}>
+                                    <ExternalLink className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           ))}

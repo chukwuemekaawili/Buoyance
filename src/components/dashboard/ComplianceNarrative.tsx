@@ -33,7 +33,7 @@ export function ComplianceNarrative({
                     messages: [
                         {
                             role: "user",
-                            content: `A Nigerian taxpayer has a compliance score of ${score}%. They have ${overdueCount} overdue filing(s), ${upcomingCount} upcoming deadline(s) in the next 30 days, and have submitted ${filingsSubmitted} out of ${filingsTotal} total filings.
+                            content: `A Nigerian taxpayer has a compliance score of ${score}%. They have ${overdueCount} overdue filing(s), ${upcomingCount} upcoming deadline(s) in the next 30 days, and have prepared ${filingsSubmitted} out of ${filingsTotal} total filing records locally in Buoyance.
 
 Write exactly 2 sentences: First sentence summarizes their compliance status. Second sentence states the single most urgent action they should take right now. Be specific and direct. Do not use markdown.`,
                         },

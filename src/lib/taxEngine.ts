@@ -25,8 +25,9 @@ export const PAYROLL_RATES = {
   PENSION_EMPLOYEE: 8n,        // 8% of gross
   PENSION_EMPLOYER: 10n,       // 10% of gross
   NHF: 25n,                    // 2.5% (numerator 25, denominator 1000) of basic salary
-  NHIA_EMPLOYEE: 175n,         // 1.75% (numerator 175, denominator 10000) of basic salary
-  NHIA_EMPLOYER: 10n,          // 10% of gross
+  // Organized Private Sector (OPS) NHIA Rates (15% of basic salary total)
+  NHIA_EMPLOYEE: 500n,         // 5% (numerator 500, denominator 10000) of basic salary
+  NHIA_EMPLOYER: 10n,          // 10% of basic salary
   NSITF: 1n,                   // 1% of gross (employer only)
 };
 

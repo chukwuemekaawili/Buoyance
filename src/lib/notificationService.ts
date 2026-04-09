@@ -141,7 +141,7 @@ export const NotificationTriggers = {
     await createNotification({
       type: "filing_draft_created",
       title: "Filing Draft Created",
-      message: `Your ${taxType} filing draft has been created. Complete it to submit.`,
+      message: `Your ${taxType} filing draft has been created. Complete it to prepare your filing record.`,
       metadata: { filing_id: filingId, tax_type: taxType },
     });
   },
@@ -149,8 +149,8 @@ export const NotificationTriggers = {
   async filingSubmitted(filingId: string, taxType: string): Promise<void> {
     await createNotification({
       type: "filing_submitted",
-      title: "Filing Submitted",
-      message: `Your ${taxType} filing has been submitted successfully.`,
+      title: "Filing Prepared",
+      message: `Your ${taxType} filing record has been prepared in Buoyance. Submit it to the relevant tax authority if required.`,
       metadata: { filing_id: filingId, tax_type: taxType },
     });
   },
@@ -161,6 +161,22 @@ export const NotificationTriggers = {
       title: "Payment Verified",
       message: `Your payment of ${amount} has been verified.`,
       metadata: { payment_id: paymentId },
+    });
+  },
+
+  /**
+   * Called when a user manually records a self-reported external payment.
+   * This does NOT imply gateway or authority verification — the user is asserting
+   * they made the payment externally (e.g., via Remita or government portal).
+   * TODO(payment-integrity): Admin/backend review of reference numbers against
+   * authority records is required before treating these as definitively verified.
+   */
+  async paymentSelfReported(paymentId: string, amount: string): Promise<void> {
+    await createNotification({
+      type: "payment_verified",
+      title: "Payment Logged (Self-Reported)",
+      message: `Your payment of ${amount} has been recorded as self-reported. Keep your receipt/reference for verification.`,
+      metadata: { payment_id: paymentId, self_reported: true },
     });
   },
 

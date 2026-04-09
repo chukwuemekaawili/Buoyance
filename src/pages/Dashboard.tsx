@@ -42,6 +42,7 @@ import {
 import { format } from "date-fns";
 import { formatKoboToNgn, stringToKobo, addKobo } from "@/lib/money";
 import type { ProfileData, FilingData, PaymentData, ActivityData } from "@/lib/taxHealthCalculator";
+import { isPaymentConfirmed } from "@/lib/paymentService";
 
 interface DashboardStats {
   calculationsCount: number;
@@ -212,6 +213,7 @@ function DashboardContent() {
           filing_id: p.filing_id,
           amount_kobo: p.amount_kobo,
           status: p.status,
+          verification_status: p.verification_status,
         }))
       );
 
@@ -222,7 +224,7 @@ function DashboardContent() {
 
       let totalPaidKobo = 0n;
       for (const payment of payments || []) {
-        if (payment.status === "paid") {
+        if (isPaymentConfirmed(payment)) {
           totalPaidKobo = addKobo(totalPaidKobo, stringToKobo(payment.amount_kobo));
         }
       }
@@ -337,7 +339,7 @@ function DashboardContent() {
                   <CardContent>
                     <p className="text-3xl font-bold">{stats.filingsTotal}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {stats.filingsSubmitted} submitted
+                      {stats.filingsSubmitted} locally prepared
                     </p>
                   </CardContent>
                 </Card>
@@ -481,7 +483,7 @@ function DashboardContent() {
                                   variant="outline"
                                   className={statusColors[activity.status] || ""}
                                 >
-                                  {activity.status}
+                                  {activity.status === "submitted" ? "Locally Prepared" : activity.status}
                                 </Badge>
                               )}
                             </div>
