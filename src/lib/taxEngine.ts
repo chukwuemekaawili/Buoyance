@@ -15,9 +15,10 @@ export const NTA2025_PIT_BANDS = [
   { minKobo: 5000000000n, maxKobo: null, rateNumerator: 25n },   // Above ₦50M: 25%
 ];
 
-// --- Reliefs and Allowances ---
+// --- Reliefs and Allowances (NTA 2025) ---
 export const RENT_RELIEF = {
-  MAX_KOBO: 20000000n,         // ₦200,000 max
+  RATE_NUMERATOR: 20n,         // 20% of annual rent paid
+  MAX_KOBO: 50000000n,         // ₦500,000 cap (NTA 2025 — raised from ₦200,000 under old PITA)
 };
 
 // --- Payroll Deduction Rates ---
@@ -43,10 +44,15 @@ export const COMPLIANCE_DEADLINES = {
 // --- Centralized Tax Calculation Functions ---
 
 /**
- * Applies progressive PIT bands to a globally aggregated taxable income.
+ * Applies progressive PIT bands to taxable income, with NTA 2025 minimum tax floor.
+ * Minimum tax = 1% of gross income where band calculation yields less.
+ * annualGrossKobo is required to compute the minimum tax floor.
  */
-export function calculateGlobalPIT(taxableIncomeKobo: bigint): bigint {
-  if (taxableIncomeKobo <= 0n) return 0n;
+export function calculateGlobalPIT(taxableIncomeKobo: bigint, annualGrossKobo?: bigint): bigint {
+  if (taxableIncomeKobo <= 0n) {
+    // Minimum tax: 1% of gross (PwC Nigeria individual summary; verify against NTA 2025 gazette)
+    return annualGrossKobo ? (annualGrossKobo / 100n) : 0n;
+  }
 
   let tax = 0n;
   let remaining = taxableIncomeKobo;
@@ -59,20 +65,21 @@ export function calculateGlobalPIT(taxableIncomeKobo: bigint): bigint {
     remaining -= taxableInBracket;
   }
 
+  // Apply minimum tax floor: tax must be at least 1% of gross income
+  if (annualGrossKobo) {
+    const minimumTax = annualGrossKobo / 100n;
+    if (tax < minimumTax) return minimumTax;
+  }
+
   return tax;
 }
 
 /**
- * Calculates correct Rent Relief according to NTA 2025.
- * Cap is MIN(Rent Paid, 200,000, 1/6 of gross)
+ * Calculates Rent Relief under NTA 2025.
+ * Relief = 20% of annual rent paid, capped at ₦500,000.
+ * (Old PITA formula of MIN(rent, ₦200K, 1/6 gross) no longer applies.)
  */
-export function calculateRentRelief(annualRentKobo: bigint, annualGrossKobo: bigint): bigint {
-  const cap1 = RENT_RELIEF.MAX_KOBO;
-  const cap2 = annualGrossKobo / 6n;
-  
-  let actualRelief = annualRentKobo;
-  if (cap1 < actualRelief) actualRelief = cap1;
-  if (cap2 < actualRelief) actualRelief = cap2;
-  
-  return actualRelief;
+export function calculateRentRelief(annualRentKobo: bigint, _annualGrossKobo: bigint): bigint {
+  const relief = (annualRentKobo * RENT_RELIEF.RATE_NUMERATOR) / 100n;
+  return relief < RENT_RELIEF.MAX_KOBO ? relief : RENT_RELIEF.MAX_KOBO;
 }

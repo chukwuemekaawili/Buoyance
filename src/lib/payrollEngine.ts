@@ -136,8 +136,8 @@ function calculatePAYE(
     // Taxable income (gross minus all allowable deductions)
     const taxableIncome = annualGrossKobo - rentRelief - pensionDeduction - nhfDeduction - nhiaDeduction;
 
-    // Apply centralized global PIT algorithm
-    return calculateGlobalPIT(taxableIncome);
+    // Pass gross for minimum tax floor (1% of gross where band calc yields less)
+    return calculateGlobalPIT(taxableIncome, annualGrossKobo);
 }
 
 export function calculateBasicPayroll(input: PayrollInput): PayrollResult {
