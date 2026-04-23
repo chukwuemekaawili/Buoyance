@@ -29,11 +29,11 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.ai-chat]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ocr-extract]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 import_map = "./functions/ocr-extract/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
