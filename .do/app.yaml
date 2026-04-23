@@ -9,3 +9,12 @@ static_sites:
     output_dir: dist
     catchall_document: index.html
     environment_slug: node-js
+    envs:
+      - key: VITE_SUPABASE_URL
+        scope: BUILD_TIME
+        type: GENERAL
+        value: https://bajwsjrqrsglsndgtfpp.supabase.co
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        scope: BUILD_TIME
+        type: GENERAL
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhandzanJxcnNnbHNuZGd0ZnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0MDEwMjgsImV4cCI6MjA4Mzk3NzAyOH0.qb_tyJ6ikteGf-v-topAs4ymW37u0Xq2NGB-MeQeLQs
