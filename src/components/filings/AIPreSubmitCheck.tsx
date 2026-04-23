@@ -3,6 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Shield, Loader2, CheckCircle2, AlertTriangle, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+import { useFeatureGate } from "@/hooks/useFeatureGate";
+import { useToast } from "@/hooks/use-toast";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import { formatKoboToNgn, stringToKobo, addKobo } from "@/lib/money";
 
 interface AIPreSubmitCheckProps {
@@ -19,6 +23,17 @@ interface CheckResult {
     text: string;
 }
 
+type IncomeAmountRow = Pick<Database["public"]["Tables"]["incomes"]["Row"], "amount_kobo">;
+type ExpenseAmountRow = Pick<Database["public"]["Tables"]["expenses"]["Row"], "amount_kobo" | "deductible">;
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return fallback;
+};
+
 /**
  * Filing Pre-Submit AI Check (Feature 2)
  * Before submitting a filing, this queries the user's ledger for the filing period,
@@ -32,11 +47,33 @@ export function AIPreSubmitCheck({
     declaredDeductionsKobo,
     declaredTaxKobo,
 }: AIPreSubmitCheckProps) {
+    const { activeWorkspace } = useWorkspace();
+    const { checkQuota } = useFeatureGate();
+    const { toast } = useToast();
     const [results, setResults] = useState<CheckResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [checked, setChecked] = useState(false);
 
     const runCheck = async () => {
+        if (!activeWorkspace) {
+            toast({
+                title: "Workspace required",
+                description: "Select an active workspace before running the AI pre-submit check.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        const quota = await checkQuota("ai_explanations");
+        if (!quota.allowed) {
+            toast({
+                title: "Quota exceeded",
+                description: "Upgrade your workspace plan to keep using AI pre-submit checks.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         setLoading(true);
         try {
             // Query actual ledger data for the filing period
@@ -48,18 +85,18 @@ export function AIPreSubmitCheck({
                     .lte("date", filingPeriodEnd),
                 supabase
                     .from("expenses")
-                    .select("amount_kobo, is_deductible")
+                    .select("amount_kobo, deductible")
                     .gte("date", filingPeriodStart)
                     .lte("date", filingPeriodEnd),
             ]);
 
             let ledgerIncomeKobo = 0n;
             let ledgerDeductibleKobo = 0n;
-            (incomes || []).forEach((i: any) => {
+            (incomes || []).forEach((i: IncomeAmountRow) => {
                 ledgerIncomeKobo = addKobo(ledgerIncomeKobo, stringToKobo(i.amount_kobo));
             });
-            (expenses || []).forEach((e: any) => {
-                if (e.is_deductible) {
+            (expenses || []).forEach((e: ExpenseAmountRow) => {
+                if (e.deductible) {
                     ledgerDeductibleKobo = addKobo(ledgerDeductibleKobo, stringToKobo(e.amount_kobo));
                 }
             });
@@ -78,6 +115,7 @@ export function AIPreSubmitCheck({
 
             const { data, error } = await supabase.functions.invoke("ai-chat", {
                 body: {
+                    workspaceId: activeWorkspace.id,
                     messages: [
                         {
                             role: "user",
@@ -110,16 +148,16 @@ If ledger has zero entries, note that the filing may be based on manual data.`,
             }
 
             setChecked(true);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Pre-submit check error:", err);
-            setResults([{ icon: "info", text: "AI check unavailable. You may still submit." }]);
+            setResults([{ icon: "info", text: getErrorMessage(err, "AI check unavailable. You may still submit.") }]);
             setChecked(true);
         } finally {
             setLoading(false);
         }
     };
 
-    const getIcon = (icon: string) => {
+    const getIcon = (icon: CheckResult["icon"]) => {
         switch (icon) {
             case "pass": return <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />;
             case "warning": return <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />;

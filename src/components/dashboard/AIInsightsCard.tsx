@@ -3,8 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sparkles, RefreshCw, AlertTriangle, TrendingUp, FileWarning, Coins } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useFeatureGate } from "@/hooks/useFeatureGate";
+import { useToast } from "@/hooks/use-toast";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import { formatKoboToNgn, stringToKobo, addKobo } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +16,19 @@ interface Insight {
     text: string;
 }
 
+type IncomeInsightRow = Pick<Database["public"]["Tables"]["incomes"]["Row"], "amount_kobo" | "category" | "date">;
+type ExpenseInsightRow = Pick<Database["public"]["Tables"]["expenses"]["Row"], "amount_kobo" | "category" | "date" | "deductible">;
+type FilingInsightRow = Pick<Database["public"]["Tables"]["filings"]["Row"], "tax_type" | "status" | "period_start" | "period_end">;
+type WhtCertificateAmountRow = { amount_kobo: string };
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return fallback;
+};
+
 /**
  * AI Dashboard Insights Card
  * Queries the user's REAL financial data from Supabase, aggregates it,
@@ -20,6 +36,9 @@ interface Insight {
  */
 export function AIInsightsCard() {
     const { user } = useAuth();
+    const { activeWorkspace } = useWorkspace();
+    const { checkQuota } = useFeatureGate();
+    const { toast } = useToast();
     const [insights, setInsights] = useState<Insight[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -27,6 +46,28 @@ export function AIInsightsCard() {
 
     const generateInsights = async () => {
         if (!user) return;
+        if (!activeWorkspace) {
+            const message = "Select an active workspace before generating AI insights.";
+            setError(message);
+            toast({
+                title: "Workspace required",
+                description: message,
+                variant: "destructive",
+            });
+            return;
+        }
+
+        const quota = await checkQuota("ai_explanations");
+        if (!quota.allowed) {
+            const message = "You've reached your monthly AI explanation limit for this workspace.";
+            setError(message);
+            toast({
+                title: "Quota exceeded",
+                description: "Upgrade your workspace plan to keep using AI insights.",
+                variant: "destructive",
+            });
+            return;
+        }
 
         setLoading(true);
         setError(null);
@@ -37,18 +78,21 @@ export function AIInsightsCard() {
             const yearStart = `${currentYear}-01-01`;
 
             const [
-                { data: incomes },
-                { data: expenses },
-                { data: filings },
-                { data: whtCerts },
-                { data: filingEvents },
+                incomesResult,
+                expensesResult,
+                filingsResult,
+                whtCertsResult,
             ] = await Promise.all([
                 supabase.from("incomes").select("amount_kobo, category, date").gte("date", yearStart),
                 supabase.from("expenses").select("amount_kobo, category, date, deductible").gte("date", yearStart),
                 supabase.from("filings").select("tax_type, status, period_start, period_end"),
-                supabase.from("wht_certificates" as any).select("amount_kobo, status"),
-                supabase.from("filing_events").select("tax_type, due_date, filed"),
+                supabase.from("wht_certificates" as never).select("amount_kobo"),
             ]);
+
+            const incomes = (incomesResult.data || []) as IncomeInsightRow[];
+            const expenses = (expensesResult.data || []) as ExpenseInsightRow[];
+            const filings = (filingsResult.data || []) as FilingInsightRow[];
+            const whtCerts = (whtCertsResult.data || []) as WhtCertificateAmountRow[];
 
             // 2. Aggregate totals (no PII sent to Claude)
             let totalIncomeKobo = 0n;
@@ -58,36 +102,27 @@ export function AIInsightsCard() {
             const incomeCategories: Record<string, number> = {};
             const expenseCategories: Record<string, number> = {};
 
-            (incomes || []).forEach((i: any) => {
+            incomes.forEach((i) => {
                 const k = stringToKobo(i.amount_kobo);
                 totalIncomeKobo = addKobo(totalIncomeKobo, k);
                 incomeCategories[i.category || "uncategorized"] = (incomeCategories[i.category || "uncategorized"] || 0) + 1;
             });
 
-            (expenses || []).forEach((e: any) => {
+            expenses.forEach((e) => {
                 const k = stringToKobo(e.amount_kobo);
                 totalExpensesKobo = addKobo(totalExpensesKobo, k);
                 if (e.deductible) totalDeductibleKobo = addKobo(totalDeductibleKobo, k);
                 expenseCategories[e.category || "uncategorized"] = (expenseCategories[e.category || "uncategorized"] || 0) + 1;
             });
 
-            (whtCerts || []).forEach((w: any) => {
+            whtCerts.forEach((w) => {
                 totalWhtCreditsKobo = addKobo(totalWhtCreditsKobo, stringToKobo(w.amount_kobo));
             });
 
-            const filingsBreakdown = (filings || []).reduce((acc: Record<string, string>, f: any) => {
+            const filingsBreakdown = filings.reduce((acc: Record<string, string>, f) => {
                 acc[f.tax_type] = f.status;
                 return acc;
             }, {});
-
-            const overdueFilings = (filingEvents || []).filter(
-                (e: any) => !e.filed && new Date(e.due_date) < new Date()
-            );
-
-            const upcomingFilings = (filingEvents || []).filter(
-                (e: any) => !e.filed && new Date(e.due_date) >= new Date() &&
-                    new Date(e.due_date) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-            );
 
             // 3. Build context for Claude (aggregated, no PII)
             const context = {
@@ -96,16 +131,13 @@ export function AIInsightsCard() {
                 totalExpenses: formatKoboToNgn(totalExpensesKobo),
                 totalDeductible: formatKoboToNgn(totalDeductibleKobo),
                 totalWhtCredits: formatKoboToNgn(totalWhtCreditsKobo),
-                incomeEntries: incomes?.length || 0,
-                expenseEntries: expenses?.length || 0,
-                whtCertificates: whtCerts?.length || 0,
+                incomeEntries: incomes.length,
+                expenseEntries: expenses.length,
+                whtCertificates: whtCerts.length,
                 filingsStatus: filingsBreakdown,
-                overdueFilingsCount: overdueFilings.length,
-                overdueTypes: overdueFilings.map((e: any) => e.tax_type),
-                upcomingDeadlines: upcomingFilings.map((e: any) => ({
-                    type: e.tax_type,
-                    due: e.due_date,
-                })),
+                overdueFilingsCount: 0,
+                overdueTypes: [],
+                upcomingDeadlines: [],
                 uncategorizedExpenses: expenseCategories["uncategorized"] || 0,
                 hasDeductionsEnabled: totalDeductibleKobo > 0n,
             };
@@ -113,6 +145,7 @@ export function AIInsightsCard() {
             // 4. Send to Claude via Edge Function
             const { data, error: fnError } = await supabase.functions.invoke("ai-chat", {
                 body: {
+                    workspaceId: activeWorkspace.id,
                     messages: [
                         {
                             role: "user",
@@ -148,15 +181,15 @@ Example format:
             }
 
             setHasLoaded(true);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("AI Insights error:", err);
-            setError("Couldn't load your insights — the AI service may be busy right now.");
+            setError(getErrorMessage(err, "Couldn't load your insights — the AI service may be busy right now."));
         } finally {
             setLoading(false);
         }
     };
 
-    const getBorderColor = (icon: string) => {
+    const getBorderColor = (icon: Insight["icon"]) => {
         switch (icon) {
             case "warning":     return "border-l-amber-500";
             case "opportunity": return "border-l-green-500";
@@ -165,7 +198,7 @@ Example format:
         }
     };
 
-    const getIconComponent = (icon: string) => {
+    const getIconComponent = (icon: Insight["icon"]) => {
         switch (icon) {
             case "warning": return <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />;
             case "opportunity": return <TrendingUp className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />;

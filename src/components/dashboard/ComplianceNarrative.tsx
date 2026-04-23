@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useFeatureGate } from "@/hooks/useFeatureGate";
+import { useToast } from "@/hooks/use-toast";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 interface ComplianceNarrativeProps {
     score: number;
@@ -22,14 +25,37 @@ export function ComplianceNarrative({
     filingsSubmitted,
     filingsTotal,
 }: ComplianceNarrativeProps) {
+    const { activeWorkspace } = useWorkspace();
+    const { checkQuota } = useFeatureGate();
+    const { toast } = useToast();
     const [narrative, setNarrative] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
     const generateNarrative = async () => {
+        if (!activeWorkspace) {
+            toast({
+                title: "Workspace required",
+                description: "Select an active workspace before using AI explanations.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        const quota = await checkQuota("ai_explanations");
+        if (!quota.allowed) {
+            toast({
+                title: "Quota exceeded",
+                description: "Upgrade your workspace plan to keep using AI explanations.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         setLoading(true);
         try {
             const { data, error } = await supabase.functions.invoke("ai-chat", {
                 body: {
+                    workspaceId: activeWorkspace.id,
                     messages: [
                         {
                             role: "user",

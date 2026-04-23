@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useWorkspace } from "@/hooks/useWorkspace";
+import { useFeatureGate } from "@/hooks/useFeatureGate";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import {
@@ -78,6 +80,8 @@ export function AIChatWidget() {
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+  const { activeWorkspace } = useWorkspace();
+  const { checkQuota } = useFeatureGate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -102,6 +106,43 @@ export function AIChatWidget() {
   const sendMessage = async (content: string) => {
     const trimmed = content.trim();
     if (!trimmed || isLoading) return;
+
+    if (!user) {
+      const message = "Sign in to use the AI assistant.";
+      setError(message);
+      setLastFailedMessage(null);
+      toast({
+        title: "Sign in required",
+        description: "Create an account or sign in to chat with the AI assistant.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!activeWorkspace) {
+      const message = "Select or create a workspace to use the AI assistant.";
+      setError(message);
+      setLastFailedMessage(null);
+      toast({
+        title: "Workspace required",
+        description: "Choose an active workspace before sending AI questions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const quota = await checkQuota("ai_explanations");
+    if (!quota.allowed) {
+      const message = "You've reached your monthly AI explanation limit for this workspace.";
+      setError(message);
+      setLastFailedMessage(null);
+      toast({
+        title: "Quota exceeded",
+        description: "Upgrade your workspace plan to keep using AI explanations.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setError(null);
     setLastFailedMessage(null);
@@ -156,6 +197,7 @@ export function AIChatWidget() {
           body: JSON.stringify({
             messages: payloadMessages,
             stream: true,
+            workspaceId: activeWorkspace.id,
             userContext: {
               isAuthenticated: !!user,
               currentPage: window.location.pathname,

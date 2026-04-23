@@ -37,6 +37,15 @@ export interface ConnectBankResult {
   isStubbed: boolean;
 }
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    return typeof message === "string" ? message : String(message);
+  }
+  return String(error);
+}
+
 /**
  * Check if banking integration is available by asking the Edge Function
  */
@@ -69,17 +78,16 @@ export async function connectBank(provider: BankProvider, workspaceId: string, c
   if (provider !== "mono") {
     return {
       success: false,
-      error: `${provider} integration is coming soon. Only Mono is currently supported.`,
-      isStubbed: true,
+      error: `${provider} integration is not live in this build. Use manual imports for now.`,
+      isStubbed: false,
     };
   }
 
   if (!code) {
-    // No Mono widget code provided — create a demo connection
     return {
-      success: true,
-      connectionId: crypto.randomUUID(),
-      isStubbed: true,
+      success: false,
+      error: "Self-serve live bank connection is not wired into this UI yet. Use statement imports until the bank widget is enabled.",
+      isStubbed: false,
     };
   }
 
@@ -91,7 +99,7 @@ export async function connectBank(provider: BankProvider, workspaceId: string, c
     if (error) {
       return {
         success: false,
-        error: typeof error === "object" && "message" in error ? (error as any).message : String(error),
+        error: getErrorMessage(error),
         isStubbed: false,
       };
     }
@@ -109,10 +117,10 @@ export async function connectBank(provider: BankProvider, workspaceId: string, c
       error: data?.error || "Failed to connect bank account.",
       isStubbed: false,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     return {
       success: false,
-      error: err.message || "Unexpected error connecting bank.",
+      error: getErrorMessage(err) || "Unexpected error connecting bank.",
       isStubbed: false,
     };
   }
@@ -141,7 +149,7 @@ export async function disconnectBank(connectionId: string): Promise<boolean> {
 export async function getBankConnections(workspaceId: string): Promise<BankConnection[]> {
   const { data, error } = await supabase
     .from("bank_connections")
-    .select<any, any>("*")
+    .select("*")
     .eq("workspace_id", workspaceId)
     .order("connected_at", { ascending: false });
 
@@ -162,10 +170,10 @@ export async function syncBankTransactions(connectionId: string): Promise<{
   error?: string;
   isStubbed: boolean;
 }> {
-  // Get the connection to find the account_id
+  // Get the connection details first so we only sync caller-visible records
   const { data: connData } = await supabase
     .from("bank_connections")
-    .select("account_id, provider")
+    .select("id, provider")
     .eq("id", connectionId)
     .single();
 
@@ -173,17 +181,27 @@ export async function syncBankTransactions(connectionId: string): Promise<{
     return { success: false, error: "Connection not found.", isStubbed: false };
   }
 
+  if (connData.provider !== "mono") {
+    return {
+      success: false,
+      error:
+        connData.provider === "manual"
+          ? "This is a statement-only connection. Upload a new statement instead of running live sync."
+          : `${connData.provider} live sync is not available in this build.`,
+      isStubbed: false,
+    };
+  }
+
   try {
     const { data, error } = await supabase.functions.invoke("bank-connect", {
-      body: { action: "transactions", account_id: connData.account_id },
+      body: { action: "transactions", connection_id: connData.id },
     });
 
     if (error) {
-      // If the Edge Function returns 503 (not configured), return demo data
       return {
-        success: true,
-        transactions: generateDemoTransactions(),
-        isStubbed: true,
+        success: false,
+        error: getErrorMessage(error) || "Live transaction sync is not available right now.",
+        isStubbed: false,
       };
     }
 
@@ -195,40 +213,22 @@ export async function syncBankTransactions(connectionId: string): Promise<{
       };
     }
 
-    // Fallback to demo data if Mono returns an error
     return {
-      success: true,
-      transactions: generateDemoTransactions(),
-      isStubbed: true,
+      success: false,
+      error: data?.error || "Live transaction sync is not available right now.",
+      isStubbed: false,
     };
-  } catch {
+  } catch (err: unknown) {
     return {
-      success: true,
-      transactions: generateDemoTransactions(),
-      isStubbed: true,
+      success: false,
+      error: getErrorMessage(err) || "Live transaction sync is not available right now.",
+      isStubbed: false,
     };
   }
 }
 
 /**
- * Generate demo transactions for when Mono is not configured
- */
-function generateDemoTransactions(): BankTransaction[] {
-  const now = new Date();
-  return [
-    { id: "demo-1", date: new Date(now.getTime() - 1 * 86400000).toISOString(), description: "Salary Credit - Employer Ltd", amount: 450000, type: "credit", category: "income" },
-    { id: "demo-2", date: new Date(now.getTime() - 2 * 86400000).toISOString(), description: "MTN Airtime Purchase", amount: 5000, type: "debit", category: "utilities" },
-    { id: "demo-3", date: new Date(now.getTime() - 3 * 86400000).toISOString(), description: "Shoprite - Grocery Purchase", amount: 28750, type: "debit", category: "groceries" },
-    { id: "demo-4", date: new Date(now.getTime() - 5 * 86400000).toISOString(), description: "Client Invoice Payment - ABC Corp", amount: 175000, type: "credit", category: "income" },
-    { id: "demo-5", date: new Date(now.getTime() - 7 * 86400000).toISOString(), description: "IKEDC Electricity Bill", amount: 15400, type: "debit", category: "utilities" },
-    { id: "demo-6", date: new Date(now.getTime() - 10 * 86400000).toISOString(), description: "Uber Ride", amount: 3200, type: "debit", category: "transport" },
-    { id: "demo-7", date: new Date(now.getTime() - 12 * 86400000).toISOString(), description: "Freelance Payment - Design Work", amount: 95000, type: "credit", category: "income" },
-    { id: "demo-8", date: new Date(now.getTime() - 15 * 86400000).toISOString(), description: "Rent Payment", amount: 250000, type: "debit", category: "housing" },
-  ];
-}
-
-/**
- * Get supported bank providers
+ * Get bank providers that are actually surfaced in this build.
  */
 export function getSupportedProviders(): Array<{
   id: BankProvider;
@@ -240,20 +240,8 @@ export function getSupportedProviders(): Array<{
     {
       id: "mono",
       name: "Mono",
-      description: "Connect Nigerian bank accounts",
+      description: "Live bank-feed provider used by the current Edge Function implementation",
       countries: ["NG"],
-    },
-    {
-      id: "okra",
-      name: "Okra",
-      description: "Nigerian open banking platform",
-      countries: ["NG"],
-    },
-    {
-      id: "plaid",
-      name: "Plaid",
-      description: "International bank connections",
-      countries: ["US", "CA", "GB", "EU"],
     },
   ];
 }

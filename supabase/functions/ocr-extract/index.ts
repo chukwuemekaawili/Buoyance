@@ -1,4 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  consumeQuota,
+  getAuthenticatedContext,
+  releaseQuota,
+} from "../_shared/workspace.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,11 +49,31 @@ serve(async (req) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  let authContext: Awaited<ReturnType<typeof getAuthenticatedContext>> = null;
+  let workspaceId: string | null = null;
+  let quotaConsumed = false;
+
   try {
-    const { imageUrl } = await req.json();
+    const payload = await req.json();
+    const imageUrl = typeof payload?.imageUrl === 'string' ? payload.imageUrl : null;
+    workspaceId =
+      typeof payload?.workspaceId === 'string'
+        ? payload.workspaceId
+        : typeof payload?.workspace_id === 'string'
+          ? payload.workspace_id
+          : null;
 
     if (!imageUrl) {
       return ok({ error: 'imageUrl payload is required' });
+    }
+
+    authContext = await getAuthenticatedContext(req);
+    if (!authContext) {
+      return ok({ error: 'Authentication required.' });
+    }
+
+    if (!workspaceId) {
+      return ok({ error: 'workspaceId payload is required' });
     }
 
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
@@ -59,7 +84,7 @@ serve(async (req) => {
 
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 
-    // 1. Download the image from the provided public URL securely on the backend
+    // 1. Download the image from the provided signed Storage URL on the backend
     console.log(`[OCR] Fetching image from: ${imageUrl}`);
     const imageResponse = await fetch(imageUrl, {
       headers: {
@@ -84,10 +109,17 @@ serve(async (req) => {
 
     console.log(`[OCR] Image downloaded and converted. Base64 length: ${cleanBase64.length}`);
 
+    const quota = await consumeQuota(authContext.supabase, workspaceId, 'ocr_receipts');
+    if (!quota.allowed) {
+      return ok({ error: 'Receipt OCR quota exceeded for this workspace.' });
+    }
+    quotaConsumed = true;
+
     // 3. Determine the correct media type for Anthropic (Claude enforces strict type checking)
-    // The bucket URL structure is .../receipts/workspace-id/uuid.extension
-    const urlParts = imageUrl.split('.');
-    let fileExtension = urlParts[urlParts.length - 1]?.toLowerCase();
+    // Signed URLs include query params, so we inspect only the pathname.
+    const imagePath = new URL(imageUrl).pathname;
+    const pathParts = imagePath.split('.');
+    const fileExtension = pathParts[pathParts.length - 1]?.toLowerCase();
 
     // Default to jpeg if parsing fails or extension is missing
     let mediaType = 'image/jpeg';
@@ -136,6 +168,9 @@ serve(async (req) => {
       });
     } catch (fetchError: unknown) {
       const msg = fetchError instanceof Error ? fetchError.message : String(fetchError);
+      if (quotaConsumed && authContext && workspaceId) {
+        await releaseQuota(authContext.supabase, workspaceId, 'ocr_receipts');
+      }
       return ok({ error: `Anthropic fetch failed: ${msg}` });
     } finally {
       clearTimeout(anthropicTimeout);
@@ -146,6 +181,9 @@ serve(async (req) => {
     if (!anthropicResponse.ok) {
       console.error(`[OCR] Anthropic HTTP ${anthropicResponse.status}. Full body:`, JSON.stringify(anthropicData));
       const message = anthropicData?.error?.message || JSON.stringify(anthropicData);
+      if (quotaConsumed && authContext && workspaceId) {
+        await releaseQuota(authContext.supabase, workspaceId, 'ocr_receipts');
+      }
       return ok({ error: `Anthropic API Error (HTTP ${anthropicResponse.status}): ${message}` });
     }
 
@@ -164,6 +202,9 @@ serve(async (req) => {
       }
     } catch (e) {
       console.error('Failed to parse Claude response as JSON. Raw:', rawText);
+      if (quotaConsumed && authContext && workspaceId) {
+        await releaseQuota(authContext.supabase, workspaceId, 'ocr_receipts');
+      }
       return ok({ error: `Claude returned invalid JSON. Raw response: ${rawText.slice(0, 300)}` });
     }
 
@@ -172,6 +213,9 @@ serve(async (req) => {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error('Unhandled error in ocr-extract:', message);
+    if (quotaConsumed && authContext && workspaceId) {
+      await releaseQuota(authContext.supabase, workspaceId, 'ocr_receipts');
+    }
     return ok({ error: `Server Error: ${message}` });
   }
 });

@@ -1,9 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
-import { useFeatureGate } from "@/hooks/useFeatureGate";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { PIIRedactor } from "./piiRedactor";
 
 export interface AIExplanationRequest {
   question: string;
+  workspaceId?: string;
   context: {
     taxType?: string;
     calculationType?: string;
@@ -18,17 +19,37 @@ export interface AIExplanationResponse {
   explanationId?: string;
 }
 
+type ExplanationContext = AIExplanationRequest["context"];
+type ExplanationInsert = Database["public"]["Tables"]["explanations"]["Insert"];
+type ExplanationRow = Database["public"]["Tables"]["explanations"]["Row"];
+
+function toJsonValue(value: ExplanationContext): Json {
+  return value as unknown as Json;
+}
+
+function toContextRecord(value: Json | null): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
+}
+
 /**
  * Invokes the 'ai-chat' Supabase Edge Function with PII-sanitized context
  */
 export async function getExplanation(request: AIExplanationRequest): Promise<AIExplanationResponse> {
-  const { question, context } = request;
+  const { question, context, workspaceId } = request;
 
   try {
     const { data: { user } } = await supabase.auth.getUser();
 
+    if (!workspaceId) {
+      throw new Error("An active workspace is required for AI explanations.");
+    }
+
     // 1. Sanitize the payload to ensure no PII leaks to OpenAI
-    const sanitizedContext = PIIRedactor.sanitizePayload(context);
+    const sanitizedContext = PIIRedactor.sanitizePayload(context) as ExplanationContext;
 
     // 2. Format the message chain
     const messages = [
@@ -43,7 +64,7 @@ My Question: ${question}`
 
     // 3. Invoke the Edge Function securely
     const { data, error } = await supabase.functions.invoke('ai-chat', {
-      body: { messages, stream: false }
+      body: { messages, stream: false, workspaceId }
     });
 
     if (error) {
@@ -59,14 +80,16 @@ My Question: ${question}`
     // 4. Log the prompt & response immutably
     let explanationId: string | undefined;
     if (user) {
+      const explanationToInsert: ExplanationInsert = {
+        user_id: user.id,
+        question,
+        answer,
+        context: toJsonValue(sanitizedContext),
+      };
+
       const { data: logData } = await supabase
         .from("explanations")
-        .insert({
-          user_id: user.id,
-          question,
-          answer,
-          context: sanitizedContext as any, // Only save the sanitized version to the DB
-        } as any)
+        .insert(explanationToInsert)
         .select("id")
         .single();
 
@@ -79,7 +102,7 @@ My Question: ${question}`
       explanationId,
     };
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Failed to generate AI explanation:", err);
     return {
       answer: "The Buoyance AI Engine is currently unavailable or unreachable. Please verify your connection or check whether you have sufficient AI Query quota remaining in your workspace.",
@@ -109,5 +132,11 @@ export async function getExplanationHistory(limit = 20): Promise<Array<{
     return [];
   }
 
-  return data as any[];
+  return (data || []).map((row: ExplanationRow) => ({
+    id: row.id,
+    question: row.question,
+    answer: row.answer,
+    context: toContextRecord(row.context),
+    created_at: row.created_at || "",
+  }));
 }

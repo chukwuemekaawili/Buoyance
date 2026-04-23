@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  consumeQuota,
+  getAuthenticatedContext,
+  releaseQuota,
+} from "../_shared/workspace.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,17 +12,22 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
+const CIT_REVIEW_REASON =
+  "Buoyance's CIT calculator, library, and filing guidance are paused until company-tax assumptions receive expert review.";
+const WHT_REVIEW_REASON =
+  "Buoyance's WHT calculator, library, and filing guidance are paused until withholding-tax assumptions receive expert review.";
+
 const SHARED_APP_KNOWLEDGE = `
 BUOYANCE APP — FULL FEATURE GUIDE
 
 FREE VS PRO PLAN (important — never tell free users they can access Pro-only features)
-FREE plan includes: all 5 basic calculators (PIT, CIT, VAT, WHT, CGT), income & expense tracking, CSV import, filing preparation, PDF export, compliance calendar, academy, 3 AI explanations/month, 5 receipt OCR scans/month, 100 API requests/month.
+FREE plan includes: PIT, VAT, and CGT calculators, income & expense tracking, CSV import, filing preparation, PDF export, compliance calendar, academy, 3 AI explanations/month, 5 receipt OCR scans/month, 100 API requests/month. CIT and WHT calculator surfaces are paused while their live assumptions are reviewed.
 PRO plan adds: Crypto calculator, Foreign Income calculator, payroll multi-employee calculator, WHT credit recovery, TCC readiness tracker, audit workspace, AI dashboard insights, invoice generator, bank feed connections (10 syncs/month), team members & multi-workspace, 100 AI explanations/month, 500 OCR scans/month, 5,000 API requests/month.
 ENTERPRISE plan: unlimited everything.
 
 MAIN PAGES (correct routes — use these exactly)
 - Dashboard → /dashboard — tax health score, AI insights (Pro), filing overview, upcoming deadlines.
-- Filings → /filings — create VAT returns, PIT returns, CIT returns, WHT remittances. Click "+ New Filing" to start. Statuses: Draft, Submitted, Overdue.
+- Filings → /filings — create VAT returns and PIT returns. CIT and WHT filing creation is paused pending expert review. Click "+ New Filing" to start. Statuses: Draft, Submitted, Overdue.
 - Income → /incomes — log income by type (salary, freelance, rental, dividends). Mark tax-exempt where applicable. Auto-feeds into calculators.
 - Expenses → /expenses — log deductible expenses, scan receipts via OCR, import CSV. Auto-feeds into calculators.
 - WHT Credits → /wht-credits — track WHT certificates received. Offsets your tax liability. (Pro only)
@@ -35,7 +45,7 @@ CALCULATORS — HOW TO USE EACH ONE (all at /calculators)
 PIT / PAYE Calculator → /calculators/pit (FREE)
 - Who it's for: employees, PAYE workers, self-employed individuals filing PIT.
 - Step 1: Enter your Gross Income. Toggle between Monthly and Yearly — it converts automatically.
-- Step 2: Add deductions (all optional): toggle Pension (auto-calculates 8%) and/or NHF (auto-calculates 2.5%), enter Rent Relief (capped at ₦500k), NHIA premium, Life Insurance premium.
+- Step 2: Add deductions (all optional): toggle Pension (auto-calculates 8%) and/or NHF (auto-calculates 2.5%), enter Rent Relief (capped at ₦200k), NHIA premium, Life Insurance premium.
 - Step 3: See Taxable Income, band-by-band breakdown, Total Tax Payable, Net Income, and Effective Tax Rate.
 - Tip: "Load from my records" auto-fills income from your logged entries.
 - Tip: "Save Calculation" stores the result under My Calculations.
@@ -48,23 +58,15 @@ VAT Calculator → /calculators/vat (FREE)
 - Tip: "Load from my records" auto-fills from logged income and expenses.
 - Tip: "Explain Calculation" button gives an AI plain-English breakdown.
 
-WHT Calculator → /calculators/wht (FREE)
-- Who it's for: anyone making payments subject to withholding tax (rent, professional fees, dividends, etc.).
-- Step 1: Toggle Individual or Corporate (recipient type).
-- Step 2: Select the Payment Category — it shows the applicable rate.
-- Step 3: Enter the Payment Amount.
-- Result: WHT Deductible + Net Payment (what the recipient receives).
-- Tip: WHT deducted must be remitted to FIRS. Track certificates you've received under WHT Credits.
+WHT Calculator → /calculators/wht
+- Status: paused for launch review.
+- ${WHT_REVIEW_REASON}
+- If a user asks for WHT help, explain the pause and direct them to manual review or Support instead of quoting an in-app rate.
 
-CIT Calculator → /calculators/cit (FREE)
-- Who it's for: limited liability companies filing Company Income Tax.
-- Step 1: Enter Annual Revenue.
-- Step 2: Enter Allowable Expenses (deductible business costs).
-- Step 3: Enter Capital Allowances (fixed asset depreciation).
-- Step 4: Enter Loss Carry Forward from prior years (if any).
-- Step 5: Toggle applicable switches — "Small Company" (reduced rate if turnover under threshold), "Professional Services", "Large MNE" (15% minimum ETR under OECD Pillar 2).
-- Result: Taxable profit, CIT payable, effective rate.
-- Tip: "Load from records" auto-fills revenue and expenses.
+CIT Calculator → /calculators/cit
+- Status: paused for launch review.
+- ${CIT_REVIEW_REASON}
+- If a user asks for CIT help, explain the pause and direct them to manual review or Support instead of quoting an in-app rate.
 
 CGT Calculator → /calculators/cgt (FREE)
 - Who it's for: anyone who sold a chargeable asset (land, property, shares, equipment).
@@ -92,8 +94,8 @@ Foreign Income Calculator → /calculators/foreign-income (PRO ONLY)
 PROACTIVE SUGGESTIONS — always mention the right calculator at the end when relevant:
 - Salary/PAYE question → PIT Calculator at /calculators/pit
 - VAT question → VAT Calculator at /calculators/vat
-- Payment to vendor/contractor → WHT Calculator at /calculators/wht
-- Company profits/CIT → CIT Calculator at /calculators/cit
+- Payment to vendor/contractor → explain that WHT guidance is paused and suggest manual review plus WHT Credits if they already have certificates
+- Company profits/CIT → explain that CIT guidance is paused and suggest manual review or Support
 - Selling property or shares → CGT Calculator at /calculators/cgt
 - Crypto income → Crypto Calculator at /calculators/crypto (Pro only)
 - Income earned abroad → Foreign Income Calculator at /calculators/foreign-income (Pro only)`;
@@ -135,7 +137,14 @@ interface TaxRuleRow {
 }
 
 const TAX_RULES_CACHE_TTL_MS = 5 * 60 * 1000;
+const MAX_CHAT_MESSAGES = 12;
+const MAX_MESSAGE_CHARS = 6000;
 let taxRulesCache: { fetchedAt: number; context: Record<string, TaxRuleRow> } | null = null;
+
+interface ChatMessageInput {
+  role: string;
+  content: string;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -150,6 +159,35 @@ function formatNairaFromKobo(kobo: number): string {
   const naira = kobo / 100;
   const fmt = new Intl.NumberFormat('en-NG', { maximumFractionDigits: 0 });
   return `₦${fmt.format(naira)}`;
+}
+
+function sanitizePromptText(text: string): string {
+  return text
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[REDACTED_EMAIL]')
+    .replace(/\b(?:\+?234|0)?[7-9][01]\d{8}\b/g, '[REDACTED_PHONE]')
+    .replace(
+      /((?:TIN|T\.I\.N|Tax\s*ID|Tax\s*Identification\s*Number|BVN|NIN|Account\s*Number|Acct\.?\s*No\.?|Card\s*Number|PAN)\s*[:#-]?\s*)([A-Z0-9 -]{6,})/gi,
+      '$1[REDACTED]'
+    )
+    .replace(/\b(?:\d[ -]*?){13,16}\b/g, '[REDACTED_CARD]')
+    .trim();
+}
+
+function toChatMessages(messages: unknown): ChatMessageInput[] {
+  if (!Array.isArray(messages)) return [];
+
+  return messages
+    .filter(isRecord)
+    .map((msg) => ({
+      role: typeof msg.role === 'string' ? msg.role : 'user',
+      content: typeof msg.content === 'string' ? msg.content : '',
+    }))
+    .filter((msg) => msg.content.trim().length > 0)
+    .slice(-MAX_CHAT_MESSAGES)
+    .map((msg) => ({
+      ...msg,
+      content: sanitizePromptText(msg.content).slice(0, MAX_MESSAGE_CHARS),
+    }));
 }
 
 function buildAuthContextSection(isAuthenticated: boolean, currentPage: string): string {
@@ -265,6 +303,82 @@ async function getTaxRulesContext(): Promise<Record<string, TaxRuleRow> | null> 
 function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null, isAuthenticated = false, currentPage = '/'): string | null {
   const q = question.toLowerCase();
 
+  if (
+    q.includes('first tax return') ||
+    (q.includes('file') && q.includes('tax return') && q.includes('first'))
+  ) {
+    const accountLine = isAuthenticated
+      ? 'Start in /filings, click "+ New Filing", choose the tax type, then save your draft before exporting the filing pack.'
+      : 'Create a free account at buoyance.app/signup first, then head to /filings to start your first return.';
+
+    return [
+      accountLine,
+      "",
+      "You'll usually do it in this order:",
+      "1. Log your income and deductible expenses.",
+      "2. Run the matching calculator to estimate the numbers.",
+      "3. Create the filing in /filings and review the period carefully.",
+      "4. Export the filing pack and verify everything before any real submission.",
+    ].join("\n");
+  }
+
+  if (
+    q.includes('deductible expense') ||
+    q.includes('what expenses can i deduct') ||
+    ((q.includes('deduct') || q.includes('deductible')) && q.includes('expense'))
+  ) {
+    return [
+      "A cost is usually only deductible if it's wholly for earning that taxable income and you can support it with records.",
+      "",
+      "Good examples to review are:",
+      "- Business rent for the work premises",
+      "- Tools, software, and supplies used for the work",
+      "- Professional services tied to the business activity",
+      "",
+      "Tell me the exact expense type and whether this is PIT, VAT, or company tax, and I'll point you to the safest next step in Buoyance.",
+    ].join("\n");
+  }
+
+  if (
+    q.includes('calculate vat') ||
+    (q.includes('vat') && q.includes('invoice'))
+  ) {
+    return [
+      "Use the VAT Calculator at /calculators/vat: enter the VAT you charged on sales as Output VAT, then subtract valid Input VAT from business purchases.",
+      "",
+      "If you're issuing an invoice, keep the VAT amount clearly separated from the base amount so your records stay clean.",
+      "",
+      "If you want, send me the sale amount and whether it's VAT-inclusive or exclusive and I'll show the setup.",
+    ].join("\n");
+  }
+
+  if (q.includes('payroll') && (q.includes('tax') || q.includes('employee'))) {
+    return [
+      "Buoyance handles payroll tax from /payroll for Pro workspaces, and the tax side follows the PIT/PAYE rules for each employee's taxable pay.",
+      "",
+      "You'll add each employee, enter their pay and deductions, then review the PAYE output before saving payroll records.",
+      "",
+      "If you're setting this up for the first time, tell me whether you have one employee or a full team.",
+    ].join("\n");
+  }
+
+  if (
+    q.includes('what records should i keep') ||
+    (q.includes('record') && q.includes('tax'))
+  ) {
+    return [
+      "Keep the documents that prove income earned, expenses claimed, taxes withheld, and what period each item belongs to.",
+      "",
+      "The core set is:",
+      "- Invoices and receipts",
+      "- Bank statements or payment confirmations",
+      "- Payroll records where relevant",
+      "- WHT certificates and prior filing records",
+      "",
+      "In Buoyance, the cleanest setup is to log income in /incomes, expenses in /expenses, and keep filing drafts in /filings.",
+    ].join("\n");
+  }
+
   // Pricing/subscription questions — tight matching only, avoid false positives on tax questions
   if (
     q.includes('pricing') ||
@@ -307,7 +421,8 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
       "",
       "Here's what you can do:",
       "- Track income and expenses (receipt scanning and CSV import included).",
-      "- Run tax calculators for PIT/PAYE, CIT, VAT, WHT, CGT, crypto, and foreign income.",
+      "- Run live tax calculators for PIT/PAYE, VAT, CGT, crypto, and foreign income.",
+      "- Track WHT certificates already received; CIT and WHT filing-ready guidance is paused pending review.",
       "- Prepare filings and export filing packs.",
       "- Stay on top of deadlines with the compliance calendar.",
       "",
@@ -337,6 +452,26 @@ function buildFastReply(question: string, ctx: Record<string, TaxRuleRow> | null
       "If you can tell me two things, I'll help you work it out:",
       "- Is this a cash allowance through payroll (PAYE), or a reimbursed expense?",
       "- Is it for an employee (PIT/PAYE) or a company (CIT)?",
+    ].join("\n");
+  }
+
+  if (q.includes('cit') || q.includes('company income tax') || q.includes('corporate tax') || q.includes('company tax')) {
+    return [
+      "Buoyance's CIT guidance is currently under review, so I can't safely give you a filing-ready company-tax rate or threshold from inside the app right now.",
+      "",
+      CIT_REVIEW_REASON,
+      "",
+      "If you tell me what decision you're trying to make, I can help you frame it for manual review or a qualified adviser.",
+    ].join("\n");
+  }
+
+  if (q.includes('wht') || q.includes('withholding')) {
+    return [
+      "Buoyance's WHT guidance is currently under review, so I can't safely give you a filing-ready withholding rate or remittance answer from inside the app right now.",
+      "",
+      WHT_REVIEW_REASON,
+      "",
+      "If you tell me the payment type and what you need to confirm, I can help you prepare it for manual review or a qualified adviser.",
     ].join("\n");
   }
 
@@ -483,12 +618,36 @@ serve(async (req) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
-  try {
-    const { messages, stream = false, userContext } = await req.json();
-    const isAuthenticated = userContext?.isAuthenticated === true;
-    const currentPage = typeof userContext?.currentPage === 'string' ? userContext.currentPage : '/';
+  let authContext: Awaited<ReturnType<typeof getAuthenticatedContext>> = null;
+  let workspaceId: string | null = null;
+  let quotaConsumed = false;
 
-    if (!messages || !Array.isArray(messages)) {
+  try {
+    const payload = await req.json();
+    const userContext = isRecord(payload) && isRecord(payload.userContext) ? payload.userContext : {};
+    const stream = isRecord(payload) && payload.stream === true;
+    const messages = toChatMessages(isRecord(payload) ? payload.messages : []);
+    workspaceId = isRecord(payload)
+      ? typeof payload.workspaceId === 'string'
+        ? payload.workspaceId
+        : typeof payload.workspace_id === 'string'
+          ? payload.workspace_id
+          : null
+      : null;
+    const currentPage =
+      typeof userContext.currentPage === 'string' && userContext.currentPage.trim().length > 0
+        ? userContext.currentPage.slice(0, 200)
+        : '/';
+    authContext = await getAuthenticatedContext(req);
+    const isAuthenticated = Boolean(authContext?.user);
+
+    const refundQuota = async () => {
+      if (!authContext || !workspaceId || !quotaConsumed) return;
+      await releaseQuota(authContext.supabase, workspaceId, 'ai_explanations');
+      quotaConsumed = false;
+    };
+
+    if (messages.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Messages array is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -511,9 +670,33 @@ serve(async (req) => {
       );
     }
 
+    if (!authContext) {
+      return new Response(
+        JSON.stringify({ error: 'Sign in to continue with AI explanations.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!workspaceId) {
+      return new Response(
+        JSON.stringify({ error: 'workspaceId is required for AI explanations.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const quota = await consumeQuota(authContext.supabase, workspaceId, 'ai_explanations');
+    if (!quota.allowed) {
+      return new Response(
+        JSON.stringify({ error: 'AI explanation quota exceeded for this workspace.', remaining: quota.remaining, limit: quota.limit }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    quotaConsumed = true;
+
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     if (!ANTHROPIC_API_KEY) {
       console.error('ANTHROPIC_API_KEY is not configured');
+      await refundQuota();
       return new Response(
         JSON.stringify({ error: 'Configuration Error: ANTHROPIC_API_KEY is missing in Supabase Secrets.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -555,6 +738,7 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Anthropic API error:', response.status, errorText);
+      await refundQuota();
 
       if (response.status === 429) {
         return new Response(
@@ -600,6 +784,9 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
+    if (authContext && workspaceId && quotaConsumed) {
+      await releaseQuota(authContext.supabase, workspaceId, 'ai_explanations');
+    }
     console.error('AI chat error:', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),

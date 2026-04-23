@@ -6,6 +6,7 @@ import { Loader2, Sparkles } from "lucide-react";
 import { getExplanation, AIExplanationRequest } from "@/lib/aiService";
 import { useToast } from "@/hooks/use-toast";
 import { useFeatureGate } from "@/hooks/useFeatureGate";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import ReactMarkdown from 'react-markdown';
 
 interface AITaxDrawerProps {
@@ -15,6 +16,14 @@ interface AITaxDrawerProps {
     contextParams: AIExplanationRequest['context'];
     onAIFinished?: () => void;
 }
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return fallback;
+};
 
 export function AITaxDrawer({
     open,
@@ -27,7 +36,8 @@ export function AITaxDrawer({
     const [explanationText, setExplanationText] = useState<string | null>(null);
 
     const { toast } = useToast();
-    const { checkQuota, recordUsage } = useFeatureGate();
+    const { activeWorkspace } = useWorkspace();
+    const { checkQuota } = useFeatureGate();
 
     // Reset state when sheet is opened to trigger new fetch
     const handleOpenChange = (newOpen: boolean) => {
@@ -42,6 +52,16 @@ export function AITaxDrawer({
     };
 
     const generateExplanation = async () => {
+        if (!activeWorkspace) {
+            toast({
+                title: "Workspace Error",
+                description: "Select an active workspace before using AI explanations.",
+                variant: "destructive"
+            });
+            onOpenChange(false);
+            return;
+        }
+
         // 1. Enforce Freemium Quota immediately
         const quota = await checkQuota('ai_explanations');
         if (!quota.allowed) {
@@ -59,6 +79,7 @@ export function AITaxDrawer({
             // 2. Transmit to LLM (PII is sanitized internally by aiService)
             const res = await getExplanation({
                 question: `Explain how the final numbers in this context were derived, step by step. Mention references to the Nigeria Tax Act 2025 where relevant.`,
+                workspaceId: activeWorkspace.id,
                 context: contextParams
             });
 
@@ -70,16 +91,13 @@ export function AITaxDrawer({
                     description: "The AI Engine could not be reached. A fallback summary has been provided.",
                     variant: "destructive"
                 });
-            } else {
-                // 3. Subtract quota upon successful LLM generation
-                await recordUsage('ai_explanations');
             }
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
             toast({
                 title: "Analysis Failed",
-                description: err.message || "An unexpected error occurred compiling the AI response.",
+                description: getErrorMessage(err, "An unexpected error occurred compiling the AI response."),
                 variant: "destructive"
             });
             onOpenChange(false);

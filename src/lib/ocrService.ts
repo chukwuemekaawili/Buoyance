@@ -53,7 +53,7 @@ function extractTIN(text: string): string | null {
 // Extract date in various formats
 function extractDate(text: string): string | null {
     // DD/MM/YYYY or DD-MM-YYYY
-    const dmy = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    const dmy = text.match(/(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
     if (dmy) return `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
 
     // Month name patterns
@@ -112,7 +112,7 @@ export async function extractWHTCertificate(
     const wht_rate = rateMatch ? parseFloat(rateMatch[1]) / 100 : null;
 
     // Extract certificate number
-    const certNoMatch = text.match(/(?:Certificate\s*No|Cert\.?\s*No|Serial\s*No|Ref)[.:\s]*([A-Z0-9\-\/]+)/i);
+    const certNoMatch = text.match(/(?:Certificate\s*No|Cert\.?\s*No|Serial\s*No|Ref)[.:\s]*([A-Z0-9/-]+)/i);
     const certificate_number = certNoMatch ? certNoMatch[1].trim() : null;
 
     // Extract TINs
@@ -196,6 +196,7 @@ export interface OCRExtractionResult {
     date: string;
     amount_ngn: number | string;
     amount_kobo: string;
+    description: string | null;
     tax_category: string;
     confidence_score: number;
 }
@@ -205,11 +206,11 @@ export interface OCRProcessResult extends OCRExtractionResult {
 }
 
 export async function extractReceiptWithAI(file: File, workspaceId: string): Promise<OCRProcessResult> {
-    // 1. Upload to Supabase Storage ('receipts' bucket)
+    // 1. Upload to private Supabase Storage ('receipts' bucket)
     const fileExt = file.name.split('.').pop();
     const fileName = `${workspaceId}/${crypto.randomUUID()}.${fileExt}`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
         .from('receipts')
         .upload(fileName, file);
 
@@ -217,17 +218,21 @@ export async function extractReceiptWithAI(file: File, workspaceId: string): Pro
         throw new Error('Failed to upload receipt image: ' + uploadError.message);
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: signedData, error: signedUrlError } = await supabase.storage
         .from('receipts')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 60 * 60);
+
+    if (signedUrlError || !signedData?.signedUrl) {
+        throw new Error('Failed to prepare receipt access URL: ' + (signedUrlError?.message || 'Unknown storage error'));
+    }
 
     // 2. We skip base64 conversion on the client to avoid Supabase Edge Function payload limits (500KB).
-    // Instead, we pass the public URL of the receipt we just uploaded. The Edge Function will download it locally.
-    console.log('[OCR] Invoking Edge Function `ocr-extract` with image URL...', { imageUrl: publicUrl });
+    // Instead, we pass a short-lived signed URL to the Edge Function.
+    console.log('[OCR] Invoking Edge Function `ocr-extract` with image URL...', { imageUrl: signedData.signedUrl });
 
     try {
         const invokeResult = await supabase.functions.invoke('ocr-extract', {
-            body: { imageUrl: publicUrl }
+            body: { imageUrl: signedData.signedUrl, workspaceId }
         });
 
         console.log('[OCR] Edge Function raw response:', invokeResult);
@@ -248,11 +253,12 @@ export async function extractReceiptWithAI(file: File, workspaceId: string): Pro
 
         return {
             ...extractionData as OCRExtractionResult,
-            receiptUrl: publicUrl
+            receiptUrl: fileName
         };
 
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error('[OCR] CATCH BLOCK HIT during invoke. Root error:', e);
-        throw new Error(`Network/Invoke Crash: ${e.message}`);
+        const message = e instanceof Error ? e.message : String(e);
+        throw new Error(`Network/Invoke Crash: ${message}`);
     }
 }

@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { extractReceiptWithAI, OCRProcessResult } from '@/lib/ocrService';
 import { useWorkspace } from '@/hooks/useWorkspace';
+import { useFeatureGate } from '@/hooks/useFeatureGate';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { UploadCloud, Loader2, FileImage, Camera, Sparkles, Info } from 'lucide-react';
@@ -12,6 +13,14 @@ interface ReceiptScannerProps {
     onCancel: () => void;
 }
 
+const getErrorMessage = (error: unknown, fallback: string): string => {
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return fallback;
+};
+
 export function ReceiptScanner({ onScanComplete, onCancel }: ReceiptScannerProps) {
     const [isScanning, setIsScanning] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -20,14 +29,22 @@ export function ReceiptScanner({ onScanComplete, onCancel }: ReceiptScannerProps
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { activeWorkspace } = useWorkspace();
+    const { checkQuota } = useFeatureGate();
     const { toast } = useToast();
 
     // Get AI tax treatment explanation for the extracted receipt
     const getAITaxTreatment = async (result: OCRProcessResult) => {
         setTreatmentLoading(true);
         try {
+            const quota = await checkQuota('ai_explanations');
+            if (!quota.allowed) {
+                setAiTreatment(null);
+                return;
+            }
+
             const { data, error } = await supabase.functions.invoke("ai-chat", {
                 body: {
+                    workspaceId: activeWorkspace.id,
                     messages: [{
                         role: "user",
                         content: `A Nigerian taxpayer scanned a receipt. Based on the extracted data below, give ONE sentence explaining the tax treatment under NTA 2025. Be specific about whether it's deductible or not.
@@ -55,10 +72,6 @@ Respond with just one sentence, no markdown.`
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-        setAiTreatment(null);
-
         if (!activeWorkspace) {
             toast({
                 title: "Workspace Error",
@@ -68,6 +81,19 @@ Respond with just one sentence, no markdown.`
             return;
         }
 
+        const quota = await checkQuota('ocr_receipts');
+        if (!quota.allowed) {
+            toast({
+                title: "Quota Exceeded",
+                description: "You have reached your workspace limit for receipt OCR scans. Please upgrade to Pro.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+        setAiTreatment(null);
         setIsScanning(true);
         try {
             const result = await extractReceiptWithAI(file, activeWorkspace.id);
@@ -81,10 +107,10 @@ Respond with just one sentence, no markdown.`
             getAITaxTreatment(result);
 
             onScanComplete(result);
-        } catch (err: any) {
+        } catch (err: unknown) {
             toast({
                 title: "Scan Failed",
-                description: err.message,
+                description: getErrorMessage(err, "Unable to scan this receipt."),
                 variant: "destructive"
             });
             setPreviewUrl(null);
