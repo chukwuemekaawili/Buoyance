@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, MapPin, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/errorUtils";
 
 interface FormData {
   name: string;
@@ -89,11 +90,13 @@ export function ContactSection() {
 
       // Reset success state after 5 seconds to allow another submission
       setTimeout(() => setIsSubmitted(false), 5000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Contact form submission failed:", error);
       toast.error(
-        error.message ||
-          "Failed to send message. Please try again or email support@buoyance.ng",
+        getErrorMessage(
+          error,
+          "Failed to send message. Please try again or email support@buoyance.app"
+        ),
         { duration: 7000 }
       );
     } finally {
@@ -102,11 +105,12 @@ export function ContactSection() {
   };
 
   return (
-    <section id="contact" className="py-20 md:py-28 bg-muted/50">
+    <section id="contact" className="py-20 md:py-28 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Contact Us
+          <p className="section-eyebrow mb-4">Human support</p>
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
+            Talk to someone who understands the stakes.
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Have questions about tax compliance? Our team is here to help you
@@ -114,9 +118,9 @@ export function ContactSection() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
+        <div className="grid lg:grid-cols-[1.08fr_0.92fr] gap-12 max-w-5xl mx-auto">
           {/* Contact Form */}
-          <div className="bg-card rounded-xl p-8 shadow-md border border-border">
+          <div className="premium-card p-6 md:p-8">
             <h3 className="text-xl font-semibold text-foreground mb-6">
               Send us a message
             </h3>
@@ -236,17 +240,17 @@ export function ContactSection() {
 
             <div className="space-y-6">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <Mail className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <h4 className="font-medium text-foreground">Email</h4>
-                  <p className="text-muted-foreground">support@buoyance.ng</p>
+                  <p className="text-muted-foreground">support@buoyance.app</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <Phone className="w-5 h-5 text-primary" />
                 </div>
                 <div>
@@ -256,7 +260,7 @@ export function ContactSection() {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <MapPin className="w-5 h-5 text-primary" />
                 </div>
                 <div>

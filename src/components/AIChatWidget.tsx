@@ -425,10 +425,11 @@ export function AIChatWidget() {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 h-12 pl-4 pr-5 rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold text-sm gap-2 shadow-accent"
+        className="fixed bottom-4 right-4 z-50 h-12 w-12 rounded-full bg-primary p-0 text-sm font-semibold text-primary-foreground shadow-xl shadow-primary/20 hover:bg-primary/90 sm:bottom-6 sm:right-6 sm:w-auto sm:px-5"
+        aria-label="Open AI assistant"
       >
         <Sparkles className="h-4 w-4" />
-        Ask AI
+        <span className="hidden sm:inline">Ask AI</span>
       </Button>
     );
   }

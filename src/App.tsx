@@ -10,76 +10,79 @@ import { WorkspaceProvider } from "@/hooks/useWorkspace";
 import { FeatureGateProvider } from "@/hooks/useFeatureGate";
 import ScrollToTop from "./components/ScrollToTop";
 import ScrollToHash from "./components/ScrollToHash";
-import { AIChatWidget } from "./components/AIChatWidget";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import About from "./pages/About";
-import Pricing from "./pages/Pricing";
-import Careers from "./pages/Careers";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import Cookies from "./pages/Cookies";
-import Compliance from "./pages/Compliance";
-import Support from "./pages/Support";
-import Documentation from "./pages/Documentation";
-import Health from "./pages/Health";
-import TaxGuide from "./pages/TaxGuide";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import MyCalculations from "./pages/MyCalculations";
-import Onboarding from "./pages/Onboarding";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AuditLogs from "./pages/admin/AuditLogs";
-import TaxRules from "./pages/admin/TaxRules";
-import ClassificationRules from "./pages/admin/ClassificationRules";
-import ClassificationTest from "./pages/admin/ClassificationTest";
-import AdminUsers from "./pages/admin/Users";
-import SystemSettings from "./pages/admin/SystemSettings";
-
-import Calculators from "./pages/Calculators";
-import CITCalculator from "./pages/calculators/CIT";
-import VATCalculator from "./pages/calculators/VAT";
-import WHTCalculator from "./pages/calculators/WHT";
-import CGTCalculator from "./pages/calculators/CGT";
-import PITCalculator from "./pages/calculators/PIT";
-import CryptoCalculator from "./pages/calculators/Crypto";
-import ForeignIncomeCalculator from "./pages/calculators/ForeignIncome";
-import Dashboard from "./pages/Dashboard";
-import Filings from "./pages/Filings";
-import NewFiling from "./pages/filings/NewFiling";
-import FilingDetail from "./pages/filings/FilingDetail";
-import Payments from "./pages/Payments";
-import ArchivedItems from "./pages/ArchivedItems";
-import PaymentVerification from "./pages/admin/PaymentVerification";
-import APISettings from "./pages/admin/APISettings";
-import Notifications from "./pages/Notifications";
-import Incomes from "./pages/Incomes";
-import Expenses from "./pages/Expenses";
-import BankConnections from "./pages/BankConnections";
-import Settings from "./pages/Settings";
-import WHTCredits from "./pages/WHTCredits";
-import ComplianceCalendar from "./pages/ComplianceCalendar";
-import Invoicing from "./pages/Invoicing";
-import Payroll from "./pages/Payroll";
-import KnowledgeBase from "./pages/KnowledgeBase";
-import TCCReadiness from "./pages/TCCReadiness";
-import AuditWorkspace from "./pages/AuditWorkspace";
-import BankImport from "./pages/BankImport";
-import Academy from "./pages/Academy";
-import CourseViewer from "./pages/CourseViewer";
-import TaxLibrary from "./pages/TaxLibrary";
-import AcceptInvite from "./pages/AcceptInvite";
-import AccountantDashboard from "./pages/AccountantDashboard";
-import TaxClearance from "./pages/TaxClearance";
-import DigiTax from "./pages/DigiTax";
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+
+const AIChatWidget = lazy(() =>
+  import("./components/AIChatWidget").then((module) => ({ default: module.AIChatWidget }))
+);
+
+const Index = lazy(() => import("./pages/Index"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const About = lazy(() => import("./pages/About"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const Careers = lazy(() => import("./pages/Careers"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Cookies = lazy(() => import("./pages/Cookies"));
+const Compliance = lazy(() => import("./pages/Compliance"));
+const Support = lazy(() => import("./pages/Support"));
+const Documentation = lazy(() => import("./pages/Documentation"));
+const Health = lazy(() => import("./pages/Health"));
+const TaxGuide = lazy(() => import("./pages/TaxGuide"));
+const SignIn = lazy(() => import("./pages/SignIn"));
+const SignUp = lazy(() => import("./pages/SignUp"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const MyCalculations = lazy(() => import("./pages/MyCalculations"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
+const TaxRules = lazy(() => import("./pages/admin/TaxRules"));
+const ClassificationRules = lazy(() => import("./pages/admin/ClassificationRules"));
+const ClassificationTest = lazy(() => import("./pages/admin/ClassificationTest"));
+const AdminUsers = lazy(() => import("./pages/admin/Users"));
+const SystemSettings = lazy(() => import("./pages/admin/SystemSettings"));
+const Calculators = lazy(() => import("./pages/Calculators"));
+const CITCalculator = lazy(() => import("./pages/calculators/CIT"));
+const VATCalculator = lazy(() => import("./pages/calculators/VAT"));
+const WHTCalculator = lazy(() => import("./pages/calculators/WHT"));
+const CGTCalculator = lazy(() => import("./pages/calculators/CGT"));
+const PITCalculator = lazy(() => import("./pages/calculators/PIT"));
+const CryptoCalculator = lazy(() => import("./pages/calculators/Crypto"));
+const ForeignIncomeCalculator = lazy(() => import("./pages/calculators/ForeignIncome"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Filings = lazy(() => import("./pages/Filings"));
+const NewFiling = lazy(() => import("./pages/filings/NewFiling"));
+const FilingDetail = lazy(() => import("./pages/filings/FilingDetail"));
+const Payments = lazy(() => import("./pages/Payments"));
+const ArchivedItems = lazy(() => import("./pages/ArchivedItems"));
+const PaymentVerification = lazy(() => import("./pages/admin/PaymentVerification"));
+const APISettings = lazy(() => import("./pages/admin/APISettings"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const Incomes = lazy(() => import("./pages/Incomes"));
+const Expenses = lazy(() => import("./pages/Expenses"));
+const BankConnections = lazy(() => import("./pages/BankConnections"));
+const Settings = lazy(() => import("./pages/Settings"));
+const WHTCredits = lazy(() => import("./pages/WHTCredits"));
+const ComplianceCalendar = lazy(() => import("./pages/ComplianceCalendar"));
+const Invoicing = lazy(() => import("./pages/Invoicing"));
+const Payroll = lazy(() => import("./pages/Payroll"));
+const KnowledgeBase = lazy(() => import("./pages/KnowledgeBase"));
+const AuditWorkspace = lazy(() => import("./pages/AuditWorkspace"));
+const BankImport = lazy(() => import("./pages/BankImport"));
+const Academy = lazy(() => import("./pages/Academy"));
+const CourseViewer = lazy(() => import("./pages/CourseViewer"));
+const TaxLibrary = lazy(() => import("./pages/TaxLibrary"));
+const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
+const AccountantDashboard = lazy(() => import("./pages/AccountantDashboard"));
+const TaxClearance = lazy(() => import("./pages/TaxClearance"));
+const DigiTax = lazy(() => import("./pages/DigiTax"));
 
 // SPA redirect handler: works with public/404.html to handle
 // DigitalOcean static site routing. When a 404 occurs on a client
@@ -99,6 +102,14 @@ function SpaRedirectHandler() {
 
 const queryClient = new QueryClient();
 
+function PageFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
@@ -115,9 +126,12 @@ const App = () => (
                     <ScrollToHash />
                     <SpaRedirectHandler />
                     <OfflineBanner />
-                    <AIChatWidget />
-                    <Routes>
-                      <Route path="/" element={<Index />} />
+                    <Suspense fallback={null}>
+                      <AIChatWidget />
+                    </Suspense>
+                    <Suspense fallback={<PageFallback />}>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
 
                       {/* Auth */}
                       <Route path="/signin" element={<SignIn />} />
@@ -212,8 +226,9 @@ const App = () => (
                       <Route path="/tax-guides/:slug" element={<TaxGuide />} />
 
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
                   </ConsentProvider>
                 </RBACProvider>
               </FeatureGateProvider>

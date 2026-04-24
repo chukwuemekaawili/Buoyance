@@ -2,121 +2,129 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Buoyance Design System - Nigerian Tax Compliance Platform */
+/* Buoyance Design System - premium Nigerian tax compliance platform */
 
 @layer base {
   :root {
-    /* Primary */
-    --primary: 273 100% 48%;
+    /* Brand identity */
+    --brand-violet: 273 100% 48%; /* #8600F4 */
+    --brand-neon: 72 100% 50%; /* #CCFF00 */
+    --brand-white: 0 0% 100%; /* #FFFFFF */
+    --brand-black: 0 0% 0%; /* #000000 */
+
+    /* Primary: Buoyance violet */
+    --primary: var(--brand-violet);
     --primary-foreground: 0 0% 100%;
 
     /* Background & Surfaces */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
+    --background: var(--brand-white);
+    --foreground: var(--brand-black);
 
     /* Card surfaces */
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
+    --card: var(--brand-white);
+    --card-foreground: var(--brand-black);
 
     /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
+    --popover: var(--brand-white);
+    --popover-foreground: var(--brand-black);
 
-    /* Secondary: Neutral surface replacing old emerald green */
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 0%;
+    /* Secondary: black creates a premium, high-contrast brand system */
+    --secondary: var(--brand-black);
+    --secondary-foreground: var(--brand-white);
 
-    /* Accent (Already updated but formatted here for completeness) */
-    --accent: 72 100% 50%;
-    --accent-foreground: 0 0% 0%;
+    /* Accent: Buoyance neon green */
+    --accent: var(--brand-neon);
+    --accent-foreground: var(--brand-black);
 
     /* Muted surfaces */
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 270 20% 96%;
+    --muted-foreground: 0 0% 35%;
 
     /* Success */
-    --success: 148 66% 37%;
-    --success-foreground: 0 0% 100%;
+    --success: var(--brand-neon);
+    --success-foreground: var(--brand-black);
 
     /* Destructive */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     /* Border & Input */
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 273 100% 48%; /* Violet focus rings */
+    --border: 270 16% 88%;
+    --input: 270 16% 88%;
+    --ring: var(--brand-violet);
 
     --radius: 0.625rem;
 
-    /* Custom gradients (Violet primary, Neon accent, Violet Hero) */
-    --gradient-primary: linear-gradient(135deg, hsl(273 100% 48%) 0%, hsl(273 100% 35%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(72 100% 50%) 0%, hsl(72 100% 40%) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(148 66% 37%) 0%, hsl(148 50% 30%) 100%);
-    --gradient-hero: linear-gradient(160deg, #8600F4 0%, #4a0088 100%);
-    --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 96%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--brand-violet)) 0%, hsl(var(--brand-black)) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(var(--brand-neon)) 0%, hsl(var(--brand-white)) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(var(--brand-neon)) 0%, hsl(72 100% 38%) 100%);
+    --gradient-hero: radial-gradient(circle at 82% 12%, hsl(var(--brand-neon) / 0.32), transparent 28%),
+      radial-gradient(circle at 18% 18%, hsl(var(--brand-violet) / 0.58), transparent 32%),
+      linear-gradient(145deg, hsl(var(--brand-black)) 0%, hsl(var(--brand-violet)) 54%, hsl(var(--brand-black)) 100%);
+    --gradient-surface: linear-gradient(180deg, hsl(var(--brand-white)) 0%, hsl(270 20% 97%) 100%);
 
-    /* Shadows (Removing legacy dark blue hue, switching to pure black/neon casts) */
-    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.08), 0 2px 4px -2px hsl(0 0% 0% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.12), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
-    --shadow-accent: 0 4px 14px 0 hsl(72 100% 50% / 0.35); /* Neon accent glow */
-    --shadow-success: 0 4px 14px 0 hsl(148 66% 37% / 0.25);
+    --shadow-sm: 0 1px 2px 0 hsl(var(--brand-black) / 0.06);
+    --shadow-md: 0 12px 30px -22px hsl(var(--brand-black) / 0.42), 0 2px 8px -4px hsl(var(--brand-violet) / 0.18);
+    --shadow-lg: 0 24px 55px -34px hsl(var(--brand-black) / 0.55), 0 10px 24px -18px hsl(var(--brand-violet) / 0.32);
+    --shadow-xl: 0 34px 80px -42px hsl(var(--brand-black) / 0.62), 0 18px 36px -28px hsl(var(--brand-violet) / 0.38);
+    --shadow-accent: 0 14px 36px -20px hsl(var(--brand-neon) / 0.7);
+    --shadow-success: 0 14px 36px -22px hsl(var(--brand-neon) / 0.52);
 
     /* Sidebar - aligning with the stark light brand system */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 0%;
-    --sidebar-primary: 273 100% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 0%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 273 100% 48%;
+    --sidebar-background: var(--brand-white);
+    --sidebar-foreground: var(--brand-black);
+    --sidebar-primary: var(--brand-violet);
+    --sidebar-primary-foreground: var(--brand-white);
+    --sidebar-accent: 270 20% 96%;
+    --sidebar-accent-foreground: var(--brand-black);
+    --sidebar-border: 270 16% 88%;
+    --sidebar-ring: var(--brand-violet);
   }
 
   .dark {
-    --primary: 210 40% 98%;
-    --primary-foreground: 210 76% 15%;
+    --primary: var(--brand-violet);
+    --primary-foreground: var(--brand-white);
 
-    --background: 210 76% 10%;
-    --foreground: 210 20% 95%;
+    --background: var(--brand-black);
+    --foreground: var(--brand-white);
 
-    --card: 210 60% 12%;
-    --card-foreground: 210 20% 95%;
+    --card: var(--brand-black);
+    --card-foreground: var(--brand-white);
 
-    --popover: 210 60% 12%;
-    --popover-foreground: 210 20% 95%;
+    --popover: var(--brand-black);
+    --popover-foreground: var(--brand-white);
 
-    --secondary: 148 66% 37%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: var(--brand-white);
+    --secondary-foreground: var(--brand-black);
 
-    --accent: 38 91% 55%;
-    --accent-foreground: 210 76% 15%;
+    --accent: var(--brand-neon);
+    --accent-foreground: var(--brand-black);
 
-    --muted: 210 50% 18%;
-    --muted-foreground: 210 20% 65%;
+    --muted: 273 26% 12%;
+    --muted-foreground: 0 0% 78%;
 
-    --success: 148 66% 37%;
-    --success-foreground: 0 0% 100%;
+    --success: var(--brand-neon);
+    --success-foreground: var(--brand-black);
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 50% 20%;
-    --input: 210 50% 20%;
-    --ring: 148 66% 37%;
+    --border: 273 26% 18%;
+    --input: 273 26% 18%;
+    --ring: var(--brand-neon);
 
-    --gradient-hero: linear-gradient(180deg, hsl(210 76% 8%) 0%, hsl(210 70% 12%) 50%, hsl(210 60% 15%) 100%);
+    --gradient-hero: radial-gradient(circle at 82% 12%, hsl(var(--brand-neon) / 0.3), transparent 28%),
+      radial-gradient(circle at 18% 18%, hsl(var(--brand-violet) / 0.62), transparent 32%),
+      linear-gradient(145deg, hsl(var(--brand-black)) 0%, hsl(var(--brand-violet)) 54%, hsl(var(--brand-black)) 100%);
 
-    --sidebar-background: 210 76% 8%;
-    --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 38 91% 55%;
-    --sidebar-primary-foreground: 210 76% 15%;
-    --sidebar-accent: 210 60% 15%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 210 50% 18%;
-    --sidebar-ring: 148 66% 37%;
+    --sidebar-background: var(--brand-black);
+    --sidebar-foreground: var(--brand-white);
+    --sidebar-primary: var(--brand-violet);
+    --sidebar-primary-foreground: var(--brand-white);
+    --sidebar-accent: 273 26% 12%;
+    --sidebar-accent-foreground: var(--brand-white);
+    --sidebar-border: 273 26% 18%;
+    --sidebar-ring: var(--brand-neon);
   }
 }
 
@@ -134,14 +142,14 @@
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
 
-  /* Financial figures typography */
+  /* Keep financial figures on-brand */
   .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
 
   /* Heading styles */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+    @apply font-sans font-semibold tracking-tight;
   }
 }
 
@@ -159,7 +167,7 @@
 
   /* Background utilities */
   .bg-gradient-hero {
-    background: linear-gradient(160deg, #8600F4 0%, #4a0088 100%);
+    background: var(--gradient-hero);
   }
 
   .bg-gradient-surface {
@@ -168,7 +176,22 @@
 
   /* Glass effect */
   .glass {
-    @apply bg-card/80 backdrop-blur-md border border-border/50;
+    @apply bg-card/80 backdrop-blur-xl border border-white/50;
+  }
+
+  .premium-card {
+    @apply rounded-3xl border border-white/70 bg-white/85 shadow-xl backdrop-blur-xl;
+  }
+
+  .section-eyebrow {
+    @apply text-xs font-bold uppercase tracking-[0.24em] text-primary/70;
+  }
+
+  .ink-surface {
+    background:
+      radial-gradient(circle at 18% 16%, hsl(var(--brand-neon) / 0.2), transparent 26%),
+      radial-gradient(circle at 88% 0%, hsl(var(--brand-violet) / 0.45), transparent 28%),
+      linear-gradient(145deg, hsl(var(--brand-black)) 0%, hsl(var(--brand-violet)) 100%);
   }
 
   /* Naira symbol styling */

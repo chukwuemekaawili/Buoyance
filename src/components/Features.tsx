@@ -1,199 +1,169 @@
 import {
-  Scale,
-  Brain,
-  FileCheck,
-  Building2,
-  ShieldCheck,
-  Clock,
-  Upload,
-  FileSpreadsheet,
+  ArrowRight,
+  BadgeCheck,
   Calculator,
-  Calendar,
-  Shield,
-  BookOpen,
+  CalendarDays,
+  FileArchive,
+  FileCheck2,
+  GitBranch,
+  LockKeyhole,
+  Scale,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
-const features = [
+const pillars = [
   {
-    icon: Scale,
-    title: "Legally Grounded Engine",
+    icon: Calculator,
+    title: "Calculate with versioned rules",
     description:
-      "All tax logic derived exclusively from the Nigeria Tax Act 2025 and NTAA 2025. Every calculation mapped to specific legal sections.",
-    highlight: "NTA 2025",
+      "Run PIT, VAT, and CGT estimates with deterministic logic, visible assumptions, and saved calculation history.",
+    detail: "Shared tax helpers reduce drift across calculators and filing workpapers.",
   },
   {
-    icon: Brain,
-    title: "Explainable Intelligence",
+    icon: FileCheck2,
+    title: "Prepare filing workpapers",
     description:
-      "Clear reasoning behind every tax result. Understand exactly how your tax is calculated with detailed rule-by-rule breakdowns.",
-    highlight: "Deterministic",
+      "Turn inputs into exportable filing packs, portal field maps, and handoff checklists for manual submission.",
+    detail: "Designed for TaxPro Max and state IRS workflows where direct filing is not yet automated.",
   },
   {
-    icon: FileCheck,
-    title: "Automated Filing",
+    icon: CalendarDays,
+    title: "Track compliance posture",
     description:
-      "Seamless preparation and submission workflows integrated with the Nigeria Revenue Service (NRS) e-Filing systems.",
-    highlight: "NRS Integrated",
-  },
-  {
-    icon: Building2,
-    title: "Multi-Entity Support",
-    description:
-      "From individual PAYE to complex corporate structures. Handle PIT, CIT, VAT, WHT, and CGT across all business types.",
-    highlight: "All Tax Types",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Audit-Ready Records",
-    description:
-      "Immutable calculation logs, versioned tax rules, and complete audit trails. Every decision is logged and reproducible.",
-    highlight: "Full Traceability",
-  },
-  {
-    icon: Clock,
-    title: "Real-Time Updates",
-    description:
-      "Stay compliant with automatic updates when tax laws change. Historical calculations preserved with versioned rule sets.",
-    highlight: "Always Current",
+      "Monitor deadlines, payments, TCC readiness, WHT credits, and evidence gaps from one workspace.",
+    detail: "Risk narratives explain what needs attention before the period closes.",
   },
 ];
 
-const tools = [
-  {
-    icon: Upload,
-    title: "Bank Statement Import",
-    description:
-      "Drag & drop bank statements from GTBank, Access, UBA, and more. Auto-detect bank format, parse transactions, and categorize expenses.",
-    highlight: "Auto-Categorize",
-  },
-  {
-    icon: FileSpreadsheet,
-    title: "Smart Invoicing",
-    description:
-      "Create professional invoices with auto-calculated VAT and WHT. Track payment status and generate PDF receipts.",
-    highlight: "VAT/WHT Built-in",
-  },
-  {
-    icon: Calculator,
-    title: "Payroll Calculator",
-    description:
-      "NTA 2025 compliant PAYE calculations with pension, NHF, NHIA deductions. Generate payslips and remittance schedules instantly.",
-    highlight: "NTA 2025 PAYE",
-  },
-  {
-    icon: Calendar,
-    title: "Compliance Calendar",
-    description:
-      "Never miss a deadline. Auto-generated tax calendar for FIRS, LIRS, and state agencies with penalty warnings and reminders.",
-    highlight: "All Regulators",
-  },
-  {
-    icon: Shield,
-    title: "WHT Credit Tracker",
-    description:
-      "Upload WHT certificates with OCR scanning. Track credit balances, expiry dates, and apply credits to filings automatically.",
-    highlight: "OCR Scanning",
-  },
-  {
-    icon: BookOpen,
-    title: "Tax Knowledge Base",
-    description:
-      "Searchable library of Nigerian tax laws, FIRS circulars, and practical guides. Stay informed with plain-language explanations.",
-    highlight: "Always Learning",
-  },
+const workflow = [
+  "Import records",
+  "Review assumptions",
+  "Generate workpapers",
+  "Track deadlines",
+];
+
+const proofMetrics = [
+  { label: "Rule path", value: "Visible" },
+  { label: "Filing mode", value: "Manual-first" },
+  { label: "Evidence", value: "Linked" },
 ];
 
 export function Features() {
   return (
-    <section id="features" className="py-20 md:py-28 bg-background">
+    <section id="features" className="relative overflow-hidden bg-background py-20 md:py-28">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
       <div className="container">
-        {/* Section Header */}
-        <div className="max-w-3xl mx-auto text-center mb-16">
-          <span className="inline-block text-primary font-semibold text-sm tracking-wide uppercase mb-4">
-            Platform Capabilities
-          </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Built for Nigerian Tax Compliance
+        <div className="mx-auto mb-16 max-w-3xl text-center">
+          <p className="section-eyebrow">Product system</p>
+          <h2 className="mt-4 text-3xl font-bold leading-tight text-foreground md:text-5xl">
+            Less tax chaos. More operational control.
           </h2>
-          <p className="text-lg text-muted-foreground">
-            A comprehensive platform designed to make tax calculation accurate,
-            transparent, and stress-free for every Nigerian taxpayer.
+          <p className="mt-5 text-lg leading-8 text-muted-foreground">
+            Buoyance is not just a calculator grid. It is the operating layer between your
+            records, the tax rulebook, and the manual filing reality Nigerian teams still face.
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {features.map((feature, index) => (
-            <Card
-              key={index}
-              className="group p-6 md:p-8 border border-border/60 hover:border-primary/40 transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+        <div className="grid gap-5 lg:grid-cols-3">
+          {pillars.map((pillar, index) => (
+            <article
+              key={pillar.title}
+              className={`premium-card group p-6 transition duration-300 hover:-translate-y-1 ${
+                index === 1 ? "lg:translate-y-8" : ""
+              }`}
             >
-              {/* Icon */}
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
-                <feature.icon className="h-6 w-6 text-primary" />
+              <div className="mb-8 flex items-center justify-between">
+                <div className="rounded-2xl bg-primary/10 p-3">
+                  <pillar.icon className="h-6 w-6 text-primary" />
+                </div>
+                <span className="font-mono text-xs font-bold text-muted-foreground">
+                  0{index + 1}
+                </span>
               </div>
-
-              {/* Highlight Badge */}
-              <span className="inline-block text-xs font-mono font-semibold text-primary bg-primary/10 px-2 py-1 rounded mb-3">
-                {feature.highlight}
-              </span>
-
-              {/* Title */}
-              <h3 className="text-lg font-bold text-foreground mb-2">
-                {feature.title}
-              </h3>
-
-              {/* Description */}
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {feature.description}
-              </p>
-            </Card>
+              <h3 className="text-2xl font-bold leading-tight">{pillar.title}</h3>
+              <p className="mt-4 text-sm leading-7 text-muted-foreground">{pillar.description}</p>
+              <div className="mt-6 rounded-2xl border border-border/70 bg-muted/45 p-4">
+                <p className="text-sm font-semibold text-foreground">{pillar.detail}</p>
+              </div>
+            </article>
           ))}
         </div>
 
-        {/* Tools Section */}
-        <div className="mt-20 border-t border-border" />
-        <div className="max-w-3xl mx-auto text-center mt-16 mb-16">
-          <span className="inline-block text-primary font-semibold text-sm tracking-wide uppercase mb-4">
-            Productivity Tools
-          </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Everything You Need in One Place
-          </h2>
-          <p className="text-lg text-muted-foreground">
-            From bank imports to invoicing, payroll to compliance tracking —
-            all the tools you need to run a tax-compliant business.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {tools.map((tool, index) => (
-            <Card
-              key={index}
-              className="group p-6 md:p-8 border border-border/60 hover:border-primary/40 transition-all duration-300 hover:shadow-md hover:-translate-y-1"
-            >
-              {/* Icon */}
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
-                <tool.icon className="h-6 w-6 text-primary" />
-              </div>
-
-              {/* Highlight Badge */}
-              <span className="inline-block text-xs font-mono font-semibold text-primary bg-primary/10 px-2 py-1 rounded mb-3">
-                {tool.highlight}
+        <div className="mt-24 grid gap-8 rounded-[2rem] border border-primary/10 bg-white/70 p-5 shadow-xl backdrop-blur-xl lg:grid-cols-[0.95fr_1.05fr] lg:p-8">
+          <div className="ink-surface overflow-hidden rounded-[1.5rem] p-6 text-white">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-accent" />
+              <span className="text-sm font-bold uppercase tracking-[0.2em] text-white/65">
+                Premium workflow
               </span>
+            </div>
+            <h3 className="mt-6 text-3xl font-bold leading-tight md:text-4xl">
+              One clear path from messy records to filing-ready evidence.
+            </h3>
+            <div className="mt-8 space-y-3">
+              {workflow.map((step, index) => (
+                <div
+                  key={step}
+                  className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/8 p-4"
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-sm font-bold text-accent-foreground">
+                    {index + 1}
+                  </span>
+                  <span className="font-semibold text-white/86">{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-              {/* Title */}
-              <h3 className="text-lg font-bold text-foreground mb-2">
-                {tool.title}
+          <div className="grid content-between gap-6 p-2 lg:p-4">
+            <div>
+              <p className="section-eyebrow">Why it feels safer</p>
+              <h3 className="mt-3 text-3xl font-bold leading-tight">
+                Buoyance shows its work before you trust its output.
               </h3>
-
-              {/* Description */}
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {tool.description}
+              <p className="mt-4 leading-8 text-muted-foreground">
+                Premium compliance software should not ask users to believe a magic answer.
+                It should make the calculation, source assumption, document, and next action easy to inspect.
               </p>
-            </Card>
-          ))}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              {proofMetrics.map((metric) => (
+                <div key={metric.label} className="rounded-2xl border border-border/70 bg-card p-4">
+                  <p className="font-mono text-xl font-bold text-primary">{metric.value}</p>
+                  <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    {metric.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                { icon: GitBranch, label: "Versioned rule history" },
+                { icon: LockKeyhole, label: "Controlled document access" },
+                { icon: FileArchive, label: "Evidence-linked records" },
+                { icon: BadgeCheck, label: "Review-state labels" },
+                { icon: Scale, label: "Professional handoff notes" },
+                { icon: ShieldCheck, label: "Conservative compliance claims" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3">
+                  <item.icon className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold">{item.label}</span>
+                </div>
+              ))}
+            </div>
+
+            <Link
+              to="/calculators"
+              className="group inline-flex w-fit items-center gap-2 text-sm font-bold text-primary"
+            >
+              Explore calculators
+              <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+            </Link>
+          </div>
         </div>
       </div>
     </section>

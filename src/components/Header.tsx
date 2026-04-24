@@ -167,13 +167,13 @@ export function Header() {
     ? "text-white/90 hover:text-white hover:bg-white/10"
     : "text-muted-foreground hover:text-primary hover:bg-muted";
 
-  // Marketing links for unauthenticated users
+  // Keep public navigation edited; deeper app surfaces live after sign-in.
   const marketingLinks = [
-    { href: getNavHref("#features"), label: "Features", type: "anchor" },
+    { href: getNavHref("#features"), label: "Product", type: "anchor" },
     { href: getNavHref("#calculator"), label: "Tax Estimator", type: "anchor" },
+    { href: "/pricing", label: "Pricing", type: "link" },
     { href: "/academy", label: "Academy", type: "link" },
     { href: "/support", label: "Support", type: "link" },
-    { href: getNavHref("#contact"), label: "Contact", type: "anchor" },
   ];
 
   // Check if any calculator path is active
@@ -263,8 +263,8 @@ export function Header() {
             {/* Spacer */}
             <div className="flex-1 min-w-0" />
 
-            {/* Desktop Navigation - Only show on 2xl and above (1536px+) */}
-            <nav className="hidden 2xl:flex items-center gap-1 flex-shrink-0">
+            {/* Desktop navigation: app users need more room, public visitors should see nav sooner. */}
+            <nav className={cn("hidden items-center gap-1 flex-shrink-0", user ? "2xl:flex" : "lg:flex")}>
               {user ? (
                 // Authenticated: App navigation
                 <>
@@ -571,8 +571,8 @@ export function Header() {
               )}
             </nav>
 
-            {/* Desktop Right Actions - Only show on 2xl and above */}
-            <div className="hidden 2xl:flex items-center gap-2 ml-4 flex-shrink-0">
+            {/* Desktop right actions */}
+            <div className={cn("hidden items-center gap-2 ml-4 flex-shrink-0", user ? "2xl:flex" : "lg:flex")}>
               {user && (
                 <>
                   <WorkspaceSwitcher className="mr-2" />
@@ -688,18 +688,18 @@ export function Header() {
               )}
               {!user && (
                 <>
-                  <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-primary font-medium">
-                    <Link to="/signin">Sign In</Link>
+                  <Button variant="ghost" size="sm" asChild className={cn("font-medium", isHeroMode ? "text-white/80 hover:bg-white/10 hover:text-white" : "text-muted-foreground hover:text-primary")}>
+                    <Link to="/signin">Sign in</Link>
                   </Button>
-                  <Button size="sm" variant="accent" asChild className="font-medium">
-                    <Link to="/signup">Get Started</Link>
+                  <Button size="sm" variant="accent" asChild className="rounded-full px-5 font-bold">
+                    <Link to="/signup">Start free</Link>
                   </Button>
                 </>
               )}
             </div>
 
-            {/* Mobile/Tablet Menu Button - visible below 2xl (1536px) */}
-            <div className="2xl:hidden flex items-center gap-2 flex-shrink-0">
+            {/* Mobile/tablet menu button */}
+            <div className={cn("flex items-center gap-2 flex-shrink-0", user ? "2xl:hidden" : "lg:hidden")}>
               {user && (
                 <>
                   <WorkspaceSwitcher className="hidden xl:flex max-w-[200px] mr-1 text-foreground border-primary-foreground/30 hover:bg-muted hover:text-foreground" />
@@ -719,7 +719,11 @@ export function Header() {
                 </>
               )}
               <button
-                className="flex 2xl:hidden items-center justify-center w-10 h-10 text-foreground"
+                className={cn(
+                  "flex items-center justify-center w-10 h-10",
+                  user ? "2xl:hidden" : "lg:hidden",
+                  isHeroMode ? "text-white" : "text-foreground"
+                )}
                 onClick={() => setIsMenuOpen(true)}
                 aria-label="Open menu"
               >
@@ -732,7 +736,7 @@ export function Header() {
 
       {/* Mobile/Tablet Menu Sheet */}
       <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md bg-background text-foreground border-l-0 p-0 overflow-y-auto">
+        <SheetContent side="right" className="w-full sm:max-w-sm bg-background text-foreground border-l-0 p-0 overflow-y-auto">
           <SheetHeader className="px-6 pt-6 pb-4">
             <SheetTitle className="text-foreground text-left">
               <img
@@ -1357,63 +1361,15 @@ export function Header() {
                 )}
 
                 <Separator className="my-4 bg-muted" />
-                <p className="text-xs uppercase text-foreground/50 tracking-wider mb-2">Calculators</p>
-                <SheetClose asChild>
-                  <a
-                    href={getNavHref("#calculator")}
-                    className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border"
-                    onClick={handleNavClick}
-                  >
-                    PIT Calculator
-                  </a>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Link
-                    to="/calculators/cit"
-                    className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border"
-                    onClick={handleNavClick}
-                  >
-                    CIT Calculator
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Link
-                    to="/calculators/vat"
-                    className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border"
-                    onClick={handleNavClick}
-                  >
-                    VAT Calculator
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Link
-                    to="/calculators/wht"
-                    className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border"
-                    onClick={handleNavClick}
-                  >
-                    WHT Calculator
-                  </Link>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Link
-                    to="/calculators/cgt"
-                    className="text-foreground/90 hover:text-foreground transition-colors font-medium text-lg py-3 border-b border-border"
-                    onClick={handleNavClick}
-                  >
-                    CGT Calculator
-                  </Link>
-                </SheetClose>
-
-                <Separator className="my-4 bg-muted" />
                 <div className="flex flex-col gap-3 pt-2 pb-6">
                   <SheetClose asChild>
                     <Button variant="ghost" asChild className="w-full justify-center text-muted-foreground hover:text-primary font-medium">
-                      <Link to="/signin" onClick={handleNavClick}>Sign In</Link>
+                      <Link to="/signin" onClick={handleNavClick}>Sign in</Link>
                     </Button>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Button variant="accent" asChild className="w-full justify-center">
-                      <Link to="/signup" onClick={handleNavClick}>Get Started</Link>
+                    <Button variant="accent" asChild className="w-full justify-center rounded-full">
+                      <Link to="/signup" onClick={handleNavClick}>Start free</Link>
                     </Button>
                   </SheetClose>
                 </div>

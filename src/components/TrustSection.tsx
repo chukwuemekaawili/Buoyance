@@ -1,95 +1,125 @@
-import { Shield, Lock, MapPin, FileCheck, Award, Server } from "lucide-react";
+import {
+  Archive,
+  BadgeCheck,
+  FileLock2,
+  Fingerprint,
+  Landmark,
+  Scale,
+  ShieldCheck,
+  Workflow,
+} from "lucide-react";
 
-const trustBadges = [
+const trustLayers = [
   {
-    icon: Lock,
-    title: "AES-256 Encrypted",
-    description: "Standard encryption for all data at rest and in transit",
+    icon: Fingerprint,
+    title: "Explainable by default",
+    description:
+      "Calculations expose the rule version, inputs, taxable base, rates, and resulting breakdown instead of hiding behind generic AI language.",
   },
   {
-    icon: MapPin,
-    title: "Nigerian Data Residency",
-    description: "All data stored within Nigerian jurisdiction",
+    icon: FileLock2,
+    title: "Document access controls",
+    description:
+      "Evidence workflows are designed around encrypted storage, signed-access patterns, and explicit workspace permissions.",
   },
   {
-    icon: FileCheck,
-    title: "NRS Formatted",
-    description: "Outputs structured for manual Nigeria Revenue Service submission",
+    icon: Archive,
+    title: "Audit-ready history",
+    description:
+      "Saved calculations, filing activity, and review states create a defensible trail for accountants and business owners.",
   },
   {
-    icon: Shield,
-    title: "Audit-Ready",
-    description: "Complete, immutable audit trails for all calculations",
-  },
-  {
-    icon: Server,
-    title: "99.9% Uptime",
-    description: "Enterprise-grade reliability and availability",
-  },
-  {
-    icon: Award,
-    title: "Legal Validation",
-    description: "Tax logic verified against current legislation",
+    icon: Workflow,
+    title: "Manual filing clarity",
+    description:
+      "Buoyance prepares the pack and handoff steps clearly where authority portals still require human submission.",
   },
 ];
 
 export function TrustSection() {
   return (
-    <section id="compliance" className="py-20 md:py-28 bg-neutral-50">
-      <div className="container">
-        {/* Section Header */}
-        <div className="max-w-3xl mx-auto text-center mb-16">
-          <span className="inline-block text-primary font-semibold text-sm tracking-wide uppercase mb-4">
-            Security & Compliance
-          </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Built on Trust, Secured by Design
-          </h2>
-          <p className="text-lg text-muted-foreground">
-            Enterprise-grade security and regulatory compliance at every layer.
-            Your financial data deserves the highest protection.
-          </p>
+    <section id="compliance" className="relative overflow-hidden bg-gradient-surface py-20 md:py-28">
+      <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
+      <div className="container relative">
+        <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
+          <div>
+            <p className="section-eyebrow">Trust architecture</p>
+            <h2 className="mt-4 text-3xl font-bold leading-tight md:text-5xl">
+              Proof beats badge theatre.
+            </h2>
+            <p className="mt-5 text-lg leading-8 text-muted-foreground">
+              For tax, premium is not flashy. Premium is knowing what was calculated,
+              why it was calculated, what evidence supports it, and what still needs a human review.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              { label: "Framework", value: "NTA 2025" },
+              { label: "Service posture", value: "Manual-first" },
+              { label: "Output style", value: "Explainable" },
+            ].map((item) => (
+              <div key={item.label} className="premium-card p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                  {item.label}
+                </p>
+                <p className="mt-3 font-mono text-2xl font-bold text-primary">{item.value}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Trust Badges Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {trustBadges.map((badge, index) => (
-            <div
-              key={index}
-              className="bg-white border border-border rounded-xl p-6 hover:shadow-md hover:-translate-y-1 transition-all duration-300"
-            >
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <badge.icon className="h-6 w-6 text-primary" />
+        <div className="mt-12 grid gap-5 md:grid-cols-2">
+          {trustLayers.map((layer) => (
+            <article key={layer.title} className="premium-card p-6">
+              <div className="flex items-start gap-4">
+                <div className="rounded-2xl bg-primary/10 p-3">
+                  <layer.icon className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">{layer.title}</h3>
+                  <p className="mt-3 leading-7 text-muted-foreground">{layer.description}</p>
+                </div>
               </div>
-              <h3 className="text-lg font-bold text-foreground mb-2">
-                {badge.title}
-              </h3>
-              <p className="text-muted-foreground text-sm">
-                {badge.description}
-              </p>
-            </div>
+            </article>
           ))}
         </div>
 
-        {/* Certification Logos */}
-        <div className="mt-16 pt-12 border-t border-border">
-          <p className="text-center text-muted-foreground text-sm mb-8">
-            Regulatory Framework
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold font-mono text-foreground">NTA 2025</div>
-              <div className="text-xs text-muted-foreground mt-1">Nigeria Tax Act</div>
+        <div className="mt-10 rounded-[2rem] border border-primary/10 bg-white p-6 shadow-xl md:p-8">
+          <div className="grid gap-6 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center">
+            <div className="flex items-center gap-4">
+              <ShieldCheck className="h-8 w-8 text-primary" />
+              <div>
+                <h3 className="font-bold">Tax rules</h3>
+                <p className="text-sm text-muted-foreground">Published, versioned, review-aware</p>
+              </div>
             </div>
-            <div className="w-px h-12 bg-border hidden md:block" />
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-foreground">NTAA 2025</div>
-              <div className="text-xs text-muted-foreground mt-1">Tax Administration Act</div>
+            <div className="hidden h-12 w-px bg-border md:block" />
+            <div className="flex items-center gap-4">
+              <Landmark className="h-8 w-8 text-primary" />
+              <div>
+                <h3 className="font-bold">Authority workflows</h3>
+                <p className="text-sm text-muted-foreground">FIRS and state IRS handoffs</p>
+              </div>
             </div>
-            <div className="w-px h-12 bg-border hidden md:block" />
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold font-mono text-primary">NRS</div>
-              <div className="text-xs text-muted-foreground mt-1">Nigeria Revenue Service</div>
+            <div className="hidden h-12 w-px bg-border md:block" />
+            <div className="flex items-center gap-4">
+              <Scale className="h-8 w-8 text-primary" />
+              <div>
+                <h3 className="font-bold">Professional review</h3>
+                <p className="text-sm text-muted-foreground">Clear boundaries before filing</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-2xl bg-muted/60 p-4">
+            <div className="flex items-start gap-3">
+              <BadgeCheck className="mt-0.5 h-5 w-5 shrink-0 text-secondary" />
+              <p className="text-sm leading-7 text-muted-foreground">
+                Buoyance is strongest when it is honest: live tools are labeled as live,
+                review-state surfaces are labeled as review-state, and filing outputs are positioned
+                as preparation support until direct authority submission is fully verified.
+              </p>
             </div>
           </div>
         </div>

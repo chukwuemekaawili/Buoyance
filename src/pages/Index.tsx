@@ -2,12 +2,28 @@ import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
-import { CalculatorSection } from "@/components/CalculatorSection";
 import { TrustSection } from "@/components/TrustSection";
-import { ContactSection } from "@/components/ContactSection";
 import { CTA } from "@/components/CTA";
 import { Footer } from "@/components/Footer";
 import { Loader2 } from "lucide-react";
+import { lazy, Suspense } from "react";
+
+const CalculatorSection = lazy(() =>
+  import("@/components/CalculatorSection").then((module) => ({ default: module.CalculatorSection }))
+);
+const ContactSection = lazy(() =>
+  import("@/components/ContactSection").then((module) => ({ default: module.ContactSection }))
+);
+
+function SectionFallback() {
+  return (
+    <div className="bg-background py-20">
+      <div className="container">
+        <div className="mx-auto h-32 max-w-5xl animate-pulse rounded-[2rem] bg-muted/70" />
+      </div>
+    </div>
+  );
+}
 
 const Index = () => {
   const { loading } = useAuth();
@@ -26,9 +42,13 @@ const Index = () => {
       <Header />
       <Hero />
       <Features />
-      <CalculatorSection />
+      <Suspense fallback={<SectionFallback />}>
+        <CalculatorSection />
+      </Suspense>
       <TrustSection />
-      <ContactSection />
+      <Suspense fallback={<SectionFallback />}>
+        <ContactSection />
+      </Suspense>
       <CTA />
       <Footer />
     </main>

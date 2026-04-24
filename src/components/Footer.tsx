@@ -63,7 +63,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-neutral-900 text-primary-foreground">
+    <footer className="ink-surface text-primary-foreground">
       <div className="container py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-12">
           <div className="lg:col-span-2">
@@ -78,22 +78,23 @@ export function Footer() {
                 className="h-10 w-auto object-contain brightness-0 invert"
               />
             </Link>
-            <p className="text-primary-foreground/70 text-sm mb-6 max-w-xs">
-              Nigeria's most trusted platform for tax compliance and financial
-              intelligence. Accurate, compliant, stress-free.
+            <p className="text-primary-foreground/70 text-sm mb-6 max-w-xs leading-6">
+              Practical tax prep, filing workpapers, and compliance tracking for
+              Nigerian teams. Conservative claims, explainable calculations,
+              manual-first workflows.
             </p>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5 text-xs text-primary-foreground/60">
                 <Lock className="h-3.5 w-3.5" />
-                <span>AES-256</span>
+                <span>Encrypted</span>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-primary-foreground/60">
                 <MapPin className="h-3.5 w-3.5" />
-                <span>Nigerian Data</span>
+                <span>Region-Aware</span>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-primary-foreground/60">
                 <Shield className="h-3.5 w-3.5" />
-                <span>NRS Formatted</span>
+                <span>Manual-First</span>
               </div>
             </div>
           </div>
@@ -136,7 +137,7 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-primary-foreground/10">
+      <div className="border-t border-primary-foreground/10 bg-black/10">
         <div className="container py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-primary-foreground/60">
