@@ -21,9 +21,9 @@ Buoyance is a comprehensive tax compliance and financial management platform tai
 - `docs/project/`: Existing technical documentation.
 
 ## Risky Areas
-- **Authentication**: Core auth surface currently appears broken in production (failed fetch to Supabase).
+- **Authentication**: Core auth and edge-function gating are live, but every deployment still needs a real browser smoke test on `/signin`, post-login shell load, and protected AI/OCR flows.
 - **Tax Logic**: Nigerian tax calculations must remain precise and compliant.
-- **Supabase Integration**: Direct client usage (`src/integrations/supabase/client.ts`) with hardcoded URLs (risk for environment consistency).
+- **Supabase Integration**: Frontend build variables, edge-function secrets, and storage policies must stay aligned across DigitalOcean and Supabase.
 
 ## Rules
 1. **Inspect Before Change**: Always check the existing folder structure and file patterns before modifying code.
