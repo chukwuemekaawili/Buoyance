@@ -19,9 +19,9 @@
 |---|---|
 | **Status** | ⚠️ Implemented, pending runtime verification |
 | **Files changed** | `.env` config guidance, `supabase/config.toml` (documented in recovery notes) |
-| **Exact fix** | Verified Supabase env vars are present in `.env.local` and `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` match the project. Backend deployment guidance documented in `docs/recovery/post-incident-actions.md`. |
-| **Verification performed** | Code audit only. Auth completion and DB writes in production environment have **not** been confirmed via live test account. |
-| **Remaining risk** | Production Supabase endpoint may time out or return 401 if PUBLISHABLE key is rotated. Must be validated with a live signup + dashboard load test before launch. |
+| **Exact fix** | Verified the active Supabase project, applied the live quota migration, redeployed the hardened edge functions, declared frontend Supabase envs in `.do/app.yaml`, and added a `/health` route for browser-side verification. |
+| **Verification performed** | Live backend reachability and protected-function hardening were confirmed, but auth completion and DB writes in the latest live frontend deployment have **not** yet been re-confirmed with a browser test account. |
+| **Remaining risk** | Latest DigitalOcean frontend deploy still needs a live signup + sign-in + dashboard load test before launch. A rotated publishable key or stale build could still break browser auth even though backend access is healthy. |
 
 ---
 

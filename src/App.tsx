@@ -26,6 +26,7 @@ import Cookies from "./pages/Cookies";
 import Compliance from "./pages/Compliance";
 import Support from "./pages/Support";
 import Documentation from "./pages/Documentation";
+import Health from "./pages/Health";
 import TaxGuide from "./pages/TaxGuide";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -207,6 +208,7 @@ const App = () => (
                       <Route path="/support" element={<Support />} />
                       <Route path="/documentation" element={<Documentation />} />
                       <Route path="/docs" element={<Documentation />} />
+                      <Route path="/health" element={<Health />} />
                       <Route path="/tax-guides/:slug" element={<TaxGuide />} />
 
                       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
@@ -224,3 +226,4 @@ const App = () => (
 );
 
 export default App;
+

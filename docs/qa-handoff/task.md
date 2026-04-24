@@ -12,7 +12,7 @@
 
 | Gate | Task | Owner | Status | Verification Required | Evidence | Blocker / Dependency |
 |---|---|---|---|---|---|---|
-| G1 | Backend / Auth Reliability | Infra | ❌ Blocked / pending manual live execution | Full auth round-trip (signup → sign-in → DB write) in production | `.env.local` vars confirmed present; `post-incident-actions.md` updated | Supabase anon key must be active; DNS routing must resolve |
+| G1 | Backend / Auth Reliability | Infra | ⚠️ Code + infra updated / pending latest live browser verification | Full auth round-trip (signup → sign-in → DB write) in production | Active Supabase project confirmed reachable; `.do/app.yaml` declares frontend Supabase envs; `/health` route added; live function hardening deployed | Latest DigitalOcean deployment still needs end-to-end browser verification |
 | G1 | Centralize Tax Logic | Engineering | ✅ Code-verified (PASS) | Cross-calculator golden-value unit tests with known expected outputs | `taxEngine.ts` single source of truth confirmed via node script execution | None |
 | G1 | Onboarding Routing Fix | Engineering | ❌ Blocked / pending manual live execution | New account signup → confirm no redirect loop → dashboard loads | Code path inspected; `onboarding_completed` flag logic corrected | Must test both email and Google OAuth signup paths in production |
 

@@ -11,6 +11,8 @@ Buoyance is a comprehensive tax compliance and financial management platform des
 * GitHub: yes
 * Deployment: DigitalOcean App Platform
 * Live URL: https://buoyance.app
+* Active Supabase project: `bajwsjrqrsglsndgtfpp`
+* Live browser smoke status: pending post-deploy verification
 
 ## Stack
 React + TypeScript + Vite + Tailwind + Supabase
@@ -19,8 +21,9 @@ React + TypeScript + Vite + Tailwind + Supabase
 - No PRD
 - Production is live
 - Auto deploy on main (risk)
-- Auth surface appears broken in production
-- Sign in page returns: Failed to fetch
+- Full browser QA is still pending on the latest deployment
+- Paystack and Mono secrets are intentionally pending
+- Live auth must still be re-verified end to end after the latest frontend redeploy
 
 ## Config Findings
 - Supabase client file: `src/integrations/supabase/client.ts`
@@ -29,11 +32,12 @@ React + TypeScript + Vite + Tailwind + Supabase
 - The client file correctly follows the standard Vite environment variable pattern
 - Local `.env` contains the required variables, and the client file consumes them correctly
 - Frontend config approach is consistent with Vite standards
-- The current production auth failure on `/signin` with `Failed to fetch` is likely due to the value of the environment variable itself, not a lack of environment variable support in the code.
-- Current VITE_SUPABASE_URL value: `https://bajwsjrqrsglsndgtfpp.supabase.co`
-- Verified result: DNS lookup failed / host does not exist
-- Current production auth failure is consistent with a dead Supabase backend endpoint
-- Local `supabase/migrations` folder has 39 migrations, confirming the backend schema can be fully reconstructed locally or in a new instance.
+- `.do/app.yaml` now declares `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` for DigitalOcean App Platform builds.
+- The active Supabase project `bajwsjrqrsglsndgtfpp` is live and reachable.
+- The server-side quota migration has been applied to the live database.
+- `ai-chat`, `ocr-extract`, `paystack-payment`, and `bank-connect` have been redeployed to the live project with the reviewed hardening changes.
+- `ai-chat` and `ocr-extract` now require a JWT at the Supabase gateway, in addition to their in-function auth checks.
+- Paystack and Mono flows still depend on secrets that are intentionally pending.
 
 ## Confirmed Live Surface
 - App name: buoyance-app
@@ -43,11 +47,11 @@ React + TypeScript + Vite + Tailwind + Supabase
 - Auth entry: present
 - Sign in page: loads
 - Sign up page: loads
-- Verified auth failure URL: https://buoyance.app/signin
-- Verified auth failure message: Failed to fetch
+- Latest repo-level frontend config fix has been pushed to `main`
+- Latest end-to-end sign-in and sign-up result is not yet re-verified in a browser on the updated deployment
 
 ## Next Questions
-- Was the original Supabase project deleted, renamed, or replaced?
-- Is there a new active Supabase project that this app should use?
-- Where is the correct production backend configuration supposed to come from?
-- Do we have a backup of the actual **production data** (users, filings, settings), or are we proceeding with a fresh, empty database containing only the schema?
+- Does live sign-in and sign-up succeed on the latest DigitalOcean deployment?
+- Do the core authenticated user journeys complete without console or runtime errors?
+- When should the pending `MONO_SECRET_KEY` and `PAYSTACK_SECRET_KEY` work resume?
+- Do we have a backup of the actual production data (users, filings, settings), or are we proceeding with a fresh, empty database containing only the schema?

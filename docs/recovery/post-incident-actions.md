@@ -17,6 +17,7 @@
 - Set up uptime check for:
   - https://bajwsjrqrsglsndgtfpp.supabase.co/rest/v1/
 - Set up alert if response fails
+- Status: still pending
 
 ### B. Document Critical Infrastructure
 Create `docs/project/infrastructure.md` with:
@@ -24,17 +25,23 @@ Create `docs/project/infrastructure.md` with:
 - Supabase URL
 - Where env vars are stored (DigitalOcean)
 - Deployment flow (main → auto deploy)
+- Status: completed
 
 ### C. Remove Hidden Coupling
 - Stop hardcoding Supabase keys in code
 - Move fully to environment variables
 - Ensure frontend reads from `import.meta.env`
+- Status: partially completed
+  - frontend reads from `import.meta.env`
+  - `.do/app.yaml` now declares the production Supabase frontend build vars
+  - continue avoiding any new hardcoded production values outside controlled config files
 
 ### D. Add Health Check Page
 - Add `/health` route in frontend
 - Should verify:
   - Supabase reachable
   - Auth session valid
+- Status: completed in repo; requires live browser verification on latest deploy
 
 ## 4. Near-Term Improvements
 
@@ -45,12 +52,14 @@ Create `docs/project/infrastructure.md` with:
 ### B. Backup Strategy
 - Enable Supabase backups (if plan allows)
 - Add manual export process (weekly minimum)
+- Status: still pending
 
 ### C. Access Control
 - Identify who owns:
   - Supabase project
   - DigitalOcean app
 - Remove ambiguity
+- Status: still pending
 
 ## 5. Non-Negotiables Going Forward
 - No production system without monitoring
@@ -61,5 +70,5 @@ Create `docs/project/infrastructure.md` with:
 ## 6. Current Status
 - Backend: active
 - Frontend: working
-- Auth: verified
+- Auth: backend/config hardening complete, latest browser verification still pending
 - Data: unknown integrity

@@ -305,11 +305,11 @@ The following evidence remains outstanding to achieve absolute launch confidence
 - **Unreviewed files**: Extensive backend functions (e.g. Supabase Edge Functions), remaining calculators, and deeper admin-level management components.
 
 ## 9. Executive Summary
-- **Top Launch Blockers**: Dead production authentication and backend failures; mock TCC upload capabilities; stubbed foreign exchange rates; and mathematically broken, isolated progressive PIT tax computations.
+- **Top Launch Blockers**: Pending live browser verification on the latest deployment; mock TCC upload capabilities; stubbed foreign exchange rates; and mathematically broken, isolated progressive PIT tax computations.
 - **Top Tax Accuracy Risks**: Flawed NHIA deductions; broken rent relief calculations; scattered/conflicting tax bands across the codebase; generic rather than statutory compliance deadlines.
 - **Top Trust Risks**: "Fake" success states for features like DigiTax sync; unreviewed AI classifications masquerading as fact; fully broken TIN identity tracking.
 - **Top Product Integrity Risks**: Unpersisted dashboard readiness tracking; unverified generation of actual PDF filing packs.
 - **Top Misleading Experience Risks**: Prominently displayed unsupported "Coming Soon" features; unverified compliance marketing badges.
-- **What Must Be Fixed First**: The dead production backend, the broken TIN data chain, and the centralization of all tax logic into a single verified source of truth.
+- **What Must Be Fixed First**: Live auth and dashboard verification on the updated deployment, the broken TIN data chain, and the centralization of all tax logic into a single verified source of truth.
 - **What Must Be Hidden Or Disabled Before Launch**: The fake DigiTax sync, the Auto-File Service UI components, the faux TCC `Math.random()` upload (if not cleanly rewritten), and unsupported marketing/trust badges.
-- **Overall Launch Recommendation**: **DO NOT LAUNCH**. Immediate focus must be redirected to resolving Gate 1 backend and routing connectivity issues so QA can begin. Proceed to Beta testing exclusively after all centralized math logic, core routing, and data persistence operations are thoroughly validated.
+- **Overall Launch Recommendation**: **DO NOT LAUNCH FULLY YET**. Immediate focus should be on completing live browser QA on the updated deployment, then proceeding to a narrow beta only after core routing, auth, data persistence, and centralized math logic are thoroughly validated.
