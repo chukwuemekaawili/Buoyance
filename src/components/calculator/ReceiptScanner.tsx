@@ -141,13 +141,13 @@ Respond with just one sentence, no markdown.`
                             type="file"
                             ref={fileInputRef}
                             className="hidden"
-                            accept="image/*,.pdf"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
                             onChange={handleFileSelect}
                             capture="environment"
                         />
                         <UploadCloud className="h-12 w-12 mx-auto text-primary/40 mb-3" />
                         <p className="font-medium">Tap to Scan or Upload</p>
-                        <p className="text-xs text-muted-foreground mt-1">Accepts images and PDFs up to 5MB</p>
+                        <p className="text-xs text-muted-foreground mt-1">Accepts JPG, PNG, WEBP, and GIF images up to 5MB</p>
                     </div>
                 ) : (
                     <div className="relative rounded-xl overflow-hidden border bg-black/5 flex items-center justify-center h-48">

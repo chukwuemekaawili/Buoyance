@@ -66,7 +66,7 @@ const courseDatabase: Record<string, CourseData> = {
                 content: [
                     "The NTA 2025 introduces a completely new progressive PIT structure with 6 bands, effective January 1, 2026:",
                     "The new PIT rates are:\n• ₦0 – ₦800,000: 0% (fully exempt)\n• ₦800,001 – ₦3,000,000: 15%\n• ₦3,000,001 – ₦12,000,000: 18%\n• ₦12,000,001 – ₦25,000,000: 21%\n• ₦25,000,001 – ₦50,000,000: 23%\n• Above ₦50,000,000: 25%",
-                    "The old Consolidated Relief Allowance (CRA) has been abolished and replaced by Rent Relief — the lower of 20% of annual rent paid or ₦500,000 per year. Other deductible items include pension contributions, NHF, NHIS, life insurance premiums, and mortgage interest.",
+                    "The old Consolidated Relief Allowance (CRA) has been abolished and replaced by Rent Relief — the lower of 20% of annual rent paid or ₦200,000 per year. Other deductible items include pension contributions, NHF, NHIS, life insurance premiums, and mortgage interest.",
                     "The 0% band up to ₦800,000 is a significant change — it means low-income earners (roughly ₦66,667/month or less) pay no income tax at all. Under the old PITA, even small incomes were taxed at 7% after CRA.",
                 ],
                 quiz: {
@@ -381,16 +381,16 @@ const courseDatabase: Record<string, CourseData> = {
                 id: "p3",
                 title: "Rent Relief (Replacing CRA)",
                 content: [
-                    "Rent Relief replaces the old CRA and is calculated as the LOWER of: (a) 20% of your annual rent paid, or (b) ₦500,000 per year.",
+                    "Rent Relief replaces the old CRA and is calculated as the LOWER of: (a) 20% of your annual rent paid, or (b) ₦200,000 per year.",
                     "To claim Rent Relief, you must: (1) Declare your annual rent amount, (2) Provide supporting documentation (rent receipt, tenancy agreement), (3) Submit the claim through your employer or directly.",
                     "Important: Homeowners or people who do not pay rent are NOT eligible for Rent Relief. This is a significant departure from the CRA, which applied universally.",
-                    "Example: If you pay ₦1,500,000 annual rent → 20% = ₦300,000 (lower than ₦500,000 cap) → Your Rent Relief is ₦300,000. If you pay ₦3,000,000 rent → 20% = ₦600,000 (exceeds cap) → Your relief is capped at ₦500,000.",
+                    "Example: If you pay ₦800,000 annual rent → 20% = ₦160,000 (lower than ₦200,000 cap) → Your Rent Relief is ₦160,000. If you pay ₦1,500,000 rent → 20% = ₦300,000 (exceeds cap) → Your relief is capped at ₦200,000.",
                 ],
                 quiz: {
                     question: "What is the maximum Rent Relief claimable per year under the NTA 2025?",
                     options: ["₦200,000", "₦300,000", "₦500,000", "₦1,000,000"],
-                    correctIndex: 2,
-                    explanation: "Rent Relief is capped at ₦500,000 per year, or 20% of annual rent paid — whichever is lower.",
+                    correctIndex: 0,
+                    explanation: "Rent Relief is capped at ₦200,000 per year, or 20% of annual rent paid — whichever is lower.",
                 },
             },
             {
@@ -768,9 +768,9 @@ const courseDatabase: Record<string, CourseData> = {
                 id: "to2",
                 title: "Personal Tax Reliefs Deep Dive",
                 content: [
-                    "Under the NTA 2025, the key personal reliefs are:\n• Zero-rate band: First ₦800,000 of income is tax-free — if you earn under this, you pay NOTHING\n• Rent Relief: Lower of 20% of annual rent or ₦500,000\n• Pension contributions: Employee's 8% is fully deductible\n• NHF: 2.5% of basic salary\n• NHIS premiums: Fully deductible\n• Life insurance premiums: Fully deductible",
+                    "Under the NTA 2025, the key personal reliefs are:\n• Zero-rate band: First ₦800,000 of income is tax-free — if you earn under this, you pay NOTHING\n• Rent Relief: Lower of 20% of annual rent or ₦200,000\n• Pension contributions: Employee's 8% is fully deductible\n• NHF: 2.5% of basic salary\n• NHIS premiums: Fully deductible\n• Life insurance premiums: Fully deductible",
                     "Optimization trick #1 — Maximize pension contributions: Consider voluntary contributions above the mandatory 8%. These are deductible NOW, grow tax-free, and are only taxed on withdrawal. It's essentially forced savings with a tax benefit.",
-                    "Optimization trick #2 — Rent documentation: Many Nigerians pay rent but don't claim Rent Relief because they lack documentation. Get a formal tenancy agreement and bank transfer receipts — this alone can save you up to ₦500,000 × your marginal tax rate.",
+                    "Optimization trick #2 — Rent documentation: Many Nigerians pay rent but don't claim Rent Relief because they lack documentation. Get a formal tenancy agreement and bank transfer receipts — this alone can save you up to ₦200,000 × your marginal tax rate.",
                     "Optimization trick #3 — Mortgage interest: If you have a mortgage on your primary residence, the interest payments are deductible. This can be a powerful incentive to buy rather than rent, depending on your numbers.",
                 ],
                 quiz: {
@@ -1399,7 +1399,7 @@ const courseDatabase: Record<string, CourseData> = {
                 content: [
                     "If your employer provides rent-free accommodation, the taxable value is capped at 20% of your gross income (excluding the accommodation value itself). This cap prevents over-taxation in areas with expensive housing.",
                     "The valuation is typically based on the local government's property assessment or the tax authority's determination. If you share the accommodation or occupy it for only part of the year, the benefit is prorated.",
-                    "Important distinction: Rent Relief (the deduction of 20% of rent paid, capped at ₦500,000) is for employees who pay their OWN rent. If your employer provides housing, you get the BIK instead — you cannot claim BOTH.",
+                    "Important distinction: Rent Relief (the deduction of 20% of rent paid, capped at ₦200,000) is for employees who pay their OWN rent. If your employer provides housing, you get the BIK instead — you cannot claim BOTH.",
                     "Planning tip for employers: Consider providing a housing allowance instead of actual accommodation. This gives the employee flexibility and may result in a lower taxable amount if their actual rent is below the BIK valuation.",
                 ],
             },

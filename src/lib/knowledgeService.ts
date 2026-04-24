@@ -28,7 +28,7 @@ export const BUILT_IN_ARTICLES: Omit<KnowledgeArticle, 'id' | 'created_at'>[] = 
         content: `# Nigeria Tax Act (NTA) 2025 - Key Changes
 
 ## CRA Abolished
-The Consolidated Relief Allowance (CRA) has been replaced with Rent Relief. Employees who pay rent can claim a relief of the lower of ₦500,000 or 20% of annual rent paid.
+The Consolidated Relief Allowance (CRA) has been replaced with Rent Relief. Employees who pay rent can claim a relief of the lower of ₦200,000 or 20% of annual rent paid.
 
 ## PAYE Brackets Updated
 - First ₦800,000: 0% (exempt)

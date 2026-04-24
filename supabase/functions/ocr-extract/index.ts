@@ -21,6 +21,14 @@ const ok = (body: unknown) =>
   });
 
 const RECEIPTS_BUCKET = 'receipts';
+const MAX_RECEIPT_IMAGE_BYTES = 5 * 1024 * 1024;
+const RECEIPT_MEDIA_TYPES_BY_EXTENSION: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+};
 
 function validateSignedReceiptUrl(
   rawUrl: string,
@@ -64,6 +72,58 @@ function validateSignedReceiptUrl(
     signedUrl: parsedInputUrl.toString(),
     storagePath,
   };
+}
+
+function getReceiptMediaType(storagePath: string): { mediaType: string } | { error: string } {
+  const extension = storagePath.split('.').pop()?.toLowerCase() ?? '';
+  const mediaType = RECEIPT_MEDIA_TYPES_BY_EXTENSION[extension];
+
+  if (!mediaType) {
+    return { error: 'Unsupported receipt image type. Upload a JPG, PNG, WEBP, or GIF image.' };
+  }
+
+  return { mediaType };
+}
+
+async function readImageBytesWithLimit(
+  response: Response,
+  maxBytes: number,
+): Promise<{ bytes: Uint8Array } | { error: string }> {
+  const contentLength = Number(response.headers.get('content-length') ?? '0');
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+    return { error: 'Receipt image is too large. Upload an image up to 5MB.' };
+  }
+
+  if (!response.body) {
+    return { error: 'Receipt image response was empty.' };
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+
+    totalBytes += value.byteLength;
+    if (totalBytes > maxBytes) {
+      await reader.cancel();
+      return { error: 'Receipt image is too large. Upload an image up to 5MB.' };
+    }
+
+    chunks.push(value);
+  }
+
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return { bytes };
 }
 
 const systemPrompt = `You are a specialized OCR extraction engine for a Nigerian tax and accounting software called Buoyance.
@@ -127,32 +187,22 @@ serve(async (req) => {
       return ok({ error: receiptUrl.error });
     }
 
+    const mediaTypeResult = getReceiptMediaType(receiptUrl.storagePath);
+    if ('error' in mediaTypeResult) {
+      return ok({ error: mediaTypeResult.error });
+    }
+
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     if (!ANTHROPIC_API_KEY) {
       console.error('ANTHROPIC_API_KEY is not configured');
       return ok({ error: 'Configuration Error: ANTHROPIC_API_KEY is missing in Supabase Secrets.' });
     }
 
-    // 1. Download the image from the validated signed Storage URL on the backend
-    console.log(`[OCR] Fetching receipt image for workspace ${workspaceId} from path ${receiptUrl.storagePath}`);
-    const imageResponse = await fetch(receiptUrl.signedUrl);
-
-    if (!imageResponse.ok) {
-      return ok({ error: `Failed to download image from Storage: ${imageResponse.statusText}` });
-    }
-
-    // 2. Convert raw image buffer to base64
-    const arrayBuffer = await imageResponse.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-
-    // Efficient base64 conversion in Deno
-    let binaryString = '';
-    for (let i = 0; i < uint8Array.length; i++) {
-      binaryString += String.fromCharCode(uint8Array[i]);
-    }
-    const cleanBase64 = btoa(binaryString);
-
-    console.log(`[OCR] Image downloaded and converted. Base64 length: ${cleanBase64.length}`);
+    const refundQuota = async () => {
+      if (!quotaConsumed || !authContext || !workspaceId) return;
+      await releaseQuota(authContext.supabase, workspaceId, 'ocr_receipts');
+      quotaConsumed = false;
+    };
 
     const quota = await consumeQuota(authContext.supabase, workspaceId, 'ocr_receipts');
     if (!quota.allowed) {
@@ -160,16 +210,36 @@ serve(async (req) => {
     }
     quotaConsumed = true;
 
-    // 3. Determine the correct media type for Anthropic (Claude enforces strict type checking)
-    // Signed URLs include query params, so we inspect only the pathname.
-    const pathParts = receiptUrl.storagePath.split('.');
-    const fileExtension = pathParts[pathParts.length - 1]?.toLowerCase();
+    // 1. Download the image from the validated signed Storage URL on the backend
+    console.log(`[OCR] Fetching receipt image for workspace ${workspaceId} from path ${receiptUrl.storagePath}`);
+    const imageResponse = await fetch(receiptUrl.signedUrl);
 
-    // Default to jpeg if parsing fails or extension is missing
-    let mediaType = 'image/jpeg';
-    if (fileExtension === 'png') mediaType = 'image/png';
-    else if (fileExtension === 'webp') mediaType = 'image/webp';
-    else if (fileExtension === 'gif') mediaType = 'image/gif';
+    if (!imageResponse.ok) {
+      await refundQuota();
+      return ok({ error: `Failed to download image from Storage: ${imageResponse.statusText}` });
+    }
+
+    const contentType = imageResponse.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase();
+    if (contentType && !Object.values(RECEIPT_MEDIA_TYPES_BY_EXTENSION).includes(contentType)) {
+      await refundQuota();
+      return ok({ error: 'Receipt URL did not return a supported image type.' });
+    }
+
+    // 2. Convert raw image buffer to base64
+    const imageBytes = await readImageBytesWithLimit(imageResponse, MAX_RECEIPT_IMAGE_BYTES);
+    if ('error' in imageBytes) {
+      await refundQuota();
+      return ok({ error: imageBytes.error });
+    }
+
+    // Efficient base64 conversion in Deno
+    let binaryString = '';
+    for (let i = 0; i < imageBytes.bytes.length; i++) {
+      binaryString += String.fromCharCode(imageBytes.bytes[i]);
+    }
+    const cleanBase64 = btoa(binaryString);
+
+    console.log(`[OCR] Image downloaded and converted. Base64 length: ${cleanBase64.length}`);
 
     // Add a 25-second timeout to the Anthropic fetch (Supabase edge functions default to 150s max)
     const anthropicController = new AbortController();
@@ -197,7 +267,7 @@ serve(async (req) => {
                   type: 'image',
                   source: {
                     type: 'base64',
-                    media_type: mediaType,
+                    media_type: mediaTypeResult.mediaType,
                     data: cleanBase64,
                   }
                 },
@@ -212,9 +282,7 @@ serve(async (req) => {
       });
     } catch (fetchError: unknown) {
       const msg = fetchError instanceof Error ? fetchError.message : String(fetchError);
-      if (quotaConsumed && authContext && workspaceId) {
-        await releaseQuota(authContext.supabase, workspaceId, 'ocr_receipts');
-      }
+      await refundQuota();
       return ok({ error: `Anthropic fetch failed: ${msg}` });
     } finally {
       clearTimeout(anthropicTimeout);
@@ -225,9 +293,7 @@ serve(async (req) => {
     if (!anthropicResponse.ok) {
       console.error(`[OCR] Anthropic HTTP ${anthropicResponse.status}. Full body:`, JSON.stringify(anthropicData));
       const message = anthropicData?.error?.message || JSON.stringify(anthropicData);
-      if (quotaConsumed && authContext && workspaceId) {
-        await releaseQuota(authContext.supabase, workspaceId, 'ocr_receipts');
-      }
+      await refundQuota();
       return ok({ error: `Anthropic API Error (HTTP ${anthropicResponse.status}): ${message}` });
     }
 
@@ -246,9 +312,7 @@ serve(async (req) => {
       }
     } catch (e) {
       console.error('Failed to parse Claude response as JSON. Raw:', rawText);
-      if (quotaConsumed && authContext && workspaceId) {
-        await releaseQuota(authContext.supabase, workspaceId, 'ocr_receipts');
-      }
+      await refundQuota();
       return ok({ error: `Claude returned invalid JSON. Raw response: ${rawText.slice(0, 300)}` });
     }
 

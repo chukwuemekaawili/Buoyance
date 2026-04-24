@@ -205,9 +205,26 @@ export interface OCRProcessResult extends OCRExtractionResult {
     receiptUrl: string;
 }
 
+const MAX_RECEIPT_UPLOAD_BYTES = 5 * 1024 * 1024;
+const ALLOWED_RECEIPT_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const RECEIPT_EXTENSION_BY_TYPE: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+};
+
 export async function extractReceiptWithAI(file: File, workspaceId: string): Promise<OCRProcessResult> {
+    if (!ALLOWED_RECEIPT_IMAGE_TYPES.has(file.type)) {
+        throw new Error('Receipt OCR supports JPG, PNG, WEBP, and GIF images.');
+    }
+
+    if (file.size > MAX_RECEIPT_UPLOAD_BYTES) {
+        throw new Error('Receipt image must be 5MB or smaller.');
+    }
+
     // 1. Upload to private Supabase Storage ('receipts' bucket)
-    const fileExt = file.name.split('.').pop();
+    const fileExt = RECEIPT_EXTENSION_BY_TYPE[file.type];
     const fileName = `${workspaceId}/${crypto.randomUUID()}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
