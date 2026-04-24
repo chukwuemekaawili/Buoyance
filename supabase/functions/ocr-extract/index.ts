@@ -20,6 +20,52 @@ const ok = (body: unknown) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 
+const RECEIPTS_BUCKET = 'receipts';
+
+function validateSignedReceiptUrl(
+  rawUrl: string,
+  workspaceId: string,
+): { signedUrl: string; storagePath: string } | { error: string } {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  if (!supabaseUrl) {
+    return { error: 'Configuration Error: SUPABASE_URL is missing in Supabase Secrets.' };
+  }
+
+  let parsedInputUrl: URL;
+  let parsedSupabaseUrl: URL;
+  try {
+    parsedInputUrl = new URL(rawUrl);
+    parsedSupabaseUrl = new URL(supabaseUrl);
+  } catch {
+    return { error: 'Invalid receipt URL.' };
+  }
+
+  if (parsedInputUrl.origin !== parsedSupabaseUrl.origin) {
+    return { error: 'Only signed Supabase Storage URLs are allowed for receipt OCR.' };
+  }
+
+  const signedPathPrefix = `/storage/v1/object/sign/${RECEIPTS_BUCKET}/`;
+  if (!parsedInputUrl.pathname.startsWith(signedPathPrefix)) {
+    return { error: 'Only signed receipt storage URLs are allowed for receipt OCR.' };
+  }
+
+  if (!parsedInputUrl.searchParams.get('token')) {
+    return { error: 'Signed receipt URL is missing its token.' };
+  }
+
+  const encodedPath = parsedInputUrl.pathname.slice(signedPathPrefix.length);
+  const storagePath = decodeURIComponent(encodedPath).replace(/^\/+/, '');
+
+  if (!storagePath.startsWith(`${workspaceId}/`)) {
+    return { error: 'Receipt URL does not belong to the active workspace.' };
+  }
+
+  return {
+    signedUrl: parsedInputUrl.toString(),
+    storagePath,
+  };
+}
+
 const systemPrompt = `You are a specialized OCR extraction engine for a Nigerian tax and accounting software called Buoyance.
 Your ONLY job is to extract data from the provided receipt or invoice image and output it as strictly formatted JSON.
 Do not include any markdown formatting, conversational text, or explanations. Only output the JSON object.
@@ -76,21 +122,20 @@ serve(async (req) => {
       return ok({ error: 'workspaceId payload is required' });
     }
 
+    const receiptUrl = validateSignedReceiptUrl(imageUrl, workspaceId);
+    if ('error' in receiptUrl) {
+      return ok({ error: receiptUrl.error });
+    }
+
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     if (!ANTHROPIC_API_KEY) {
       console.error('ANTHROPIC_API_KEY is not configured');
       return ok({ error: 'Configuration Error: ANTHROPIC_API_KEY is missing in Supabase Secrets.' });
     }
 
-    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-
-    // 1. Download the image from the provided signed Storage URL on the backend
-    console.log(`[OCR] Fetching image from: ${imageUrl}`);
-    const imageResponse = await fetch(imageUrl, {
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-      }
-    });
+    // 1. Download the image from the validated signed Storage URL on the backend
+    console.log(`[OCR] Fetching receipt image for workspace ${workspaceId} from path ${receiptUrl.storagePath}`);
+    const imageResponse = await fetch(receiptUrl.signedUrl);
 
     if (!imageResponse.ok) {
       return ok({ error: `Failed to download image from Storage: ${imageResponse.statusText}` });
@@ -117,8 +162,7 @@ serve(async (req) => {
 
     // 3. Determine the correct media type for Anthropic (Claude enforces strict type checking)
     // Signed URLs include query params, so we inspect only the pathname.
-    const imagePath = new URL(imageUrl).pathname;
-    const pathParts = imagePath.split('.');
+    const pathParts = receiptUrl.storagePath.split('.');
     const fileExtension = pathParts[pathParts.length - 1]?.toLowerCase();
 
     // Default to jpeg if parsing fails or extension is missing

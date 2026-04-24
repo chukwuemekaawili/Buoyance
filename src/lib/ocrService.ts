@@ -228,7 +228,10 @@ export async function extractReceiptWithAI(file: File, workspaceId: string): Pro
 
     // 2. We skip base64 conversion on the client to avoid Supabase Edge Function payload limits (500KB).
     // Instead, we pass a short-lived signed URL to the Edge Function.
-    console.log('[OCR] Invoking Edge Function `ocr-extract` with image URL...', { imageUrl: signedData.signedUrl });
+    console.log('[OCR] Invoking Edge Function `ocr-extract` for uploaded receipt...', {
+        workspaceId,
+        receiptPath: fileName,
+    });
 
     try {
         const invokeResult = await supabase.functions.invoke('ocr-extract', {
